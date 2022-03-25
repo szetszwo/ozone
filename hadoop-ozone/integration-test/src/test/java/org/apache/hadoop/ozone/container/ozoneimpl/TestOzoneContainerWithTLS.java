@@ -20,19 +20,20 @@ package org.apache.hadoop.ozone.container.ozoneimpl;
 
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hdds.HddsConfigKeys;
+import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.MockDatanodeDetails;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
+import org.apache.hadoop.hdds.ratis.RatisHelper;
+import org.apache.hadoop.hdds.scm.XceiverClientGrpc;
+import org.apache.hadoop.hdds.scm.XceiverClientSpi;
 import org.apache.hadoop.hdds.scm.pipeline.MockPipeline;
+import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.security.token.OzoneBlockTokenIdentifier;
 import org.apache.hadoop.hdds.security.x509.SecurityConfig;
 import org.apache.hadoop.ozone.OzoneConfigKeys;
-import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.ozone.client.CertificateClientTestImpl;
 import org.apache.hadoop.ozone.container.ContainerTestHelper;
-import org.apache.hadoop.hdds.scm.XceiverClientGrpc;
-import org.apache.hadoop.hdds.scm.XceiverClientSpi;
-import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.ozone.container.common.statemachine.DatanodeStateMachine;
 import org.apache.hadoop.ozone.container.common.statemachine.StateContext;
 import org.apache.hadoop.ozone.security.OzoneBlockTokenSecretManager;
@@ -40,20 +41,15 @@ import org.apache.hadoop.security.token.Token;
 import org.apache.ozone.test.GenericTestUtils;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -67,8 +63,6 @@ import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_SECURITY_ENABLED_KEY
 /**
  * Tests ozone containers via secure grpc/netty.
  */
-@RunWith(Parameterized.class)
-@Ignore("TODO:HDDS-1157")
 public class TestOzoneContainerWithTLS {
   private static final Logger LOG = LoggerFactory.getLogger(
       TestOzoneContainerWithTLS.class);
@@ -84,19 +78,7 @@ public class TestOzoneContainerWithTLS {
   private OzoneConfiguration conf;
   private OzoneBlockTokenSecretManager secretManager;
   private CertificateClientTestImpl caClient;
-  private boolean blockTokenEnabled;
 
-  public TestOzoneContainerWithTLS(boolean blockTokenEnabled) {
-    this.blockTokenEnabled = blockTokenEnabled;
-  }
-
-  @Parameterized.Parameters
-  public static Collection<Object[]> enableBlockToken() {
-    return Arrays.asList(new Object[][] {
-        {false},
-        {true}
-    });
-  }
 
   @Before
   public void setup() throws Exception {
@@ -130,6 +112,10 @@ public class TestOzoneContainerWithTLS {
 
   @Test
   public void testCreateOzoneContainer() throws Exception {
+    runTestCreateOzoneContainer(false);
+  }
+
+  void runTestCreateOzoneContainer(boolean blockTokenEnabled) throws Exception {
     LOG.info("testCreateOzoneContainer with TLS and blockToken enabled: {}",
         blockTokenEnabled);
     conf.setBoolean(HddsConfigKeys.HDDS_BLOCK_TOKEN_ENABLED,
@@ -139,6 +125,9 @@ public class TestOzoneContainerWithTLS {
     OzoneContainer container = null;
     System.out.println(System.getProperties().getProperty("java.library.path"));
     DatanodeDetails dn = MockDatanodeDetails.randomDatanodeDetails();
+
+    RatisHelper.putGrpcTlsConfig("server", SecurityTestUtils.newServerGrpcTlsConfig(true));
+    RatisHelper.putGrpcTlsConfig("client", SecurityTestUtils.newClientGrpcTlsConfig(true));
     try {
       Pipeline pipeline = MockPipeline.createSingleNodePipeline();
       conf.set(HDDS_DATANODE_DIR_KEY, tempFolder.getRoot().getPath());
@@ -160,8 +149,8 @@ public class TestOzoneContainerWithTLS {
         client.connect();
         createSecureContainerForTesting(client, containerID, null);
       } else {
-        createContainerForTesting(client, containerID);
         client.connect();
+        createContainerForTesting(client, containerID);
       }
     } finally {
       if (container != null) {

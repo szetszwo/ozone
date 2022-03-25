@@ -34,6 +34,8 @@ import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandRequestProto;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.PipelineReport;
+import org.apache.hadoop.hdds.ratis.SslUtils;
+import org.apache.hadoop.hdds.ratis.RatisHelper;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
 import org.apache.hadoop.hdds.security.x509.SecurityConfig;
@@ -50,6 +52,7 @@ import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.util.GlobalTracer;
 import org.apache.hadoop.ozone.container.common.statemachine.DatanodeConfiguration;
+import org.apache.ratis.grpc.GrpcTlsConfig;
 import org.apache.ratis.thirdparty.com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.ratis.thirdparty.io.grpc.Server;
 import org.apache.ratis.thirdparty.io.grpc.ServerInterceptors;
@@ -142,8 +145,8 @@ public final class XceiverServerGrpc implements XceiverServerSpi {
     SecurityConfig secConf = new SecurityConfig(conf);
     if (secConf.isGrpcTlsEnabled()) {
       try {
-        SslContextBuilder sslClientContextBuilder = SslContextBuilder.forServer(
-            caClient.getPrivateKey(), caClient.getCertificate());
+        final GrpcTlsConfig grpcTlsConfig = RatisHelper.getGrpcTlsConfig("server");
+        SslContextBuilder sslClientContextBuilder = SslUtils.newServerSslContextBuilder(grpcTlsConfig);
         SslContextBuilder sslContextBuilder = GrpcSslContexts.configure(
             sslClientContextBuilder, secConf.getGrpcSslProvider());
         nettyServerBuilder.sslContext(sslContextBuilder.build());

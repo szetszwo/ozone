@@ -42,6 +42,8 @@ import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.DatanodeBl
 import org.apache.hadoop.hdds.protocol.datanode.proto.XceiverClientProtocolServiceGrpc;
 import org.apache.hadoop.hdds.protocol.datanode.proto.XceiverClientProtocolServiceGrpc.XceiverClientProtocolServiceStub;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
+import org.apache.hadoop.hdds.ratis.SslUtils;
+import org.apache.hadoop.hdds.ratis.RatisHelper;
 import org.apache.hadoop.hdds.scm.client.HddsClientUtils;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.storage.CheckedBiFunction;
@@ -58,9 +60,9 @@ import com.google.common.base.Preconditions;
 import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.util.GlobalTracer;
+import org.apache.ratis.grpc.GrpcTlsConfig;
 import org.apache.ratis.thirdparty.io.grpc.ManagedChannel;
 import org.apache.ratis.thirdparty.io.grpc.Status;
-import org.apache.ratis.thirdparty.io.grpc.netty.GrpcSslContexts;
 import org.apache.ratis.thirdparty.io.grpc.netty.NettyChannelBuilder;
 import org.apache.ratis.thirdparty.io.grpc.stub.StreamObserver;
 import org.apache.ratis.thirdparty.io.netty.handler.ssl.SslContextBuilder;
@@ -180,10 +182,11 @@ public class XceiverClientGrpc extends XceiverClientSpi {
             .maxInboundMessageSize(OzoneConsts.OZONE_SCM_CHUNK_MAX_SIZE)
             .intercept(new GrpcClientInterceptor());
     if (secConfig.isGrpcTlsEnabled()) {
-      SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient();
-      if (caCerts != null) {
-        sslContextBuilder.trustManager(caCerts);
-      }
+//      if (caCerts != null) {
+//        sslContextBuilder.trustManager(caCerts);
+//      }
+      GrpcTlsConfig grpcTlsConfig = RatisHelper.getGrpcTlsConfig("client");
+      SslContextBuilder sslContextBuilder = SslUtils.newClientSslContextBuilder(grpcTlsConfig);
       if (secConfig.useTestCert()) {
         channelBuilder.overrideAuthority("localhost");
       }
@@ -510,7 +513,7 @@ public class XceiverClientGrpc extends XceiverClientSpi {
 
               @Override
               public void onError(Throwable t) {
-                replyFuture.completeExceptionally(t);
+                replyFuture.completeExceptionally(new IOException("XXX Failed ", t));
                 metrics.decrPendingContainerOpsMetrics(request.getCmdType());
                 long cost = System.currentTimeMillis() - requestTime;
                 metrics.addContainerOpsLatency(request.getCmdType(),

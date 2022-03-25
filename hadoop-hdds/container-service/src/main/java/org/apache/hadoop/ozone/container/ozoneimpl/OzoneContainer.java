@@ -36,6 +36,7 @@ import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolPro
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.ContainerReplicaProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.IncrementalContainerReportProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.PipelineReportsProto;
+import org.apache.hadoop.hdds.ratis.RatisHelper;
 import org.apache.hadoop.hdds.security.token.TokenVerifier;
 import org.apache.hadoop.hdds.security.x509.SecurityConfig;
 import org.apache.hadoop.hdds.security.x509.certificate.client.CertificateClient;
@@ -203,9 +204,9 @@ public class OzoneContainer {
     if (certClient != null && secConf.isGrpcTlsEnabled()) {
       List<X509Certificate> x509Certificates =
           HAUtils.buildCAX509List(certClient, conf);
-      tlsClientConfig = new GrpcTlsConfig(
+      tlsClientConfig = RatisHelper.newGrpcTlsConfig(
           certClient.getPrivateKey(), certClient.getCertificate(),
-          x509Certificates, true);
+          x509Certificates, true, "client");
     } else {
       tlsClientConfig = null;
     }

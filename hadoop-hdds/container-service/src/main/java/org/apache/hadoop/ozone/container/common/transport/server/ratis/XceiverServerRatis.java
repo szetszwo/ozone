@@ -499,12 +499,12 @@ public final class XceiverServerRatis implements XceiverServerSpi {
     if (conf.isSecurityEnabled() && conf.isGrpcTlsEnabled()) {
       List<X509Certificate> caList = HAUtils.buildCAX509List(caClient,
           conf.getConfiguration());
-      GrpcTlsConfig serverConfig = new GrpcTlsConfig(
+      GrpcTlsConfig serverConfig = RatisHelper.newGrpcTlsConfig(
           caClient.getPrivateKey(), caClient.getCertificate(),
-          caList, true);
-      GrpcTlsConfig clientConfig = new GrpcTlsConfig(
+          caList, true, "server");
+      GrpcTlsConfig clientConfig = RatisHelper.newGrpcTlsConfig(
           caClient.getPrivateKey(), caClient.getCertificate(),
-          caList, false);
+          caList, false, "client");
       return RatisHelper.setServerTlsConf(serverConfig, clientConfig);
     }
 

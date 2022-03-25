@@ -19,6 +19,7 @@
 package org.apache.hadoop.hdds.ratis;
 
 import java.io.IOException;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -363,10 +365,45 @@ public final class RatisHelper {
       List<X509Certificate> caCerts) {
     GrpcTlsConfig tlsConfig = null;
     if (conf.isSecurityEnabled() && conf.isGrpcTlsEnabled()) {
-      tlsConfig = new GrpcTlsConfig(null, null,
+      tlsConfig = newGrpcTlsConfig(null, null,
           caCerts, false);
     }
     return tlsConfig;
+  }
+
+  private static final Map<String, GrpcTlsConfig> grpcTlsConfigs = new ConcurrentHashMap<>();
+
+  public static GrpcTlsConfig putGrpcTlsConfig(String id, GrpcTlsConfig grpcTlsConfig) {
+    LOG.info("putGrpcTlsConfig, {} -> {}", id, grpcTlsConfig);
+    return grpcTlsConfigs.put(id, grpcTlsConfig);
+  }
+
+  public static GrpcTlsConfig getGrpcTlsConfig(String id) {
+    return grpcTlsConfigs.get(id);
+  }
+  public static GrpcTlsConfig newGrpcTlsConfig(
+      PrivateKey privateKey, X509Certificate certChain, List<X509Certificate> trustStore, boolean mTls,
+      String id) {
+    if (id != null) {
+      LOG.info("newGrpcTlsConfig, id = {}, mTls? {}", id, mTls);
+      final GrpcTlsConfig cached = grpcTlsConfigs.get(id);
+      if (cached != null) {
+        LOG.info("XXX 3", new Throwable("CACHED " + id));
+        return cached;
+      }
+    }
+    return newGrpcTlsConfig(privateKey, certChain, trustStore, mTls);
+  }
+
+  public static GrpcTlsConfig newGrpcTlsConfig
+      (PrivateKey privateKey, X509Certificate certChain, List<X509Certificate> trustStore, boolean mTls) {
+    LOG.info("XXX 1", new Throwable("NEW"));
+    return new GrpcTlsConfig(privateKey, certChain, trustStore, mTls);
+  }
+
+  public static GrpcTlsConfig newGrpcTlsConfig(PrivateKey privateKey, X509Certificate certChain, X509Certificate trustStore, boolean mTlsEnabled) {
+    LOG.info("XXX 2", new Throwable("TRACE"));
+    return new GrpcTlsConfig(privateKey, certChain, trustStore, mTlsEnabled);
   }
 
   public static RetryPolicy createRetryPolicy(ConfigurationSource conf) {
