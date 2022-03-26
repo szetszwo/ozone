@@ -482,7 +482,7 @@ public final class XceiverServerRatis implements XceiverServerSpi {
       ContainerDispatcher dispatcher, ContainerController containerController,
       CertificateClient caClient, StateContext context) throws IOException {
     Parameters parameters = createTlsParameters(
-        new SecurityConfig(ozoneConf), caClient);
+        new SecurityConfig(ozoneConf), caClient, datanodeDetails);
 
     return new XceiverServerRatis(datanodeDetails, dispatcher,
         containerController, context, ozoneConf, parameters);
@@ -495,16 +495,24 @@ public final class XceiverServerRatis implements XceiverServerSpi {
   // DN Ratis server act as both SSL client and server and we must pass TLS
   // configuration for both.
   private static Parameters createTlsParameters(SecurityConfig conf,
-      CertificateClient caClient) throws IOException {
+      CertificateClient caClient, DatanodeDetails datanodeDetails)
+      throws IOException {
     if (conf.isSecurityEnabled() && conf.isGrpcTlsEnabled()) {
       List<X509Certificate> caList = HAUtils.buildCAX509List(caClient,
           conf.getConfiguration());
-      GrpcTlsConfig serverConfig = new GrpcTlsConfig(
+      GrpcTlsConfig serverConfig = RatisHelper.newGrpcTlsConfig(
           caClient.getPrivateKey(), caClient.getCertificate(),
           caList, true);
-      GrpcTlsConfig clientConfig = new GrpcTlsConfig(
+      GrpcTlsConfig clientConfig = RatisHelper.newGrpcTlsConfig(
           caClient.getPrivateKey(), caClient.getCertificate(),
           caList, false);
+      return RatisHelper.setServerTlsConf(serverConfig, clientConfig);
+    }
+    if (conf.isTlsConfCacheEnabled()) {
+      final GrpcTlsConfig serverConfig
+          = RatisHelper.getGrpcTlsConfigFromCache(datanodeDetails + "-server");
+      final GrpcTlsConfig clientConfig
+          = RatisHelper.getGrpcTlsConfigFromCache(datanodeDetails + "-client");
       return RatisHelper.setServerTlsConf(serverConfig, clientConfig);
     }
 

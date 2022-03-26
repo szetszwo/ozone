@@ -814,7 +814,7 @@ public final class OzoneManagerRatisServer {
     if (conf.isSecurityEnabled() && conf.isGrpcTlsEnabled()) {
       List<X509Certificate> caList = HAUtils.buildCAX509List(caClient,
           conf.getConfiguration());
-      GrpcTlsConfig config = new GrpcTlsConfig(
+      GrpcTlsConfig config = RatisHelper.newGrpcTlsConfig(
           caClient.getPrivateKey(), caClient.getCertificate(),
           caList, true);
       return RatisHelper.setServerTlsConf(config);

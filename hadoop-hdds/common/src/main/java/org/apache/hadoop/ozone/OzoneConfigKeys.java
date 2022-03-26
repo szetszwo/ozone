@@ -340,6 +340,11 @@ public final class OzoneConfigKeys {
       "ozone.security.enabled";
   public static final boolean OZONE_SECURITY_ENABLED_DEFAULT = false;
 
+  public static final String OZONE_SECURITY_TLS_CONF_CACHE_ENABLED_KEY =
+      "ozone.security.tls-conf.cache.enabled";
+  public static final boolean OZONE_SECURITY_TLS_CONF_CACHE_ENABLED_DEFAULT
+      = false;
+
   public static final String OZONE_HTTP_SECURITY_ENABLED_KEY =
       "ozone.security.http.kerberos.enabled";
   public static final boolean OZONE_HTTP_SECURITY_ENABLED_DEFAULT = false;

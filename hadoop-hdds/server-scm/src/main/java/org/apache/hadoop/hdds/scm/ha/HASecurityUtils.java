@@ -307,7 +307,7 @@ public final class HASecurityUtils {
   public static GrpcTlsConfig createSCMRatisTLSConfig(SecurityConfig conf,
       CertificateClient certificateClient) {
     if (conf.isSecurityEnabled() && conf.isGrpcTlsEnabled()) {
-      return new GrpcTlsConfig(
+      return RatisHelper.newGrpcTlsConfig(
           certificateClient.getPrivateKey(), certificateClient.getCertificate(),
           certificateClient.getCACertificate(), true);
     }

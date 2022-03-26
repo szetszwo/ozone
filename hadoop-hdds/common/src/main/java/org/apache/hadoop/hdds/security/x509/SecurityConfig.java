@@ -69,6 +69,9 @@ import static org.apache.hadoop.hdds.HddsConfigKeys.OZONE_METADATA_DIRS;
 import static org.apache.hadoop.hdds.scm.ScmConfigKeys.HDDS_DATANODE_DIR_KEY;
 import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_SECURITY_ENABLED_DEFAULT;
 import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_SECURITY_ENABLED_KEY;
+import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_SECURITY_TLS_CONF_CACHE_ENABLED_DEFAULT;
+import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_SECURITY_TLS_CONF_CACHE_ENABLED_KEY;
+
 import org.apache.ratis.thirdparty.io.netty.handler.ssl.SslProvider;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
@@ -101,6 +104,7 @@ public class SecurityConfig {
   private final boolean grpcTlsEnabled;
   private final Duration defaultCertDuration;
   private final boolean isSecurityEnabled;
+  private final boolean isTlsConfCacheEnabled;
   private final String crlName;
   private boolean grpcTlsUseTestCert;
 
@@ -159,6 +163,9 @@ public class SecurityConfig {
     this.isSecurityEnabled = this.configuration.getBoolean(
         OZONE_SECURITY_ENABLED_KEY,
         OZONE_SECURITY_ENABLED_DEFAULT);
+    this.isTlsConfCacheEnabled = this.configuration.getBoolean(
+        OZONE_SECURITY_TLS_CONF_CACHE_ENABLED_KEY,
+        OZONE_SECURITY_TLS_CONF_CACHE_ENABLED_DEFAULT);
 
     String certDurationString =
         this.configuration.get(HDDS_X509_DEFAULT_DURATION,
@@ -205,6 +212,10 @@ public class SecurityConfig {
    */
   public boolean isSecurityEnabled() {
     return isSecurityEnabled;
+  }
+
+  public boolean isTlsConfCacheEnabled() {
+    return isTlsConfCacheEnabled;
   }
 
   /**

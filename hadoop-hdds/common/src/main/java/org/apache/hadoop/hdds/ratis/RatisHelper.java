@@ -19,6 +19,7 @@
 package org.apache.hadoop.hdds.ratis;
 
 import java.io.IOException;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -179,7 +181,8 @@ public final class RatisHelper {
         toRaftPeerId(pipeline.getLeaderNode()),
         toRaftPeer(pipeline.getFirstNode()),
         newRaftGroup(RaftGroupId.valueOf(pipeline.getId().getId()),
-            pipeline.getNodes()), retryPolicy, tlsConfig, ozoneConfiguration);
+            pipeline.getNodes()), retryPolicy, tlsConfig, ozoneConfiguration,
+        pipeline);
   }
 
   private static RpcType getRpcType(ConfigurationSource conf) {
@@ -199,7 +202,7 @@ public final class RatisHelper {
       ConfigurationSource configuration) {
     return newRaftClient(rpcType, leader.getId(), leader,
         newRaftGroup(Collections.singletonList(leader)), retryPolicy,
-        tlsConfig, configuration);
+        tlsConfig, configuration, null);
   }
 
   public static RaftClient newRaftClient(RpcType rpcType, RaftPeer leader,
@@ -207,13 +210,14 @@ public final class RatisHelper {
       ConfigurationSource ozoneConfiguration) {
     return newRaftClient(rpcType, leader.getId(), leader,
         newRaftGroup(Collections.singletonList(leader)), retryPolicy, null,
-        ozoneConfiguration);
+        ozoneConfiguration, null);
   }
 
   @SuppressWarnings("checkstyle:ParameterNumber")
   private static RaftClient newRaftClient(RpcType rpcType, RaftPeerId leader,
       RaftPeer primary, RaftGroup group, RetryPolicy retryPolicy,
-      GrpcTlsConfig tlsConfig, ConfigurationSource ozoneConfiguration) {
+      GrpcTlsConfig tlsConfig, ConfigurationSource ozoneConfiguration, Pipeline pipeline) {
+    LOG.info("XXX tlsConfig=" + tlsConfig, new Throwable("TRACE"));
     if (LOG.isTraceEnabled()) {
       LOG.trace("newRaftClient: {}, leader={}, group={}",
           rpcType, leader, group);
@@ -366,10 +370,43 @@ public final class RatisHelper {
       List<X509Certificate> caCerts) {
     GrpcTlsConfig tlsConfig = null;
     if (conf.isSecurityEnabled() && conf.isGrpcTlsEnabled()) {
-      tlsConfig = new GrpcTlsConfig(null, null,
+      tlsConfig = newGrpcTlsConfig(null, null,
           caCerts, false);
     }
     return tlsConfig;
+  }
+
+  private static final Map<String, GrpcTlsConfig> GRPC_TLS_CONFIG_MAP = new ConcurrentHashMap<>();
+
+  public static GrpcTlsConfig putGrpcTlsConfigToCache(String id, GrpcTlsConfig grpcTlsConfig) {
+    LOG.info("putGrpcTlsConfig, {} -> {}", id, grpcTlsConfig);
+    return GRPC_TLS_CONFIG_MAP.put(id, grpcTlsConfig);
+  }
+
+  public static GrpcTlsConfig getGrpcTlsConfigFromCache(String id) {
+    LOG.info("getGrpcTlsConfigFromCache, id = {}", id);
+    if (id != null) {
+      final GrpcTlsConfig cached = GRPC_TLS_CONFIG_MAP.get(id);
+      if (cached != null) {
+        LOG.info("XXX id: ", new Throwable("CACHED " + cached));
+        return cached;
+      }
+    }
+    return null;
+  }
+
+  public static GrpcTlsConfig newGrpcTlsConfig(
+      PrivateKey privateKey, X509Certificate certChain,
+      List<X509Certificate> trustStore, boolean mTls) {
+    LOG.info("XXX", new Throwable("NEW 1"));
+    return new GrpcTlsConfig(privateKey, certChain, trustStore, mTls);
+  }
+
+  public static GrpcTlsConfig newGrpcTlsConfig(
+      PrivateKey privateKey, X509Certificate certChain,
+      X509Certificate trustStore, boolean mTls) {
+    LOG.info("XXX", new Throwable("NEW 2"));
+    return new GrpcTlsConfig(privateKey, certChain, trustStore, mTls);
   }
 
   public static RetryPolicy createRetryPolicy(ConfigurationSource conf) {
