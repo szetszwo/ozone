@@ -129,14 +129,12 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
   private final Checksum checksum;
 
   //number of buffers used before doing a flush/putBlock.
-  private int flushPeriod;
   private final Token<? extends TokenIdentifier> token;
   private final DataStreamOutput out;
   private CompletableFuture<DataStreamReply> dataStreamCloseReply;
   private List<CompletableFuture<DataStreamReply>> futures = new ArrayList<>();
   private final long syncSize = 0; // TODO: disk sync is disabled for now
   private long syncPosition = 0;
-  private StreamBuffer currentBuffer;
   private XceiverClientMetrics metrics;
   // buffers for which putBlock is yet to be executed
   private List<StreamBuffer> buffersForPutBlock;
@@ -171,13 +169,6 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
     this.out = setupStream(pipeline);
     this.token = token;
     this.bufferList = bufferList;
-    flushPeriod = (int) (config.getStreamBufferFlushSize() / config
-        .getStreamBufferSize());
-
-    Preconditions
-        .checkArgument(
-            (long) flushPeriod * config.getStreamBufferSize() == config
-                .getStreamBufferFlushSize());
 
     // A single thread executor handle the responses of async requests
     responseExecutor = Executors.newSingleThreadExecutor();
@@ -245,26 +236,11 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
     if (b == null) {
       throw new NullPointerException();
     }
-    if (len == 0) {
-      return;
-    }
-    while (len > 0) {
-      allocateNewBufferIfNeeded();
-      int writeLen = Math.min(len, currentBuffer.length());
-      final StreamBuffer buf = new StreamBuffer(b, off, writeLen);
-      currentBuffer.put(buf);
-      writeChunkIfNeeded();
-      off += writeLen;
-      writtenDataLength += writeLen;
-      len -= writeLen;
+    if (len > 0) {
+      final StreamBuffer buf = new StreamBuffer(b, off, len);
+      writeChunk(buf);
+      writtenDataLength += len;
       doFlushIfNeeded();
-    }
-  }
-
-  private void writeChunkIfNeeded() throws IOException {
-    if (currentBuffer.length() == 0) {
-      writeChunk(currentBuffer);
-      currentBuffer = null;
     }
   }
 
@@ -278,13 +254,6 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
     dup.position(0);
     dup.limit(sb.position());
     writeChunkToContainer(dup);
-  }
-
-  private void allocateNewBufferIfNeeded() {
-    if (currentBuffer == null) {
-      currentBuffer =
-          StreamBuffer.allocate(config.getDataStreamMinPacketSize());
-    }
   }
 
   private void doFlushIfNeeded() throws IOException {
@@ -531,10 +500,6 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
       // here, we just limit this buffer to the current position. So that next
       // write will happen in new buffer
 
-      if (currentBuffer != null) {
-        writeChunk(currentBuffer);
-        currentBuffer = null;
-      }
       updateFlushLength();
       executePutBlock(close, false);
     } else if (close) {

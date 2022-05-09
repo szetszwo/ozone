@@ -25,6 +25,8 @@ import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerExcep
 import org.apache.hadoop.io.retry.RetryPolicy;
 import org.apache.ratis.protocol.exceptions.AlreadyClosedException;
 import org.apache.ratis.protocol.exceptions.RaftRetryFailureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -35,6 +37,9 @@ import java.util.Map;
  */
 public abstract class AbstractDataStreamOutput
     implements ByteBufferStreamOutput {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AbstractDataStreamOutput.class);
+
 
   private final Map<Class<? extends Throwable>, RetryPolicy> retryPolicyMap;
   private int retryCount;
@@ -116,6 +121,7 @@ public abstract class AbstractDataStreamOutput
         action.action == RetryPolicy.RetryAction.RetryDecision.RETRY);
     if (action.delayMillis > 0) {
       try {
+        LOG.info("Sleep {}ms for retry {}", action.delayMillis, action);
         Thread.sleep(action.delayMillis);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
