@@ -338,15 +338,8 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
     checkOpen();
     long flushPos = totalDataFlushedLength;
     final List<StreamBuffer> byteBufferList;
-    if (!force) {
-      Preconditions.checkNotNull(bufferList);
       byteBufferList = buffersForPutBlock;
       buffersForPutBlock = null;
-      Preconditions.checkNotNull(byteBufferList);
-    } else {
-      byteBufferList = null;
-    }
-    waitFuturesComplete();
     final BlockData blockData = containerBlockData.build();
     if (close) {
       final ContainerCommandRequestProto putBlockRequest
@@ -377,7 +370,7 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
               throw new CompletionException(sce);
             }
             // if the ioException is not set, putBlock is successful
-            if (getIoException() == null && !force) {
+            if (getIoException() == null) {
               BlockID responseBlockID = BlockID.getFromProtobuf(
                   e.getPutBlock().getCommittedBlockLength().getBlockID());
               Preconditions.checkState(blockID.get().getContainerBlockID()
@@ -554,6 +547,7 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
       // TODO: or position >= fileLength
       if (position - syncPosition >= syncSize) {
         syncPosition = position;
+        LOG.info("sync at position {}", position);
         return true;
       }
     }
