@@ -232,10 +232,14 @@ public final class XceiverServerRatis implements XceiverServerSpi {
           OzoneConfigKeys.DFS_CONTAINER_RATIS_DATASTREAM_PORT_DEFAULT);
     }
     NettyConfigKeys.DataStream.setPort(properties, dataStreamPort);
+    NettyConfigKeys.DataStream.Client.setWorkerGroupSize(properties, 100);
+    NettyConfigKeys.DataStream.Client.setWorkerGroupShare(properties, true);
     int dataStreamAsyncRequestThreadPoolSize =
         conf.getObject(DatanodeRatisServerConfig.class)
             .getStreamRequestThreads();
     RaftServerConfigKeys.DataStream.setAsyncRequestThreadPoolSize(properties,
+        dataStreamAsyncRequestThreadPoolSize);
+    RaftServerConfigKeys.DataStream.setAsyncWriteThreadPoolSize(properties,
         dataStreamAsyncRequestThreadPoolSize);
     int dataStreamClientPoolSize =
         conf.getObject(DatanodeRatisServerConfig.class)

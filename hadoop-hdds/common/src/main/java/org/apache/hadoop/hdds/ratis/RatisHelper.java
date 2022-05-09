@@ -222,6 +222,8 @@ public final class RatisHelper {
           rpcType, leader, group);
     }
     final RaftProperties properties = newRaftProperties(rpcType);
+    NettyConfigKeys.DataStream.Client.setWorkerGroupSize(properties, 100);
+    NettyConfigKeys.DataStream.Client.setWorkerGroupShare(properties, true);
 
     // Set the ratis client headers which are matching with regex.
     createRaftClientProperties(ozoneConfiguration, properties);
