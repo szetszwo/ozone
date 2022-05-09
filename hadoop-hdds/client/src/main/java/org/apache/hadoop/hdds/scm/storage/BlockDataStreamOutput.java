@@ -240,7 +240,6 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
       final StreamBuffer buf = new StreamBuffer(b, off, len);
       writeChunk(buf);
       writtenDataLength += len;
-      doFlushIfNeeded();
     }
   }
 
@@ -254,37 +253,6 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
     dup.position(0);
     dup.limit(sb.position());
     writeChunkToContainer(dup);
-  }
-
-  private void doFlushIfNeeded() throws IOException {
-    long boundary = config.getDataStreamBufferFlushSize() / config
-        .getDataStreamMinPacketSize();
-    // streamWindow is the maximum number of buffers that
-    // are allowed to exist in the bufferList. If buffers in
-    // the list exceed this limit , client will till it gets
-    // one putBlockResponse (first index) . This is similar to
-    // the bufferFull condition in async write path.
-    long streamWindow = config.getStreamWindowSize() / config
-        .getDataStreamMinPacketSize();
-    if (!bufferList.isEmpty() && bufferList.size() % boundary == 0 &&
-        buffersForPutBlock != null && !buffersForPutBlock.isEmpty()) {
-      updateFlushLength();
-      executePutBlock(false, false);
-    }
-    if (bufferList.size() == streamWindow) {
-      try {
-        checkOpen();
-        if (!putBlockFutures.isEmpty()) {
-          putBlockFutures.remove().get();
-        }
-      } catch (ExecutionException e) {
-        handleExecutionException(e);
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-        handleInterruptedException(ex, true);
-      }
-      watchForCommit(true);
-    }
   }
 
   private void updateFlushLength() {
@@ -488,25 +456,12 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
     }
   }
 
-  /**
-   * @param close whether the flush is happening as part of closing the stream
-   */
-  private void handleFlush(boolean close)
+  private void handleCloseFlush()
       throws IOException, InterruptedException, ExecutionException {
     checkOpen();
-    // flush the last chunk data residing on the currentBuffer
-    if (totalDataFlushedLength < writtenDataLength) {
-      // This can be a partially filled chunk. Since we are flushing the buffer
-      // here, we just limit this buffer to the current position. So that next
-      // write will happen in new buffer
-
-      updateFlushLength();
-      executePutBlock(close, false);
-    } else if (close) {
       // forcing an "empty" putBlock if stream is being closed without new
       // data since latest flush - we need to send the "EOF" flag
       executePutBlock(true, true);
-    }
     CompletableFuture.allOf(putBlockFutures.toArray(EMPTY_FUTURE_ARRAY)).get();
     watchForCommit(false);
     // just check again if the exception is hit while waiting for the
@@ -521,7 +476,7 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
   public void close() throws IOException {
     if (xceiverClientFactory != null && xceiverClient != null) {
       try {
-        handleFlush(true);
+        handleCloseFlush();
         dataStreamCloseReply.get();
       } catch (ExecutionException e) {
         handleExecutionException(e);
