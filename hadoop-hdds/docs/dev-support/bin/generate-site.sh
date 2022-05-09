@@ -35,7 +35,7 @@ fi
 # for pre-processing the markdown files.
 TMPDIR="$DOCDIR/target/tmp"
 mkdir -p "$TMPDIR"
-rsync -a --exclude="target" --exclude="public" "$DOCDIR/" "$TMPDIR"
+# rsync -a --exclude="target" --exclude="public" "$DOCDIR/" "$TMPDIR"
 
 # Replace all markdown images with a hugo shortcode to make them responsive.
 python3 $DIR/make_images_responsive.py $TMPDIR
@@ -44,5 +44,5 @@ DESTDIR="$DOCDIR/target/classes/docs"
 mkdir -p "$DESTDIR"
 # We want to build the processed files inside the $DOCDIR/target/tmp
 cd "$TMPDIR"
-hugo "${ENABLE_GIT_INFO}" -d "$DESTDIR" "$@"
+# hugo "${ENABLE_GIT_INFO}" -d "$DESTDIR" "$@"
 cd -
