@@ -379,7 +379,6 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
     } else {
       byteBufferList = null;
     }
-    waitFuturesComplete();
     final BlockData blockData = containerBlockData.build();
     if (close) {
       final ContainerCommandRequestProto putBlockRequest
