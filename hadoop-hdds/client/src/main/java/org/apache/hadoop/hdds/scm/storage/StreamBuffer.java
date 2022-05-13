@@ -48,8 +48,8 @@ public class StreamBuffer {
   }
 
 
-  public void put(StreamBuffer sb) {
-    buffer.put(sb.buffer);
+  public void put(ByteBuffer b) {
+    buffer.put(b);
   }
 
   public static StreamBuffer allocate(int size) {
