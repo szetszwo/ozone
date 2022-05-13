@@ -27,6 +27,7 @@ package org.apache.hadoop.hdds.scm.storage;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hdds.scm.XceiverClientReply;
 import org.apache.hadoop.hdds.scm.XceiverClientSpi;
+import org.apache.ratis.util.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,15 +131,19 @@ public class StreamCommitWatcher {
    */
   public XceiverClientReply streamWatchForCommit(long commitIndex)
       throws IOException {
+    LOG.info("streamWatchForCommit {}", commitIndex);
+    final Timestamp start = Timestamp.currentTime();
     final long index;
     try {
       XceiverClientReply reply =
           xceiverClient.watchForCommit(commitIndex);
+
       if (reply == null) {
         index = 0;
       } else {
         index = reply.getLogIndex();
       }
+      LOG.info("streamWatchForCommit {} returned {} in {}ms", commitIndex, index, start.elapsedTimeMs());
       adjustBuffers(index);
       return reply;
     } catch (InterruptedException e) {

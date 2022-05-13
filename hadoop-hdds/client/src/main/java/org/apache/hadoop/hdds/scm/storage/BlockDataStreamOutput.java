@@ -46,6 +46,7 @@ import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.ratis.client.api.DataStreamOutput;
 import org.apache.ratis.io.StandardWriteOption;
 import org.apache.ratis.protocol.DataStreamReply;
+import org.apache.ratis.util.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -479,8 +480,11 @@ public class BlockDataStreamOutput implements ByteBufferStreamOutput {
   }
 
   public void waitFuturesComplete() throws IOException {
+    LOG.info("waitFuturesComplete started.");
+    final Timestamp start = Timestamp.currentTime();
     try {
       CompletableFuture.allOf(futures.toArray(EMPTY_FUTURE_ARRAY)).get();
+      LOG.info("waitFuturesComplete completed in {}ms", start.elapsedTimeMs());
       futures.clear();
     } catch (Exception e) {
       LOG.warn("Failed to write all chunks through stream: " + e);
