@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +56,7 @@ public class StreamCommitWatcher {
   // total data which has been successfully flushed and acknowledged
   // by all servers
   private long totalAckDataLength;
+  private final AtomicLong watchedIndex = new AtomicLong();
 
   private XceiverClientSpi xceiverClient;
 
@@ -131,6 +133,9 @@ public class StreamCommitWatcher {
    */
   public XceiverClientReply streamWatchForCommit(long commitIndex)
       throws IOException {
+    if (commitIndex <= watchedIndex.get()) {
+      return null;
+    }
     LOG.info("streamWatchForCommit {}", commitIndex);
     final Timestamp start = Timestamp.currentTime();
     final long index;
@@ -143,6 +148,7 @@ public class StreamCommitWatcher {
       } else {
         index = reply.getLogIndex();
       }
+      watchedIndex.updateAndGet(previous -> Math.max(index, previous));
       LOG.info("streamWatchForCommit {} returned {} in {}ms", commitIndex, index, start.elapsedTimeMs());
       adjustBuffers(index);
       return reply;

@@ -257,18 +257,18 @@ public final class XceiverClientRatis extends XceiverClientSpi {
       clientReply.setLogIndex(commitIndex);
       return clientReply;
     }
-    RaftClientReply reply;
     try {
       CompletableFuture<RaftClientReply> replyFuture = getClient().async()
           .watch(index, RaftProtos.ReplicationLevel.ALL_COMMITTED);
-      replyFuture.get();
+      final long watched = replyFuture.get().getLogIndex();
+      clientReply.setLogIndex(watched);
     } catch (Exception e) {
       Throwable t = HddsClientUtils.checkForException(e);
       LOG.warn("3 way commit failed on pipeline {}", pipeline, e);
       if (t instanceof GroupMismatchException) {
         throw e;
       }
-      reply = getClient().async()
+      final RaftClientReply reply = getClient().async()
           .watch(index, RaftProtos.ReplicationLevel.MAJORITY_COMMITTED)
           .get();
       List<RaftProtos.CommitInfoProto> commitInfoProtoList =
@@ -287,8 +287,8 @@ public final class XceiverClientRatis extends XceiverClientSpi {
             "Server {} has failed. Committed by majority.",
             index, pipeline, address);
       });
+      clientReply.setLogIndex(index);
     }
-    clientReply.setLogIndex(index);
     return clientReply;
   }
 
