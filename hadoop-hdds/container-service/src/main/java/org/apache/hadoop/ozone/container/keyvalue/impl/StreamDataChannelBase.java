@@ -36,8 +36,8 @@ import java.nio.channels.FileChannel;
  */
 abstract class StreamDataChannelBase implements StateMachine.DataChannel {
   private final RandomAccessFile randomAccessFile;
-
   private final File file;
+  private final FileChannel channel;
 
   private final ContainerData containerData;
   private final ContainerMetrics metrics;
@@ -48,6 +48,7 @@ abstract class StreamDataChannelBase implements StateMachine.DataChannel {
     try {
       this.file = file;
       this.randomAccessFile = new RandomAccessFile(file, "rw");
+      this.channel = randomAccessFile.getChannel();
     } catch (FileNotFoundException e) {
       throw new StorageContainerException("BlockFile not exists with " +
           "container Id " + containerData.getContainerID() +
@@ -60,18 +61,14 @@ abstract class StreamDataChannelBase implements StateMachine.DataChannel {
 
   abstract ContainerProtos.Type getType();
 
-  private FileChannel getChannel() {
-    return randomAccessFile.getChannel();
-  }
-
   @Override
   public final void force(boolean metadata) throws IOException {
-    getChannel().force(metadata);
+    channel.force(metadata);
   }
 
   @Override
   public final boolean isOpen() {
-    return getChannel().isOpen();
+    return channel.isOpen();
   }
 
   @Override
@@ -80,7 +77,7 @@ abstract class StreamDataChannelBase implements StateMachine.DataChannel {
   }
 
   final int writeFileChannel(ByteBuffer src) throws IOException {
-    final int writeBytes = getChannel().write(src);
+    final int writeBytes = channel.write(src);
     metrics.incContainerBytesStats(getType(), writeBytes);
     containerData.updateWriteStats(writeBytes, false);
     return writeBytes;
