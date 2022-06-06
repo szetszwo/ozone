@@ -27,6 +27,8 @@ package org.apache.hadoop.hdds.scm.storage;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hdds.scm.XceiverClientReply;
 import org.apache.hadoop.hdds.scm.XceiverClientSpi;
+import org.apache.ratis.util.JavaUtils;
+import org.apache.ratis.util.MemoizedSupplier;
 import org.apache.ratis.util.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,9 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -57,6 +62,7 @@ public class StreamCommitWatcher {
   // by all servers
   private long totalAckDataLength;
   private final AtomicLong watchedIndex = new AtomicLong();
+  private final ConcurrentMap<Long, CompletableFuture<XceiverClientReply>> replies = new ConcurrentHashMap<>();
 
   private XceiverClientSpi xceiverClient;
 
@@ -136,12 +142,20 @@ public class StreamCommitWatcher {
     if (commitIndex <= watchedIndex.get()) {
       return null;
     }
+    final MemoizedSupplier<CompletableFuture<XceiverClientReply>> supplier
+        = JavaUtils.memoize(CompletableFuture::new);
+    final CompletableFuture<XceiverClientReply> f = replies.compute(commitIndex,
+        (key, value) -> value != null ? value : supplier.get());
+    if (!supplier.isInitialized()) {
+      return f.join();
+    }
     LOG.info("streamWatchForCommit {}", commitIndex);
     final Timestamp start = Timestamp.currentTime();
     final long index;
     try {
       XceiverClientReply reply =
           xceiverClient.watchForCommit(commitIndex);
+      f.complete(reply);
 
       if (reply == null) {
         index = 0;
