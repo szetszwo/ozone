@@ -106,7 +106,8 @@ public final class XceiverClientRatis extends XceiverClientSpi {
   private final ConcurrentHashMap<UUID, Long> commitInfoMap;
   private final AtomicLong watchedIndex = new AtomicLong();
 
-  private XceiverClientMetrics metrics;
+  private final XceiverClientMetrics metrics
+      = XceiverClientManager.getXceiverClientMetrics();
 
   /**
    * Constructs a client.
@@ -120,8 +121,10 @@ public final class XceiverClientRatis extends XceiverClientSpi {
     this.retryPolicy = retryPolicy;
     commitInfoMap = new ConcurrentHashMap<>();
     this.tlsConfig = tlsConfig;
-    metrics = XceiverClientManager.getXceiverClientMetrics();
     this.ozoneConfiguration = configuration;
+
+    LOG.trace("new XceiverClientRatis for pipeline " + pipeline.getId(),
+        new Throwable("TRACE"));
   }
 
   public void updateCommitInfosMap(
@@ -251,25 +254,29 @@ public final class XceiverClientRatis extends XceiverClientSpi {
   public XceiverClientReply watchForCommit(long index)
       throws InterruptedException, ExecutionException, TimeoutException,
       IOException {
-    long commitIndex = getReplicatedMinCommitIndex();
-    XceiverClientReply clientReply = new XceiverClientReply(null);
-    if (commitIndex >= index) {
-      // return the min commit index till which the log has been replicated to
-      // all servers
-      clientReply.setLogIndex(commitIndex);
+    final XceiverClientReply clientReply = new XceiverClientReply(null);
+    final long replicatedMin = getReplicatedMinCommitIndex();
+    if (replicatedMin >= index) {
+      clientReply.setLogIndex(replicatedMin);
+      LOG.info("watchForCommit({}) returns replicatedMin {}", index, replicatedMin);
       return clientReply;
     }
 
     final long watchedPreviously = watchedIndex.get();
     if (watchedPreviously >= index) {
       clientReply.setLogIndex(watchedPreviously);
+      LOG.info("watchForCommit({}) returns watchedPreviously {}", index, watchedPreviously);
       return clientReply;
     }
 
+    LOG.info("watchForCommit({}) submit a new async watch request", index);
     try {
       CompletableFuture<RaftClientReply> replyFuture = getClient().async()
           .watch(index, RaftProtos.ReplicationLevel.ALL_COMMITTED);
-      replyFuture.get();
+      final RaftClientReply reply = replyFuture.get();
+      if (reply.isSuccess()) {
+        updateCommitInfosMap(reply.getCommitInfos());
+      }
       // TODO: Once we have RATIS-1590,
       //       use RaftClientReply.getLogIndex() instead of index.
       watchedIndex.updateAndGet(previous -> Math.max(index, previous));

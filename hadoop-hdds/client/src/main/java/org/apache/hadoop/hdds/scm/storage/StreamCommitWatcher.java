@@ -145,7 +145,6 @@ public class StreamCommitWatcher {
       // future already exists
       return f.join();
     }
-    LOG.info("streamWatchForCommit {}", commitIndex);
 
     try {
       XceiverClientReply reply =
