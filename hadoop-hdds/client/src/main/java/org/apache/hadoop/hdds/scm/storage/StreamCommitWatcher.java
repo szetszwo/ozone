@@ -27,6 +27,8 @@ package org.apache.hadoop.hdds.scm.storage;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hdds.scm.XceiverClientReply;
 import org.apache.hadoop.hdds.scm.XceiverClientSpi;
+import org.apache.ratis.util.JavaUtils;
+import org.apache.ratis.util.MemoizedSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,9 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -54,6 +59,8 @@ public class StreamCommitWatcher {
   // total data which has been successfully flushed and acknowledged
   // by all servers
   private long totalAckDataLength;
+  private final ConcurrentMap<Long, CompletableFuture<XceiverClientReply>>
+      replies = new ConcurrentHashMap<>();
 
   private XceiverClientSpi xceiverClient;
 
@@ -130,16 +137,25 @@ public class StreamCommitWatcher {
    */
   public XceiverClientReply streamWatchForCommit(long commitIndex)
       throws IOException {
-    final long index;
+    final MemoizedSupplier<CompletableFuture<XceiverClientReply>> supplier
+        = JavaUtils.memoize(CompletableFuture::new);
+    final CompletableFuture<XceiverClientReply> f = replies.compute(commitIndex,
+        (key, value) -> value != null ? value : supplier.get());
+    if (!supplier.isInitialized()) {
+      // future already exists
+      return f.join();
+    }
+    LOG.info("streamWatchForCommit {}", commitIndex);
+
     try {
       XceiverClientReply reply =
           xceiverClient.watchForCommit(commitIndex);
-      if (reply == null) {
-        index = 0;
-      } else {
-        index = reply.getLogIndex();
-      }
-      adjustBuffers(index);
+      f.complete(reply);
+      final CompletableFuture<XceiverClientReply> removed
+          = replies.remove(commitIndex);
+      Preconditions.checkState(removed == f);
+
+      adjustBuffers(reply.getLogIndex());
       return reply;
     } catch (InterruptedException e) {
       // Re-interrupt the thread while catching InterruptedException

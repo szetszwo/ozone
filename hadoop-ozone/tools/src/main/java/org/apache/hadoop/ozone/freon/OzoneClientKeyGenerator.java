@@ -132,14 +132,13 @@ public class OzoneClientKeyGenerator extends BaseFreonGenerator
   }
 
   private void createStreamKey(long counter) throws Exception {
-    final ReplicationConfig replicationConfig = ReplicationConfig
-        .fromProtoTypeAndFactor(HddsProtos.ReplicationType.RATIS,
-            HddsProtos.ReplicationFactor.THREE);
+    final ReplicationConfig conf = ReplicationConfig.fromProtoTypeAndFactor(
+        HddsProtos.ReplicationType.RATIS, HddsProtos.ReplicationFactor.THREE);
     final String key = generateObjectName(counter);
 
     timer.time(() -> {
       try (OzoneDataStreamOutput stream = bucket
-          .createStreamKey(key, keySize, replicationConfig, metadata)) {
+          .createStreamKey(key, keySize, conf, metadata)) {
         contentGenerator.write(stream);
       }
       return null;

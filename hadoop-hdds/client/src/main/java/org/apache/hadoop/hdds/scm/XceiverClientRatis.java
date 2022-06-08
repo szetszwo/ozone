@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -103,6 +104,7 @@ public final class XceiverClientRatis extends XceiverClientSpi {
 
   // Map to track commit index at every server
   private final ConcurrentHashMap<UUID, Long> commitInfoMap;
+  private final AtomicLong watchedIndex = new AtomicLong();
 
   private XceiverClientMetrics metrics;
 
@@ -257,18 +259,27 @@ public final class XceiverClientRatis extends XceiverClientSpi {
       clientReply.setLogIndex(commitIndex);
       return clientReply;
     }
-    RaftClientReply reply;
+
+    final long watchedPreviously = watchedIndex.get();
+    if (watchedPreviously >= index) {
+      clientReply.setLogIndex(watchedPreviously);
+      return clientReply;
+    }
+
     try {
       CompletableFuture<RaftClientReply> replyFuture = getClient().async()
           .watch(index, RaftProtos.ReplicationLevel.ALL_COMMITTED);
       replyFuture.get();
+      // TODO: Once we have RATIS-1590,
+      //       use RaftClientReply.getLogIndex() instead of index.
+      watchedIndex.updateAndGet(previous -> Math.max(index, previous));
     } catch (Exception e) {
       Throwable t = HddsClientUtils.checkForException(e);
       LOG.warn("3 way commit failed on pipeline {}", pipeline, e);
       if (t instanceof GroupMismatchException) {
         throw e;
       }
-      reply = getClient().async()
+      final RaftClientReply reply = getClient().async()
           .watch(index, RaftProtos.ReplicationLevel.MAJORITY_COMMITTED)
           .get();
       List<RaftProtos.CommitInfoProto> commitInfoProtoList =
