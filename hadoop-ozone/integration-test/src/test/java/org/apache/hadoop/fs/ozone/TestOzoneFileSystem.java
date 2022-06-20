@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -45,8 +46,11 @@ import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.fs.TrashPolicy;
 import org.apache.hadoop.fs.contract.ContractTestUtils;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hdds.client.DefaultReplicationConfig;
 import org.apache.hadoop.hdds.client.ECReplicationConfig;
 import org.apache.hadoop.hdds.client.RatisReplicationConfig;
+import org.apache.hadoop.hdds.client.ReplicationConfig;
+import org.apache.hadoop.hdds.client.ReplicationFactor;
 import org.apache.hadoop.hdds.client.ReplicationType;
 import org.apache.hadoop.hdds.client.StandaloneReplicationConfig;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
@@ -54,8 +58,13 @@ import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.TestDataUtil;
+import org.apache.hadoop.ozone.client.BucketArgs;
+import org.apache.hadoop.ozone.client.ObjectStore;
 import org.apache.hadoop.ozone.client.OzoneBucket;
+import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.client.OzoneKeyDetails;
+import org.apache.hadoop.ozone.client.OzoneVolume;
+import org.apache.hadoop.ozone.client.io.OzoneOutputStream;
 import org.apache.hadoop.ozone.om.OMConfigKeys;
 import org.apache.hadoop.ozone.om.OzonePrefixPathImpl;
 import org.apache.hadoop.ozone.om.TrashPolicyOzone;
@@ -310,6 +319,63 @@ public class TestOzoneFileSystem {
       fail("Should throw FileNotFoundException");
     } catch (FileNotFoundException fnfe) {
       // ignore as its expected
+    }
+  }
+
+  static OzoneVolume initVolume(ObjectStore store, String volumeName) throws IOException {
+    store.createVolume(volumeName);
+    return store.getVolume(volumeName);
+  }
+
+  static OzoneBucket initBucket(OzoneVolume volume, String bucketName) throws IOException {
+    final DefaultReplicationConfig conf = new DefaultReplicationConfig(
+        ReplicationType.EC, new ECReplicationConfig(3, 2,
+            ECReplicationConfig.EcCodec.RS, 1 << 20));
+
+    final BucketArgs args = BucketArgs.newBuilder()
+        .setDefaultReplicationConfig(conf)
+        .build();
+    volume.createBucket(bucketName, args);
+    return volume.getBucket(bucketName);
+  }
+
+  static void getKey(OzoneBucket bucket, String key) throws IOException {
+    final OzoneKeyDetails details = bucket.getKey(key);
+    LOG.info("XXX {} size {} with {}", key, details.getDataSize(), details.getReplicationConfig());
+  }
+
+  @Test
+  public void testRatis() throws Exception {
+    final String volumeName = "testvol";
+    final String bucketName = "testbuck";
+
+    try(OzoneClient client = cluster.getClient()) {
+      final ObjectStore store = client.getObjectStore();
+      final OzoneVolume volume = initVolume(store, volumeName);
+      final OzoneBucket bucket = initBucket(volume, bucketName);
+      LOG.info("XXX ec bucket replication conf = {}", bucket.getReplicationConfig());
+
+      final int size = 100;
+      final String ecKey = "ecKey";
+      try(OzoneOutputStream out = bucket.createKey("ecKey", size)) {
+        for(int i = 0; i < 100; i++) {
+          out.write(i);
+        }
+      }
+
+
+      final ReplicationConfig ratisConf = ReplicationConfig.fromTypeAndFactor(
+          ReplicationType.RATIS, ReplicationFactor.THREE);
+      final String ratisKey = "ratisKey";
+      LOG.info("XXX write {} with {}", ratisKey, ratisConf);
+      try(OzoneOutputStream out = bucket.createKey(ratisKey, size, ratisConf, new HashMap<>())) {
+        for(int i = 0; i < 100; i++) {
+          out.write(i);
+        }
+      }
+
+      getKey(bucket, ecKey);
+      getKey(bucket, ratisKey);
     }
   }
 
