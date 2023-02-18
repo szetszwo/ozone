@@ -483,7 +483,7 @@ public final class OmKeyInfo2 extends WithParentObjectId {
   @Override
   public String toString() {
     final String root = rootObjectId != null? ", root:" + rootObjectId: "";
-    return getPath() + ":" + getObjectID() + " (key)" + root;
+    return volumeName + "/" + bucketName + "/" + getPath() + ":" + getObjectID() + " (key)" + root;
   }
 
   private Long rootObjectId = null;
