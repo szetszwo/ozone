@@ -17,10 +17,12 @@
  */
 package org.apache.hadoop.ozone.om.helpers;
 
+import org.apache.hadoop.hdds.server.JsonUtils;
 import org.apache.hadoop.ozone.OzoneAcl;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 
+import java.io.File;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -40,6 +42,9 @@ public class OmDirectoryInfo extends WithParentObjectId {
   private long modificationTime;
 
   private List<OzoneAcl> acls;
+
+  public OmDirectoryInfo() {
+  }
 
   public OmDirectoryInfo(Builder builder) {
     this.name = builder.name;
@@ -265,5 +270,15 @@ public class OmDirectoryInfo extends WithParentObjectId {
     }
 
     return builder.build();
+  }
+
+  public static void main(String[] args) throws Exception {
+    final File f = new File(args[0]);
+    final List<OmDirectoryInfo> a = JsonUtils.readFromFile(f, OmDirectoryInfo.class);
+    System.out.println(a.size());
+    for(int i = 0; i < 10; i++) {
+      final OmDirectoryInfo dir = a.get(i);
+      System.out.println(i + ": " + dir);
+    }
   }
 }

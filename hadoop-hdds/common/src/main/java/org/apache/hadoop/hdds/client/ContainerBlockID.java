@@ -28,6 +28,9 @@ public class ContainerBlockID {
   private long containerID;
   private long localID;
 
+  public ContainerBlockID() {
+
+  }
   public ContainerBlockID(long containerID, long localID) {
     this.containerID = containerID;
     this.localID = localID;

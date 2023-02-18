@@ -31,6 +31,9 @@ public class BlockID {
   private ContainerBlockID containerBlockID;
   private long blockCommitSequenceId;
 
+  public BlockID(){
+
+  }
   public BlockID(long containerID, long localID) {
     this(containerID, localID, 0);
   }
