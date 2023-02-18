@@ -21,6 +21,7 @@ import org.apache.hadoop.hdds.server.JsonUtils;
 import org.apache.hadoop.ozone.OzoneAcl;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
+import org.apache.ratis.util.Preconditions;
 
 import java.io.File;
 import java.util.BitSet;
@@ -29,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * This class represents the directory information by keeping each component
@@ -152,7 +154,8 @@ public class OmDirectoryInfo extends WithParentObjectId {
 
   @Override
   public String toString() {
-    return getPath() + ":" + getObjectID();
+    final String root = rootObjectId != null? ", root:" + rootObjectId: "";
+    return getPath() + ":" + getObjectID() + " (dir)" + root;
   }
 
   public long getParentObjectID() {
@@ -272,13 +275,52 @@ public class OmDirectoryInfo extends WithParentObjectId {
     return builder.build();
   }
 
+  private Long rootObjectId = null;
+
+  public Long getRootObjectId() {
+    return rootObjectId;
+  }
+
+  void findRoot(Map<Long, OmDirectoryInfo> map) {
+    if (rootObjectId != null) {
+      return;
+    }
+    rootObjectId = findRoot(getParentObjectID(), map);
+  }
+
+  static long findRoot(long id, Map<Long, OmDirectoryInfo> map) {
+    for(;;) {
+      final OmDirectoryInfo dir = map.get(id);
+      if (dir == null) {
+        return id;
+      }
+      final Long root = dir.getRootObjectId();
+      if (root != null) {
+        return root; //already found
+      }
+      id = dir.getParentObjectID();
+    }
+  }
+
   public static void main(String[] args) throws Exception {
-    final File f = new File(args[0]);
+    parse(args[0]);
+  }
+
+  public static Map<Long, OmDirectoryInfo> parse(String dirFile) throws Exception {
+    final File f = new File(dirFile);
+    System.out.println("parsing " + f.getAbsolutePath());
     final List<OmDirectoryInfo> a = JsonUtils.readFromFile(f, OmDirectoryInfo.class);
-    System.out.println(a.size());
+    System.out.println("list size: " + a.size());
     for(int i = 0; i < 10; i++) {
       final OmDirectoryInfo dir = a.get(i);
       System.out.println(i + ": " + dir);
     }
+
+    final Map<Long, OmDirectoryInfo> map = new TreeMap<>();
+    for(OmDirectoryInfo dir : a) {
+      final OmDirectoryInfo previous = map.put(dir.getObjectID(), dir);
+      Preconditions.assertNull(previous, () -> "previous=" + previous + ", dir=" + dir);
+    }
+    return map;
   }
 }

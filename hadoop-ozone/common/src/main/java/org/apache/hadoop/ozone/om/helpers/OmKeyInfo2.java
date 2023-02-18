@@ -19,38 +19,32 @@ package org.apache.hadoop.ozone.om.helpers;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.fs.FileChecksum;
 import org.apache.hadoop.fs.FileEncryptionInfo;
-import org.apache.hadoop.hdds.client.ContainerBlockID;
-import org.apache.hadoop.hdds.client.ECReplicationConfig;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.server.JsonUtils;
 import org.apache.hadoop.ozone.OzoneAcl;
 import org.apache.hadoop.ozone.OzoneConsts;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.FileChecksumProto;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.KeyInfo;
-import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.KeyLocationList;
-import org.apache.hadoop.ozone.protocolPB.OMPBHelper;
 import org.apache.hadoop.util.Time;
+import org.apache.ratis.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * Args for key block. The block instance for the key requested in putKey.
  * This is returned from OM to client, and client use class to talk to
  * datanode. Also, this is the metadata written to om.db on server side.
  */
-@JsonIgnoreProperties
+@JsonIgnoreProperties({ "encInfo", "replicationConfig" })
 public final class OmKeyInfo2 extends WithParentObjectId {
   private static final Logger LOG = LoggerFactory.getLogger(OmKeyInfo2.class);
   private String volumeName;
@@ -62,7 +56,7 @@ public final class OmKeyInfo2 extends WithParentObjectId {
   private long creationTime;
   private long modificationTime;
   private ReplicationConf replicationConfig;
-  private FileEncryptionInfo encInfo;
+  private FileEncryptionInfo2 encInfo;
   private FileChecksum fileChecksum;
   /**
    * Support OFS use-case to identify if the key is a file or a directory.
@@ -100,7 +94,6 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     this.creationTime = creationTime;
     this.modificationTime = modificationTime;
     this.metadata = metadata;
-    this.encInfo = encInfo;
     this.acls = acls;
     this.objectID = objectID;
     this.updateID = updateID;
@@ -203,9 +196,6 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     this.modificationTime = modificationTime;
   }
 
-  public FileEncryptionInfo getFileEncryptionInfo() {
-    return encInfo;
-  }
 
   public List<OzoneAcl> getAcls() {
     return acls;
@@ -442,7 +432,6 @@ public final class OmKeyInfo2 extends WithParentObjectId {
         .setCreationTime(creationTime)
         .setModificationTime(modificationTime)
         .setDataSize(dataSize)
-        .setFileEncryptionInfo(encInfo)
         .setObjectID(objectID)
         .setUpdateID(updateID)
         .setParentObjectID(parentObjectID)
@@ -479,7 +468,7 @@ public final class OmKeyInfo2 extends WithParentObjectId {
    * Set the file encryption info.
    * @param fileEncryptionInfo
    */
-  public void setFileEncryptionInfo(FileEncryptionInfo fileEncryptionInfo) {
+  public void setFileEncryptionInfo(FileEncryptionInfo2 fileEncryptionInfo) {
     this.encInfo = fileEncryptionInfo;
   }
 
@@ -490,18 +479,54 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     return getParentObjectID() + OzoneConsts.OM_KEY_PREFIX + getFileName();
   }
 
+
   @Override
   public String toString() {
-    return getPath() + ":" + getObjectID();
+    final String root = rootObjectId != null? ", root:" + rootObjectId: "";
+    return getPath() + ":" + getObjectID() + " (key)" + root;
   }
 
+  private Long rootObjectId = null;
+
+  void findRoot(Map<Long, OmDirectoryInfo> map) {
+    if (rootObjectId != null) {
+      return;
+    }
+    rootObjectId = OmDirectoryInfo.findRoot(getParentObjectID(), map);
+  }
+
+  /**
+   * Run this by
+   *   java OmKeyInfo2 directoryTable.json filetable.json
+   */
   public static void main(String[] args) throws Exception {
-    final File f = new File(args[0]);
+    final Map<Long, OmDirectoryInfo> dirMap = OmDirectoryInfo.parse(args[0]);
+    final Map<Long, OmKeyInfo2> fileMap = OmKeyInfo2.parse(args[1]);
+    for(OmDirectoryInfo dir : dirMap.values()) {
+      dir.findRoot(dirMap);
+    }
+    for(OmKeyInfo2 f : fileMap.values()) {
+      f.findRoot(dirMap);
+      System.out.println(f);
+    }
+  }
+
+
+  public static Map<Long, OmKeyInfo2> parse(String filename) throws Exception {
+    final File f = new File(filename);
+    System.out.println("parsing " + f.getAbsolutePath());
     final List<OmKeyInfo2> a = JsonUtils.readFromFile(f, OmKeyInfo2.class);
-    System.out.println(a.size());
+    System.out.println("list size: " + a.size());
     for(int i = 0; i < 10; i++) {
       final OmKeyInfo2 key = a.get(i);
       System.out.println(i + ": " + key);
     }
+
+    final Map<Long, OmKeyInfo2> map = new TreeMap<>();
+    for(OmKeyInfo2 dir : a) {
+      final OmKeyInfo2 previous = map.put(dir.getObjectID(), dir);
+      Preconditions.assertNull(previous, () -> "previous=" + previous + ", dir=" + dir);
+    }
+    return map;
   }
 }
