@@ -27,6 +27,7 @@ import org.apache.hadoop.ozone.OzoneAcl;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.util.Time;
 import org.apache.ratis.util.Preconditions;
+import org.apache.ratis.util.TraditionalBinaryPrefix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -483,16 +484,17 @@ public final class OmKeyInfo2 extends WithParentObjectId {
   @Override
   public String toString() {
     final String root = rootObjectId != null? ", root:" + rootObjectId: "";
-    return volumeName + "/" + bucketName + "/" + getPath() + ":" + getObjectID() + " (key)" + root;
+    return volumeName + "/" + bucketName + "/" + getPath() + ":" + getObjectID()
+        + " (size=" + getDataSize() + ")" + root;
   }
 
   private Long rootObjectId = null;
 
-  void findRoot(Map<Long, OmDirectoryInfo> map) {
-    if (rootObjectId != null) {
-      return;
+  long findRoot(Map<Long, OmDirectoryInfo> map) {
+    if (rootObjectId == null) {
+      rootObjectId = OmDirectoryInfo.findRoot(getParentObjectID(), map);
     }
-    rootObjectId = OmDirectoryInfo.findRoot(getParentObjectID(), map);
+    return rootObjectId;
   }
 
   /**
@@ -502,15 +504,62 @@ public final class OmKeyInfo2 extends WithParentObjectId {
   public static void main(String[] args) throws Exception {
     final Map<Long, OmDirectoryInfo> dirMap = OmDirectoryInfo.parse(args[0]);
     final Map<Long, OmKeyInfo2> fileMap = OmKeyInfo2.parse(args[1]);
+    final Map<Long, Root> roots = new TreeMap<>();
+
     for(OmDirectoryInfo dir : dirMap.values()) {
-      dir.findRoot(dirMap);
+      final long rid = dir.findRoot(dirMap);
+      roots.computeIfAbsent(rid, Root::new).add(dir);
     }
+
+    long size = 0L;
     for(OmKeyInfo2 f : fileMap.values()) {
-      f.findRoot(dirMap);
-      System.out.println(f);
+      final long rid = f.findRoot(dirMap);
+      roots.computeIfAbsent(rid, Root::new).add(f);
+      size += f.getDataSize();
+    }
+    System.out.println("size = " + size + " = " + TraditionalBinaryPrefix.long2String(size, "B", 3));
+    System.out.println("#roots = " + roots.size());
+    for(Root r : roots.values()) {
+      r.print();
     }
   }
 
+  static class Root {
+    private final long id;
+    private final List<OmKeyInfo2> files = new ArrayList<>();
+    private final List<OmDirectoryInfo> dirs = new ArrayList<>();
+
+    Root(long id) {
+      this.id = id;
+    }
+
+    void print() {
+      long size = 0L;
+      System.out.println(this);
+      for(OmDirectoryInfo d : dirs) {
+        System.out.println(d);
+      }
+      for(OmKeyInfo2 f : files) {
+        size += f.getDataSize();
+        System.out.println(f);
+      }
+      System.out.println(this + ", size = " + size + " = "
+          + TraditionalBinaryPrefix.long2String(size, "B", 3));
+    }
+
+    void add(OmKeyInfo2 file) {
+      files.add(file);
+    }
+
+    void add(OmDirectoryInfo dir) {
+      dirs.add(dir);
+    }
+
+    @Override
+    public String toString() {
+      return "Root " + id + ": #dirs=" + dirs.size() + ", #files=" + files.size();
+    }
+  }
 
   public static Map<Long, OmKeyInfo2> parse(String filename) throws Exception {
     final File f = new File(filename);

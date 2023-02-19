@@ -281,11 +281,11 @@ public class OmDirectoryInfo extends WithParentObjectId {
     return rootObjectId;
   }
 
-  void findRoot(Map<Long, OmDirectoryInfo> map) {
-    if (rootObjectId != null) {
-      return;
+  long findRoot(Map<Long, OmDirectoryInfo> map) {
+    if (rootObjectId == null) {
+      rootObjectId = findRoot(getParentObjectID(), map);
     }
-    rootObjectId = findRoot(getParentObjectID(), map);
+    return rootObjectId;
   }
 
   static long findRoot(long id, Map<Long, OmDirectoryInfo> map) {
