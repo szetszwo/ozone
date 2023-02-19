@@ -31,9 +31,12 @@ import org.apache.ratis.util.TraditionalBinaryPrefix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -494,16 +497,42 @@ public final class OmKeyInfo2 extends WithParentObjectId {
   @Override
   public String toString() {
     return volumeName + "/" + bucketName + "/" + getFullPath() + ":" + getObjectID()
-        + " (size=" + getDataSize() + ")";
+        + " (size=" + getDataSize() + ", found? " + foundLs + ")";
   }
 
   private List<OmDirectoryInfo> parents = null;
+  private String ofsPath = null;
+  private Boolean foundLs = null;
 
-  List<OmDirectoryInfo> findParents(Map<Long, OmDirectoryInfo> map) {
+  boolean isFoundLs() {
+    return foundLs;
+  }
+
+  static String computeOfsPath(String vol, String buck, List<OmDirectoryInfo> parents, String name) {
+    // ofs://ozdtentr/user/nbswhm01/.staging/job_1676074085469_43750/job.jar
+    final StringBuilder b = new StringBuilder()
+        .append("ofs://ozdtentr/")
+        .append(vol).append("/")
+        .append(buck).append("/");
+    for(int i = parents.size() - 1; i >= 0; i--) {
+      b.append(parents.get(i).getName()).append("/");
+    }
+    return b.append(name).toString();
+  }
+
+  List<OmDirectoryInfo> findParents(Map<Long, OmDirectoryInfo> map, List<String> ls) {
     if (parents == null) {
       parents = OmDirectoryInfo.findParents(getParentObjectID(), map);
+      ofsPath = computeOfsPath(getVolumeName(), getBucketName(), parents, getName());
+      System.out.println(ofsPath);
+      final int i = Collections.binarySearch(ls, getOfsPath());
+      foundLs = i >= 0;
     }
    return parents;
+  }
+
+  public String getOfsPath() {
+    return ofsPath;
   }
 
   public long getRootObjectID() {
@@ -513,9 +542,12 @@ public final class OmKeyInfo2 extends WithParentObjectId {
 
   /**
    * Run this by
-   *   java OmKeyInfo2 directoryTable.json filetable.json
+   *   java OmKeyInfo2 directoryTable.json filetable.json ozonefiles.txt
    */
   public static void main(String[] args) throws Exception {
+    final List<String> ls = parseLs(args[2]);
+    System.out.println("ls outputs #lines = " + ls.size());
+
     final Map<Long, OmDirectoryInfo> dirMap = OmDirectoryInfo.parse(args[0]);
     final Map<Long, OmKeyInfo2> fileMap = OmKeyInfo2.parse(args[1]);
     final Map<Long, Root> roots = new TreeMap<>();
@@ -526,12 +558,20 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     }
 
     long size = 0L;
+    int found = 0, notFound = 0;
     for(OmKeyInfo2 f : fileMap.values()) {
-      f.findParents(dirMap);
+      f.findParents(dirMap, ls);
       roots.computeIfAbsent(f.getRootObjectID(), Root::new).add(f);
       size += f.getDataSize();
+      if (f.isFoundLs()) {
+        found++;
+      } else {
+        notFound++;
+      }
     }
-    System.out.println("size = " + size + " = " + TraditionalBinaryPrefix.long2String(size, "B", 3));
+    System.out.println("data size = " + size + " = " + TraditionalBinaryPrefix.long2String(size, "B", 3));
+    System.out.println("#found-in-ls = " + found);
+    System.out.println("#not-found   = " + notFound);
     System.out.println("#roots = " + roots.size());
     for(Root r : roots.values()) {
       r.print();
@@ -549,16 +589,23 @@ public final class OmKeyInfo2 extends WithParentObjectId {
 
     void print() {
       long size = 0L;
+      int found = 0, notFound = 0;
       System.out.println(this);
       for(OmDirectoryInfo d : dirs) {
         System.out.println(d);
       }
       for(OmKeyInfo2 f : files) {
         size += f.getDataSize();
+        if (f.isFoundLs()) {
+          found++;
+        } else {
+          notFound++;
+        }
         System.out.println(f);
       }
       System.out.println(this + ", size = " + size + " = "
-          + TraditionalBinaryPrefix.long2String(size, "B", 3));
+          + TraditionalBinaryPrefix.long2String(size, "B", 3)
+          + ", found=" + found + ", notFound=" + notFound);
     }
 
     void add(OmKeyInfo2 file) {
@@ -591,5 +638,29 @@ public final class OmKeyInfo2 extends WithParentObjectId {
       Preconditions.assertNull(previous, () -> "previous=" + previous + ", dir=" + dir);
     }
     return map;
+  }
+
+  public static List<String> parseLs(String filename) throws Exception {
+    final File file = new File(filename);
+    System.out.println("parsing " + file.getAbsolutePath());
+    final List<String> ls = new ArrayList<>();
+    try(BufferedReader in = Files.newBufferedReader(file.toPath())) {
+      int n = 1;
+      for(String line; (line = in.readLine()) != null; n++) {
+        final int i = line.indexOf("ofs://");
+        if (i >= 0) {
+          ls.add(line.substring(i));
+        } else {
+          System.out.println("Ignoring line " + n + ": " + line);
+        }
+      }
+    }
+    Collections.sort(ls);
+
+    for(int i = 0; i < 10; i++) {
+      System.out.println(i + ": " + ls.get(i));
+    }
+
+    return ls;
   }
 }
