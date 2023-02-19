@@ -687,7 +687,7 @@ public class TestOMDirectoryCreateRequestWithFSO {
       Assert.assertNotNull("Invalid directory!", omDirInfo);
       Assert.assertEquals("Invalid directory!", dirName, omDirInfo.getName());
       Assert.assertEquals("Invalid dir path!",
-              parentID + "/" + dirName, omDirInfo.getPath());
+              parentID + "/" + dirName, omDirInfo.getFullPath());
       parentID = omDirInfo.getObjectID();
     }
   }

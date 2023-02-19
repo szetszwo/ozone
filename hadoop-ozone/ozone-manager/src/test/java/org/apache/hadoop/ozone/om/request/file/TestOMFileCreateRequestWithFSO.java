@@ -65,7 +65,7 @@ public class TestOMFileCreateRequestWithFSO extends TestOMFileCreateRequest {
     String dbFileD = omMetadataManager.getOzonePathKey(volumeId, bucketId,
             dirPathC.getObjectID(), fileNameD);
     omMetadataManager.getKeyTable(getBucketLayout()).delete(dbFileD);
-    omMetadataManager.getKeyTable(getBucketLayout()).delete(dirPathC.getPath());
+    omMetadataManager.getKeyTable(getBucketLayout()).delete(dirPathC.getFullPath());
 
     // can create non-recursive because parents already exist.
     testNonRecursivePath("a/b/e", false, false, false);

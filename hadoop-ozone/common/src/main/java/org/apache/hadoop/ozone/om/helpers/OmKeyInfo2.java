@@ -480,21 +480,35 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     return getParentObjectID() + OzoneConsts.OM_KEY_PREFIX + getFileName();
   }
 
+  public String getName() {
+    final String f = getFileName();
+    return StringUtils.isBlank(f)? getKeyName(): f;
+  }
+
+  String getFullPath() {
+    return parents == null? getPath()
+        : (parents.isEmpty()? new StringBuilder().append(getParentObjectID()).append("/")
+        : OmDirectoryInfo.toStringBuilder(parents)).append(getName()).toString();
+  }
 
   @Override
   public String toString() {
-    final String root = rootObjectId != null? ", root:" + rootObjectId: "";
-    return volumeName + "/" + bucketName + "/" + getPath() + ":" + getObjectID()
-        + " (size=" + getDataSize() + ")" + root;
+    return volumeName + "/" + bucketName + "/" + getFullPath() + ":" + getObjectID()
+        + " (size=" + getDataSize() + ")";
   }
 
-  private Long rootObjectId = null;
+  private List<OmDirectoryInfo> parents = null;
 
-  long findRoot(Map<Long, OmDirectoryInfo> map) {
-    if (rootObjectId == null) {
-      rootObjectId = OmDirectoryInfo.findRoot(getParentObjectID(), map);
+  List<OmDirectoryInfo> findParents(Map<Long, OmDirectoryInfo> map) {
+    if (parents == null) {
+      parents = OmDirectoryInfo.findParents(getParentObjectID(), map);
     }
-    return rootObjectId;
+   return parents;
+  }
+
+  public long getRootObjectID() {
+    return parents == null || parents.isEmpty()? getParentObjectID()
+        : parents.get(parents.size() - 1).getParentObjectID();
   }
 
   /**
@@ -507,14 +521,14 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     final Map<Long, Root> roots = new TreeMap<>();
 
     for(OmDirectoryInfo dir : dirMap.values()) {
-      final long rid = dir.findRoot(dirMap);
-      roots.computeIfAbsent(rid, Root::new).add(dir);
+      dir.findParents(dirMap);
+      roots.computeIfAbsent(dir.getRootObjectID(), Root::new).add(dir);
     }
 
     long size = 0L;
     for(OmKeyInfo2 f : fileMap.values()) {
-      final long rid = f.findRoot(dirMap);
-      roots.computeIfAbsent(rid, Root::new).add(f);
+      f.findParents(dirMap);
+      roots.computeIfAbsent(f.getRootObjectID(), Root::new).add(f);
       size += f.getDataSize();
     }
     System.out.println("size = " + size + " = " + TraditionalBinaryPrefix.long2String(size, "B", 3));

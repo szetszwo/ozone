@@ -24,6 +24,7 @@ import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos;
 import org.apache.ratis.util.Preconditions;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -154,16 +155,32 @@ public class OmDirectoryInfo extends WithParentObjectId {
 
   @Override
   public String toString() {
-    final String root = rootObjectId != null? ", root:" + rootObjectId: "";
-    return getPath() + ":" + getObjectID() + " (dir)" + root;
+    return getFullPath() + ":" + getObjectID() + " (dir)";
   }
 
   public long getParentObjectID() {
     return parentObjectID;
   }
 
-  public String getPath() {
-    return getParentObjectID() + OzoneConsts.OM_KEY_PREFIX + getName();
+  public long getRootObjectID() {
+    return parents == null || parents.isEmpty()? getParentObjectID()
+        : parents.get(parents.size() - 1).getParentObjectID();
+  }
+
+  String getFullPath() {
+    return parents == null? getParentObjectID() + OzoneConsts.OM_KEY_PREFIX + getName()
+        : (parents.isEmpty()? new StringBuilder().append(getParentObjectID()).append("/")
+        : toStringBuilder(parents)).append(getName()).toString();
+  }
+
+  static StringBuilder toStringBuilder(List<OmDirectoryInfo> parents) {
+    int i = parents.size() - 1;
+    final StringBuilder b = new StringBuilder()
+        .append(parents.get(i).getParentObjectID()).append("/");
+    for(; i >= 0; i--) {
+      b.append(parents.get(i).getName()).append("/");
+    }
+    return b;
   }
 
   public String getName() {
@@ -275,28 +292,31 @@ public class OmDirectoryInfo extends WithParentObjectId {
     return builder.build();
   }
 
-  private Long rootObjectId = null;
+  private List<OmDirectoryInfo> parents = null;
 
-  public Long getRootObjectId() {
-    return rootObjectId;
+  List<OmDirectoryInfo> getParents() {
+    return parents;
   }
 
-  long findRoot(Map<Long, OmDirectoryInfo> map) {
-    if (rootObjectId == null) {
-      rootObjectId = findRoot(getParentObjectID(), map);
+  List<OmDirectoryInfo> findParents(Map<Long, OmDirectoryInfo> map) {
+    if (parents == null) {
+      parents = findParents(getParentObjectID(), map);
     }
-    return rootObjectId;
+    return parents;
   }
 
-  static long findRoot(long id, Map<Long, OmDirectoryInfo> map) {
+  static List<OmDirectoryInfo> findParents(long id, Map<Long, OmDirectoryInfo> map) {
+    final List<OmDirectoryInfo> path = new ArrayList<>();
     for(;;) {
       final OmDirectoryInfo dir = map.get(id);
       if (dir == null) {
-        return id;
+        return path;
       }
-      final Long root = dir.getRootObjectId();
-      if (root != null) {
-        return root; //already found
+      path.add(dir);
+      final List<OmDirectoryInfo> p = dir.getParents();
+      if (p != null) {
+        path.addAll(p);
+        return path; //already found
       }
       id = dir.getParentObjectID();
     }
