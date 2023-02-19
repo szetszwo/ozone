@@ -510,7 +510,7 @@ public final class OmKeyInfo2 extends WithParentObjectId {
   }
 
   static String computeOfsPath(String vol, String buck, List<OmDirectoryInfo> parents, String name) {
-    // ofs://ozdtentr/user/nbswhm01/.staging/job_1676074085469_43750/job.jar
+    // ofs://ozdtentr/user/nb/.staging/job_1676074085469_43750/job.jar
     final StringBuilder b = new StringBuilder()
         .append("ofs://ozdtentr/")
         .append(vol).append("/")
@@ -649,7 +649,7 @@ public final class OmKeyInfo2 extends WithParentObjectId {
       for(String line; (line = in.readLine()) != null; n++) {
         final int i = line.indexOf("ofs://");
         if (i >= 0) {
-          ls.add(line.substring(i));
+          ls.add(line.substring(i).trim());
         } else {
           System.out.println("Ignoring line " + n + ": " + line);
         }
