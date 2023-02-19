@@ -1,668 +1,334 @@
-Root -9223372036854772480: #dirs=13, #files=1781
 Root -9223372036854772480: #dirs=13, #files=1781, size = 4109674550 = 3.827 GB, found=1781, notFound=0
-Root -9223372036854771968: #dirs=5, #files=0
 Root -9223372036854771968: #dirs=5, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036854771456: #dirs=13, #files=1830
 Root -9223372036854771456: #dirs=13, #files=1830, size = 2879924163 = 2.682 GB, found=1830, notFound=0
-Root -9223372036854770944: #dirs=5, #files=0
 Root -9223372036854770944: #dirs=5, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036854769920: #dirs=186, #files=199
 Root -9223372036854769920: #dirs=186, #files=199, size = 9612943255 = 8.953 GB, found=199, notFound=0
-Root -9223372036854769408: #dirs=352, #files=1500
 Root -9223372036854769408: #dirs=352, #files=1500, size = 47159718753 = 43.921 GB, found=1500, notFound=0
-Root -9223372036854768896: #dirs=38, #files=10024
 Root -9223372036854768896: #dirs=38, #files=10024, size = 984254222170 = 916.658 GB, found=10024, notFound=0
-Root -9223372036854768384: #dirs=347, #files=345
 Root -9223372036854768384: #dirs=347, #files=345, size = 19200885293 = 17.882 GB, found=345, notFound=0
-Root -9223372036854734592: #dirs=5, #files=3
 Root -9223372036854734592: #dirs=5, #files=3, size = 121 = 121 B, found=3, notFound=0
-Root -9223372036808296704: #dirs=23, #files=88
 Root -9223372036808296704: #dirs=23, #files=88, size = 44463184 = 42.403 MB, found=88, notFound=0
-Root -9223372036808296192: #dirs=3, #files=8
 Root -9223372036808296192: #dirs=3, #files=8, size = 1154150 = 1.101 MB, found=8, notFound=0
-Root -9223372036808226047: #dirs=4, #files=6
 Root -9223372036808226047: #dirs=4, #files=6, size = 1048576000281 = 976.563 GB, found=0, notFound=6
-Root -9223372036808226046: #dirs=0, #files=1
 Root -9223372036808226046: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036805983999: #dirs=0, #files=1
 Root -9223372036805983999: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036803969791: #dirs=0, #files=1
 Root -9223372036803969791: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036803963135: #dirs=0, #files=2
 Root -9223372036803963135: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036801872638: #dirs=0, #files=100
 Root -9223372036801872638: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036801764607: #dirs=0, #files=2
 Root -9223372036801764607: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036801764095: #dirs=0, #files=100
 Root -9223372036801764095: #dirs=0, #files=100, size = 1048576000000 = 976.563 GB, found=0, notFound=100
-Root -9223372036799652863: #dirs=0, #files=101
 Root -9223372036799652863: #dirs=0, #files=101, size = 10000 = 9.766 KB, found=0, notFound=101
-Root -9223372036799495166: #dirs=0, #files=1323
 Root -9223372036799495166: #dirs=0, #files=1323, size = 166911 = 162.999 KB, found=0, notFound=1323
-Root -9223372036798139391: #dirs=0, #files=20
 Root -9223372036798139391: #dirs=0, #files=20, size = 2490 = 2.432 KB, found=0, notFound=20
-Root -9223372036798113279: #dirs=0, #files=3
 Root -9223372036798113279: #dirs=0, #files=3, size = 174 = 174 B, found=0, notFound=3
-Root -9223372036798112767: #dirs=0, #files=200
 Root -9223372036798112767: #dirs=0, #files=200, size = 420000 = 410.156 KB, found=0, notFound=200
-Root -9223372036797903359: #dirs=0, #files=100
 Root -9223372036797903359: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036797755391: #dirs=0, #files=1
 Root -9223372036797755391: #dirs=0, #files=1, size = 124 = 124 B, found=0, notFound=1
-Root -9223372036797748735: #dirs=0, #files=2
 Root -9223372036797748735: #dirs=0, #files=2, size = 175 = 175 B, found=0, notFound=2
-Root -9223372036797748223: #dirs=0, #files=1000
 Root -9223372036797748223: #dirs=0, #files=1000, size = 2100000 = 2.003 MB, found=0, notFound=1000
-Root -9223372036796717055: #dirs=0, #files=1
 Root -9223372036796717055: #dirs=0, #files=1, size = 124 = 124 B, found=0, notFound=1
-Root -9223372036796710399: #dirs=0, #files=2
 Root -9223372036796710399: #dirs=0, #files=2, size = 175 = 175 B, found=0, notFound=2
-Root -9223372036796709887: #dirs=0, #files=1000
 Root -9223372036796709887: #dirs=0, #files=1000, size = 21000000 = 20.027 MB, found=0, notFound=1000
-Root -9223372036795678207: #dirs=0, #files=1
 Root -9223372036795678207: #dirs=0, #files=1, size = 124 = 124 B, found=0, notFound=1
-Root -9223372036795671551: #dirs=0, #files=2
 Root -9223372036795671551: #dirs=0, #files=2, size = 179 = 179 B, found=0, notFound=2
-Root -9223372036795671039: #dirs=0, #files=10000
 Root -9223372036795671039: #dirs=0, #files=10000, size = 210000000 = 200.272 MB, found=0, notFound=10000
-Root -9223372036549164799: #dirs=5, #files=204
 Root -9223372036549164799: #dirs=5, #files=204, size = 1048576011465 = 976.563 GB, found=0, notFound=204
-Root -9223372036549164797: #dirs=0, #files=100
 Root -9223372036549164797: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036549056767: #dirs=2, #files=0
 Root -9223372036549056767: #dirs=2, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036548798719: #dirs=0, #files=1
 Root -9223372036548798719: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036548791039: #dirs=0, #files=2
 Root -9223372036548791039: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036548790527: #dirs=0, #files=1
 Root -9223372036548790527: #dirs=0, #files=1, size = 1048576000000 = 976.563 GB, found=0, notFound=1
-Root -9223372036546782975: #dirs=0, #files=1
 Root -9223372036546782975: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036546776319: #dirs=0, #files=2
 Root -9223372036546776319: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036546769151: #dirs=0, #files=10
 Root -9223372036546769151: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036546752255: #dirs=0, #files=2
 Root -9223372036546752255: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036546751743: #dirs=0, #files=10
 Root -9223372036546751743: #dirs=0, #files=10, size = 1048576000000 = 976.563 GB, found=0, notFound=10
-Root -9223372036544737535: #dirs=0, #files=10
 Root -9223372036544737535: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036544721151: #dirs=0, #files=2
 Root -9223372036544721151: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036544713983: #dirs=0, #files=100
 Root -9223372036544713983: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036544604927: #dirs=0, #files=2
 Root -9223372036544604927: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036544604415: #dirs=0, #files=100
 Root -9223372036544604415: #dirs=0, #files=100, size = 1048576000000 = 976.563 GB, found=0, notFound=100
-Root -9223372036542497023: #dirs=0, #files=100
 Root -9223372036542497023: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036542388479: #dirs=0, #files=2
 Root -9223372036542388479: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036542381311: #dirs=0, #files=3
 Root -9223372036542381311: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036542371583: #dirs=0, #files=2
 Root -9223372036542371583: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036542371071: #dirs=0, #files=3
 Root -9223372036542371071: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036536360447: #dirs=0, #files=1
 Root -9223372036536360447: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036536352767: #dirs=0, #files=2
 Root -9223372036536352767: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036536352255: #dirs=0, #files=1
 Root -9223372036536352255: #dirs=0, #files=1, size = 1048576000000 = 976.563 GB, found=0, notFound=1
-Root -9223372036534345215: #dirs=0, #files=1
 Root -9223372036534345215: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036534338047: #dirs=0, #files=2
 Root -9223372036534338047: #dirs=0, #files=2, size = 82 = 82 B, found=0, notFound=2
-Root -9223372036534301183: #dirs=0, #files=10
 Root -9223372036534301183: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036534284287: #dirs=0, #files=2
 Root -9223372036534284287: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036534283775: #dirs=0, #files=10
 Root -9223372036534283775: #dirs=0, #files=10, size = 1048576000000 = 976.563 GB, found=0, notFound=10
-Root -9223372036532269823: #dirs=0, #files=10
 Root -9223372036532269823: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036532253439: #dirs=0, #files=2
 Root -9223372036532253439: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036532245247: #dirs=0, #files=100
 Root -9223372036532245247: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036532136191: #dirs=0, #files=2
 Root -9223372036532136191: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036532135679: #dirs=0, #files=100
 Root -9223372036532135679: #dirs=0, #files=100, size = 1048576000000 = 976.563 GB, found=0, notFound=100
-Root -9223372036530019839: #dirs=0, #files=100
 Root -9223372036530019839: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036529911295: #dirs=0, #files=2
 Root -9223372036529911295: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036529856511: #dirs=0, #files=3
 Root -9223372036529856511: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036529846783: #dirs=0, #files=2
 Root -9223372036529846783: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036529846271: #dirs=0, #files=3
 Root -9223372036529846271: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036523820031: #dirs=0, #files=3
 Root -9223372036523820031: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036523810815: #dirs=0, #files=2
 Root -9223372036523810815: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036523802623: #dirs=0, #files=30
 Root -9223372036523802623: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036523765247: #dirs=0, #files=2
 Root -9223372036523765247: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036523764735: #dirs=0, #files=30
 Root -9223372036523764735: #dirs=0, #files=30, size = 3145728000000 = 2.861 TB, found=0, notFound=30
-Root -9223372036517723903: #dirs=0, #files=30
 Root -9223372036517723903: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036517687039: #dirs=0, #files=2
 Root -9223372036517687039: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036517679359: #dirs=0, #files=300
 Root -9223372036517679359: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036517365503: #dirs=0, #files=2
 Root -9223372036517365503: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036517364991: #dirs=0, #files=300
 Root -9223372036517364991: #dirs=0, #files=300, size = 3145728000000 = 2.861 TB, found=0, notFound=300
-Root -9223372036510894591: #dirs=0, #files=300
 Root -9223372036510894591: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036510581247: #dirs=0, #files=2
 Root -9223372036510581247: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036510572543: #dirs=0, #files=5
 Root -9223372036510572543: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036510560767: #dirs=0, #files=2
 Root -9223372036510560767: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036510560255: #dirs=0, #files=5
 Root -9223372036510560255: #dirs=0, #files=5, size = 5242880000000 = 4.768 TB, found=0, notFound=5
-Root -9223372036500555263: #dirs=0, #files=5
 Root -9223372036500555263: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036500543999: #dirs=0, #files=2
 Root -9223372036500543999: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036500536831: #dirs=0, #files=50
 Root -9223372036500536831: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036500478975: #dirs=0, #files=2
 Root -9223372036500478975: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036500478463: #dirs=0, #files=50
 Root -9223372036500478463: #dirs=0, #files=50, size = 5242880000000 = 4.768 TB, found=0, notFound=50
-Root -9223372036490425855: #dirs=0, #files=50
 Root -9223372036490425855: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036490368511: #dirs=0, #files=2
 Root -9223372036490368511: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036490361343: #dirs=0, #files=500
 Root -9223372036490361343: #dirs=0, #files=500, size = 56890 = 55.557 KB, found=0, notFound=500
-Root -9223372036489842687: #dirs=0, #files=2
 Root -9223372036489842687: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036489842175: #dirs=0, #files=500
 Root -9223372036489842175: #dirs=0, #files=500, size = 5242880000000 = 4.768 TB, found=0, notFound=500
-Root -9223372036479020543: #dirs=0, #files=500
 Root -9223372036479020543: #dirs=0, #files=500, size = 56890 = 55.557 KB, found=0, notFound=500
-Root -9223372036478502399: #dirs=0, #files=2
 Root -9223372036478502399: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036477712639: #dirs=0, #files=100
 Root -9223372036477712639: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036475494655: #dirs=0, #files=100
 Root -9223372036475494655: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036473013247: #dirs=0, #files=42
 Root -9223372036473013247: #dirs=0, #files=42, size = 5592358038 = 5.208 GB, found=0, notFound=42
-Root -9223372036472948224: #dirs=0, #files=1
 Root -9223372036472948224: #dirs=0, #files=1, size = 5 = 5 B, found=1, notFound=0
-Root -9223372036472947712: #dirs=2, #files=0
 Root -9223372036472947712: #dirs=2, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036472743935: #dirs=0, #files=100
 Root -9223372036472743935: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036447952383: #dirs=0, #files=1067
 Root -9223372036447952383: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036442533631: #dirs=0, #files=1067
 Root -9223372036442533631: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036439393791: #dirs=0, #files=1067
 Root -9223372036439393791: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036420233727: #dirs=0, #files=1067
 Root -9223372036420233727: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036418593279: #dirs=0, #files=1067
 Root -9223372036418593279: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036416953343: #dirs=0, #files=1067
 Root -9223372036416953343: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036415312383: #dirs=5, #files=14
 Root -9223372036415312383: #dirs=5, #files=14, size = 5242880000735 = 4.768 TB, found=0, notFound=14
-Root -9223372036415312381: #dirs=0, #files=1
 Root -9223372036415312381: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036415305727: #dirs=0, #files=2
 Root -9223372036415305727: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036415305215: #dirs=0, #files=1
 Root -9223372036415305215: #dirs=0, #files=1, size = 1048576000000 = 976.563 GB, found=0, notFound=1
-Root -9223372036413297663: #dirs=0, #files=1
 Root -9223372036413297663: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036413291007: #dirs=0, #files=2
 Root -9223372036413291007: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036413283839: #dirs=0, #files=10
 Root -9223372036413283839: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036413266943: #dirs=0, #files=2
 Root -9223372036413266943: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036413266431: #dirs=0, #files=10
 Root -9223372036413266431: #dirs=0, #files=10, size = 1048576000000 = 976.563 GB, found=0, notFound=10
-Root -9223372036411252735: #dirs=0, #files=10
 Root -9223372036411252735: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036411236351: #dirs=0, #files=2
 Root -9223372036411236351: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036411229183: #dirs=0, #files=100
 Root -9223372036411229183: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036411120127: #dirs=0, #files=2
 Root -9223372036411120127: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036411119615: #dirs=0, #files=100
 Root -9223372036411119615: #dirs=0, #files=100, size = 1048576000000 = 976.563 GB, found=0, notFound=100
-Root -9223372036409013759: #dirs=0, #files=100
 Root -9223372036409013759: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036408905215: #dirs=0, #files=2
 Root -9223372036408905215: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036408898559: #dirs=0, #files=3
 Root -9223372036408898559: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036408888831: #dirs=0, #files=2
 Root -9223372036408888831: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036408888319: #dirs=0, #files=3
 Root -9223372036408888319: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036402879231: #dirs=0, #files=3
 Root -9223372036402879231: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036402870015: #dirs=0, #files=2
 Root -9223372036402870015: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036402862847: #dirs=0, #files=30
 Root -9223372036402862847: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036402825471: #dirs=0, #files=2
 Root -9223372036402825471: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036402824959: #dirs=0, #files=30
 Root -9223372036402824959: #dirs=0, #files=30, size = 3145728000000 = 2.861 TB, found=0, notFound=30
-Root -9223372036396796671: #dirs=0, #files=30
 Root -9223372036396796671: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036396752639: #dirs=0, #files=300
 Root -9223372036396752639: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036379691007: #dirs=5, #files=104
 Root -9223372036379691007: #dirs=5, #files=104, size = 5242880005812 = 4.768 TB, found=0, notFound=104
-Root -9223372036379691005: #dirs=0, #files=1
 Root -9223372036379691005: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036379684351: #dirs=0, #files=2
 Root -9223372036379684351: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036379683839: #dirs=0, #files=1
 Root -9223372036379683839: #dirs=0, #files=1, size = 1048576000000 = 976.563 GB, found=0, notFound=1
-Root -9223372036377676799: #dirs=0, #files=1
 Root -9223372036377676799: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036377670143: #dirs=0, #files=2
 Root -9223372036377670143: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036377662975: #dirs=0, #files=10
 Root -9223372036377662975: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036377646079: #dirs=0, #files=2
 Root -9223372036377646079: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036377645567: #dirs=0, #files=10
 Root -9223372036377645567: #dirs=0, #files=10, size = 1048576000000 = 976.563 GB, found=0, notFound=10
-Root -9223372036375632383: #dirs=0, #files=10
 Root -9223372036375632383: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036375615999: #dirs=0, #files=2
 Root -9223372036375615999: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036375608831: #dirs=0, #files=100
 Root -9223372036375608831: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036375499775: #dirs=0, #files=2
 Root -9223372036375499775: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036375499263: #dirs=0, #files=100
 Root -9223372036375499263: #dirs=0, #files=100, size = 1048576000000 = 976.563 GB, found=0, notFound=100
-Root -9223372036373389567: #dirs=0, #files=100
 Root -9223372036373389567: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036373281023: #dirs=0, #files=2
 Root -9223372036373281023: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036373274367: #dirs=0, #files=3
 Root -9223372036373274367: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036373264639: #dirs=0, #files=2
 Root -9223372036373264639: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036373264127: #dirs=0, #files=3
 Root -9223372036373264127: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036367254527: #dirs=0, #files=3
 Root -9223372036367254527: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036367245311: #dirs=0, #files=2
 Root -9223372036367245311: #dirs=0, #files=2, size = 83 = 83 B, found=0, notFound=2
-Root -9223372036367238143: #dirs=0, #files=30
 Root -9223372036367238143: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036364447743: #dirs=0, #files=87
 Root -9223372036364447743: #dirs=0, #files=87, size = 9821 = 9.591 KB, found=0, notFound=87
-Root -9223372036364329983: #dirs=0, #files=2
 Root -9223372036364329983: #dirs=0, #files=2, size = 5505100 = 5.250 MB, found=0, notFound=2
-Root -9223372036363700223: #dirs=0, #files=3
 Root -9223372036363700223: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036363690495: #dirs=0, #files=2
 Root -9223372036363690495: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036363689983: #dirs=0, #files=3
 Root -9223372036363689983: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036357681151: #dirs=0, #files=3
 Root -9223372036357681151: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036357670399: #dirs=0, #files=2
 Root -9223372036357670399: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036357669375: #dirs=0, #files=1067
 Root -9223372036357669375: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036355923199: #dirs=0, #files=1067
 Root -9223372036355923199: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036354281215: #dirs=0, #files=1067
 Root -9223372036354281215: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036352634111: #dirs=0, #files=30
 Root -9223372036352634111: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036352596735: #dirs=2, #files=0
 Root -9223372036352596735: #dirs=2, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036351501055: #dirs=0, #files=1067
 Root -9223372036351501055: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036346362879: #dirs=0, #files=1067
 Root -9223372036346362879: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036344722431: #dirs=0, #files=1067
 Root -9223372036344722431: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036343083007: #dirs=0, #files=42
 Root -9223372036343083007: #dirs=0, #files=42, size = 5592358038 = 5.208 GB, found=0, notFound=42
-Root -9223372036343017983: #dirs=0, #files=21
 Root -9223372036343017983: #dirs=0, #files=21, size = 5592358038 = 5.208 GB, found=0, notFound=21
-Root -9223372036342984703: #dirs=0, #files=21
 Root -9223372036342984703: #dirs=0, #files=21, size = 5592358038 = 5.208 GB, found=0, notFound=21
-Root -9223372036342951935: #dirs=0, #files=16
 Root -9223372036342951935: #dirs=0, #files=16, size = 5592358038 = 5.208 GB, found=0, notFound=16
-Root -9223372036342926847: #dirs=0, #files=11
 Root -9223372036342926847: #dirs=0, #files=11, size = 5592358038 = 5.208 GB, found=0, notFound=11
-Root -9223372036342908927: #dirs=0, #files=1067
 Root -9223372036342908927: #dirs=0, #files=1067, size = 5592358038 = 5.208 GB, found=0, notFound=1067
-Root -9223372036337701887: #dirs=0, #files=3
 Root -9223372036337701887: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036337692159: #dirs=0, #files=2
 Root -9223372036337692159: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036337691647: #dirs=0, #files=3
 Root -9223372036337691647: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036331683071: #dirs=0, #files=3
 Root -9223372036331683071: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036331673855: #dirs=0, #files=2
 Root -9223372036331673855: #dirs=0, #files=2, size = 83 = 83 B, found=0, notFound=2
-Root -9223372036331666687: #dirs=0, #files=30
 Root -9223372036331666687: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036331629311: #dirs=0, #files=2
 Root -9223372036331629311: #dirs=0, #files=2, size = 83 = 83 B, found=0, notFound=2
-Root -9223372036331628799: #dirs=0, #files=30
 Root -9223372036331628799: #dirs=0, #files=30, size = 3145728000000 = 2.861 TB, found=0, notFound=30
-Root -9223372036325603583: #dirs=0, #files=30
 Root -9223372036325603583: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036325566719: #dirs=0, #files=2
 Root -9223372036325566719: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036325559551: #dirs=0, #files=300
 Root -9223372036325559551: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036325245695: #dirs=0, #files=2
 Root -9223372036325245695: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036325245183: #dirs=0, #files=300
 Root -9223372036325245183: #dirs=0, #files=300, size = 3145728000000 = 2.861 TB, found=0, notFound=300
-Root -9223372036318811647: #dirs=0, #files=300
 Root -9223372036318811647: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036318498303: #dirs=0, #files=2
 Root -9223372036318498303: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036318490623: #dirs=0, #files=5
 Root -9223372036318490623: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036318478847: #dirs=0, #files=2
 Root -9223372036318478847: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036318478335: #dirs=0, #files=5
 Root -9223372036318478335: #dirs=0, #files=5, size = 5242880000000 = 4.768 TB, found=0, notFound=5
-Root -9223372036308470783: #dirs=0, #files=5
 Root -9223372036308470783: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036308459519: #dirs=0, #files=2
 Root -9223372036308459519: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036308452351: #dirs=0, #files=50
 Root -9223372036308452351: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036308394495: #dirs=0, #files=2
 Root -9223372036308394495: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036308393983: #dirs=0, #files=50
 Root -9223372036308393983: #dirs=0, #files=50, size = 5242880000000 = 4.768 TB, found=0, notFound=50
-Root -9223372036298332415: #dirs=0, #files=50
 Root -9223372036298332415: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036298275071: #dirs=0, #files=2
 Root -9223372036298275071: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036298267903: #dirs=0, #files=500
 Root -9223372036298267903: #dirs=0, #files=500, size = 56890 = 55.557 KB, found=0, notFound=500
-Root -9223372036297749247: #dirs=0, #files=2
 Root -9223372036297749247: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036297748735: #dirs=0, #files=500
 Root -9223372036297748735: #dirs=0, #files=500, size = 5242880000000 = 4.768 TB, found=0, notFound=500
-Root -9223372036286870271: #dirs=0, #files=500
 Root -9223372036286870271: #dirs=0, #files=500, size = 56890 = 55.557 KB, found=0, notFound=500
-Root -9223372036286341887: #dirs=2, #files=0
 Root -9223372036286341887: #dirs=2, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036286340351: #dirs=0, #files=5
 Root -9223372036286340351: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036286328575: #dirs=0, #files=2
 Root -9223372036286328575: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036286328063: #dirs=0, #files=5
 Root -9223372036286328063: #dirs=0, #files=5, size = 5242880000000 = 4.768 TB, found=0, notFound=5
-Root -9223372036276317695: #dirs=0, #files=5
 Root -9223372036276317695: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036276306431: #dirs=0, #files=2
 Root -9223372036276306431: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036276299263: #dirs=0, #files=50
 Root -9223372036276299263: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036276241407: #dirs=0, #files=2
 Root -9223372036276241407: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036276240895: #dirs=0, #files=50
 Root -9223372036276240895: #dirs=0, #files=50, size = 5242880000000 = 4.768 TB, found=0, notFound=50
-Root -9223372036266175487: #dirs=0, #files=50
 Root -9223372036266175487: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036266118143: #dirs=0, #files=2
 Root -9223372036266118143: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036266110975: #dirs=0, #files=500
 Root -9223372036266110975: #dirs=0, #files=500, size = 56890 = 55.557 KB, found=0, notFound=500
-Root -9223372036265592319: #dirs=0, #files=2
 Root -9223372036265592319: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036265591807: #dirs=0, #files=500
 Root -9223372036265591807: #dirs=0, #files=500, size = 5242880000000 = 4.768 TB, found=0, notFound=500
-Root -9223372036254937599: #dirs=0, #files=500
 Root -9223372036254937599: #dirs=0, #files=500, size = 56890 = 55.557 KB, found=0, notFound=500
-Root -9223372036254419455: #dirs=0, #files=2
 Root -9223372036254419455: #dirs=0, #files=2, size = 89 = 89 B, found=0, notFound=2
-Root -9223372036254411775: #dirs=0, #files=5
 Root -9223372036254411775: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036254405119: #dirs=0, #files=5
 Root -9223372036254405119: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036254399487: #dirs=0, #files=10
 Root -9223372036254399487: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036254386175: #dirs=0, #files=1
 Root -9223372036254386175: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036254384127: #dirs=0, #files=1
 Root -9223372036254384127: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036254377471: #dirs=0, #files=2
 Root -9223372036254377471: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036254376959: #dirs=0, #files=1
 Root -9223372036254376959: #dirs=0, #files=1, size = 1048576000000 = 976.563 GB, found=0, notFound=1
-Root -9223372036252356607: #dirs=0, #files=1
 Root -9223372036252356607: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036252349439: #dirs=0, #files=2
 Root -9223372036252349439: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036252342271: #dirs=0, #files=10
 Root -9223372036252342271: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036252325375: #dirs=0, #files=2
 Root -9223372036252325375: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036252324863: #dirs=0, #files=10
 Root -9223372036252324863: #dirs=0, #files=10, size = 1048576000000 = 976.563 GB, found=0, notFound=10
-Root -9223372036250311679: #dirs=0, #files=10
 Root -9223372036250311679: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036250295295: #dirs=0, #files=2
 Root -9223372036250295295: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036250288127: #dirs=0, #files=100
 Root -9223372036250288127: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036250179071: #dirs=0, #files=2
 Root -9223372036250179071: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036250178559: #dirs=0, #files=100
 Root -9223372036250178559: #dirs=0, #files=100, size = 1048576000000 = 976.563 GB, found=0, notFound=100
-Root -9223372036248071935: #dirs=0, #files=100
 Root -9223372036248071935: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036247963391: #dirs=0, #files=2
 Root -9223372036247963391: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036247956223: #dirs=0, #files=1
 Root -9223372036247956223: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036247948543: #dirs=0, #files=2
 Root -9223372036247948543: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036247948031: #dirs=0, #files=1
 Root -9223372036247948031: #dirs=0, #files=1, size = 1048576000000 = 976.563 GB, found=0, notFound=1
-Root -9223372036245940479: #dirs=0, #files=1
 Root -9223372036245940479: #dirs=0, #files=1, size = 112 = 112 B, found=0, notFound=1
-Root -9223372036245933311: #dirs=0, #files=2
 Root -9223372036245933311: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036245926143: #dirs=0, #files=10
 Root -9223372036245926143: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036245909247: #dirs=0, #files=2
 Root -9223372036245909247: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036245908735: #dirs=0, #files=10
 Root -9223372036245908735: #dirs=0, #files=10, size = 1048576000000 = 976.563 GB, found=0, notFound=10
-Root -9223372036243895039: #dirs=0, #files=10
 Root -9223372036243895039: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372036243878655: #dirs=0, #files=2
 Root -9223372036243878655: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036243871487: #dirs=0, #files=100
 Root -9223372036243871487: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036243762431: #dirs=0, #files=2
 Root -9223372036243762431: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036243761919: #dirs=0, #files=100
 Root -9223372036243761919: #dirs=0, #files=100, size = 1048576000000 = 976.563 GB, found=0, notFound=100
-Root -9223372036241650687: #dirs=0, #files=100
 Root -9223372036241650687: #dirs=0, #files=100, size = 11290 = 11.025 KB, found=0, notFound=100
-Root -9223372036241542143: #dirs=0, #files=2
 Root -9223372036241542143: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036241534463: #dirs=0, #files=3
 Root -9223372036241534463: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036241524735: #dirs=0, #files=2
 Root -9223372036241524735: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036241524223: #dirs=0, #files=3
 Root -9223372036241524223: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036235515903: #dirs=0, #files=3
 Root -9223372036235515903: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036235506687: #dirs=0, #files=2
 Root -9223372036235506687: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036235499519: #dirs=0, #files=30
 Root -9223372036235499519: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036235462143: #dirs=0, #files=2
 Root -9223372036235462143: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036235461631: #dirs=0, #files=30
 Root -9223372036235461631: #dirs=0, #files=30, size = 3145728000000 = 2.861 TB, found=0, notFound=30
-Root -9223372036229433599: #dirs=0, #files=30
 Root -9223372036229433599: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036229396735: #dirs=0, #files=2
 Root -9223372036229396735: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036229389567: #dirs=0, #files=300
 Root -9223372036229389567: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036229075711: #dirs=0, #files=2
 Root -9223372036229075711: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036229075199: #dirs=0, #files=300
 Root -9223372036229075199: #dirs=0, #files=300, size = 3145728000000 = 2.861 TB, found=0, notFound=300
-Root -9223372036222691839: #dirs=0, #files=300
 Root -9223372036222691839: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036222371327: #dirs=0, #files=5
 Root -9223372036222371327: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036202205437: #dirs=0, #files=3
 Root -9223372036202205437: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036202196735: #dirs=0, #files=2
 Root -9223372036202196735: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036202196223: #dirs=0, #files=3
 Root -9223372036202196223: #dirs=0, #files=3, size = 3145728000000 = 2.861 TB, found=0, notFound=3
-Root -9223372036196187647: #dirs=0, #files=3
 Root -9223372036196187647: #dirs=0, #files=3, size = 336 = 336 B, found=0, notFound=3
-Root -9223372036196178943: #dirs=0, #files=2
 Root -9223372036196178943: #dirs=0, #files=2, size = 84 = 84 B, found=0, notFound=2
-Root -9223372036196171775: #dirs=0, #files=30
 Root -9223372036196171775: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036196134399: #dirs=0, #files=2
 Root -9223372036196134399: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036196133887: #dirs=0, #files=30
 Root -9223372036196133887: #dirs=0, #files=30, size = 3145728000000 = 2.861 TB, found=0, notFound=30
-Root -9223372036190109695: #dirs=0, #files=30
 Root -9223372036190109695: #dirs=0, #files=30, size = 3380 = 3.301 KB, found=0, notFound=30
-Root -9223372036190072831: #dirs=0, #files=2
 Root -9223372036190072831: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036190065663: #dirs=0, #files=300
 Root -9223372036190065663: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036189751807: #dirs=0, #files=2
 Root -9223372036189751807: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036189751295: #dirs=0, #files=300
 Root -9223372036189751295: #dirs=0, #files=300, size = 3145728000000 = 2.861 TB, found=0, notFound=300
-Root -9223372036183362047: #dirs=0, #files=300
 Root -9223372036183362047: #dirs=0, #files=300, size = 34090 = 33.291 KB, found=0, notFound=300
-Root -9223372036183048703: #dirs=0, #files=2
 Root -9223372036183048703: #dirs=0, #files=2, size = 88 = 88 B, found=0, notFound=2
-Root -9223372036183041535: #dirs=0, #files=5
 Root -9223372036183041535: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036183029759: #dirs=0, #files=2
 Root -9223372036183029759: #dirs=0, #files=2, size = 86 = 86 B, found=0, notFound=2
-Root -9223372036183029247: #dirs=0, #files=5
 Root -9223372036183029247: #dirs=0, #files=5, size = 5242880000000 = 4.768 TB, found=0, notFound=5
-Root -9223372036173020159: #dirs=0, #files=5
 Root -9223372036173020159: #dirs=0, #files=5, size = 560 = 560 B, found=0, notFound=5
-Root -9223372036173008895: #dirs=0, #files=2
 Root -9223372036173008895: #dirs=0, #files=2, size = 85 = 85 B, found=0, notFound=2
-Root -9223372036173001727: #dirs=0, #files=50
 Root -9223372036173001727: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036172943871: #dirs=0, #files=2
 Root -9223372036172943871: #dirs=0, #files=2, size = 87 = 87 B, found=0, notFound=2
-Root -9223372036172943359: #dirs=0, #files=50
 Root -9223372036172943359: #dirs=0, #files=50, size = 5242880000000 = 4.768 TB, found=0, notFound=50
-Root -9223372036162879999: #dirs=0, #files=50
 Root -9223372036162879999: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036162822143: #dirs=2, #files=0
 Root -9223372036162822143: #dirs=2, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036154533119: #dirs=0, #files=50
 Root -9223372036154533119: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036144420351: #dirs=0, #files=50
 Root -9223372036144420351: #dirs=0, #files=50, size = 5640 = 5.508 KB, found=0, notFound=50
-Root -9223372036132663807: #dirs=135, #files=3
 Root -9223372036132663807: #dirs=135, #files=3, size = 8928571400 = 8.315 GB, found=0, notFound=3
-Root -9223372036132333823: #dirs=253, #files=0
 Root -9223372036132333823: #dirs=253, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036132142591: #dirs=0, #files=337
 Root -9223372036132142591: #dirs=0, #files=337, size = 1000000000000 = 931.323 GB, found=0, notFound=337
-Root -9223372036129708543: #dirs=238, #files=235
 Root -9223372036129708543: #dirs=238, #files=235, size = 2098214285200 = 1.908 TB, found=0, notFound=235
-Root -9223372036123913215: #dirs=4, #files=1
 Root -9223372036123913215: #dirs=4, #files=1, size = 8928571400 = 8.315 GB, found=0, notFound=1
-Root -9223372036123634431: #dirs=0, #files=337
 Root -9223372036123634431: #dirs=0, #files=337, size = 1000000000000 = 931.323 GB, found=0, notFound=337
-Root -9223372036121224959: #dirs=0, #files=337
 Root -9223372036121224959: #dirs=0, #files=337, size = 3000000000000 = 2.728 TB, found=0, notFound=337
-Root -9223372036114984191: #dirs=0, #files=337
 Root -9223372036114984191: #dirs=0, #files=337, size = 5000000000000 = 4.547 TB, found=0, notFound=337
-Root -9223372036066574335: #dirs=0, #files=1
 Root -9223372036066574335: #dirs=0, #files=1, size = 19393 = 18.938 KB, found=0, notFound=1
-Root -9223372036066567167: #dirs=0, #files=1
 Root -9223372036066567167: #dirs=0, #files=1, size = 19393 = 18.938 KB, found=0, notFound=1
-Root -9223372036066559999: #dirs=0, #files=1
 Root -9223372036066559999: #dirs=0, #files=1, size = 19393 = 18.938 KB, found=0, notFound=1
-Root -9223372036066552831: #dirs=0, #files=1
 Root -9223372036066552831: #dirs=0, #files=1, size = 19393 = 18.938 KB, found=0, notFound=1
-Root -9223372036066543615: #dirs=0, #files=1
 Root -9223372036066543615: #dirs=0, #files=1, size = 19393 = 18.938 KB, found=0, notFound=1
-Root -9223372036066529791: #dirs=0, #files=1766
 Root -9223372036066529791: #dirs=0, #files=1766, size = 1000000019393 = 931.323 GB, found=0, notFound=1766
-Root -9223372036066499071: #dirs=0, #files=1
 Root -9223372036066499071: #dirs=0, #files=1, size = 19393 = 18.938 KB, found=0, notFound=1
-Root -9223372036062182656: #dirs=24, #files=0
 Root -9223372036062182656: #dirs=24, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036027134464: #dirs=5, #files=0
 Root -9223372036027134464: #dirs=5, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372036015117311: #dirs=0, #files=1766
 Root -9223372036015117311: #dirs=0, #files=1766, size = 3000000019393 = 2.728 TB, found=0, notFound=1766
-Root -9223372036007114495: #dirs=0, #files=1766
 Root -9223372036007114495: #dirs=0, #files=1766, size = 5000000019393 = 4.547 TB, found=0, notFound=1766
-Root -9223372035995307775: #dirs=0, #files=1766
 Root -9223372035995307775: #dirs=0, #files=1766, size = 1000000019393 = 931.323 GB, found=0, notFound=1766
-Root -9223372035991095039: #dirs=0, #files=1766
 Root -9223372035991095039: #dirs=0, #files=1766, size = 3000000019393 = 2.728 TB, found=0, notFound=1766
-Root -9223372035983092991: #dirs=0, #files=10
 Root -9223372035983092991: #dirs=0, #files=10, size = 1120 = 1.094 KB, found=0, notFound=10
-Root -9223372035983077119: #dirs=0, #files=2
 Root -9223372035983077119: #dirs=0, #files=2, size = 82 = 82 B, found=0, notFound=2
-Root -9223372035983076607: #dirs=0, #files=10
 Root -9223372035983076607: #dirs=0, #files=10, size = 10737418240 = 10 GB, found=0, notFound=10
-Root -9223372035982670079: #dirs=2, #files=1
 Root -9223372035982670079: #dirs=2, #files=1, size = 19393 = 18.938 KB, found=0, notFound=1
-Root -9223372035982662911: #dirs=0, #files=500
 Root -9223372035982662911: #dirs=0, #files=500, size = 56890 = 55.557 KB, found=0, notFound=500
-Root -9223372035982144767: #dirs=2, #files=0
 Root -9223372035982144767: #dirs=2, #files=0, size = 0 = 0 B, found=0, notFound=0
-Root -9223372035982144255: #dirs=0, #files=27
 Root -9223372035982144255: #dirs=0, #files=27, size = 283115520000 = 263.672 GB, found=0, notFound=27
-Root -9223372035979876351: #dirs=0, #files=241
 Root -9223372035979876351: #dirs=0, #files=241, size = 27364 = 26.723 KB, found=0, notFound=241
-Root -9223372035966411520: #dirs=0, #files=2
 Root -9223372035966411520: #dirs=0, #files=2, size = 14255681016 = 13.277 GB, found=2, notFound=0
-Root -9223372035953764605: #dirs=609, #files=602
 Root -9223372035953764605: #dirs=609, #files=602, size = 340040455600 = 316.687 GB, found=0, notFound=602
-Root -9223372035941350399: #dirs=40, #files=38
 Root -9223372035941350399: #dirs=40, #files=38, size = 21604364993 = 20.121 GB, found=0, notFound=38

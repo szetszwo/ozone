@@ -496,7 +496,8 @@ public final class OmKeyInfo2 extends WithParentObjectId {
 
   @Override
   public String toString() {
-    return volumeName + "/" + bucketName + "/" + getFullPath() + ":" + getObjectID()
+    return (ofsPath != null? getRootObjectID() + " " + ofsPath : volumeName + "/" + bucketName + "/" + getFullPath())
+        + ":" + getObjectID()
         + " (size=" + getDataSize() + ", found? " + foundLs + ")";
   }
 
@@ -524,7 +525,7 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     if (parents == null) {
       parents = OmDirectoryInfo.findParents(getParentObjectID(), map);
       ofsPath = computeOfsPath(getVolumeName(), getBucketName(), parents, getName());
-      System.out.println(ofsPath);
+//      System.out.println(ofsPath);
       final int i = Collections.binarySearch(ls, getOfsPath());
       foundLs = i >= 0;
     }
@@ -590,7 +591,6 @@ public final class OmKeyInfo2 extends WithParentObjectId {
     void print() {
       long size = 0L;
       int found = 0, notFound = 0;
-      System.out.println(this);
       for(OmDirectoryInfo d : dirs) {
         System.out.println(d);
       }
