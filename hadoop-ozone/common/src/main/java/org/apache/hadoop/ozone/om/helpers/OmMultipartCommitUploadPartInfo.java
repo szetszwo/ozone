@@ -31,4 +31,11 @@ public class OmMultipartCommitUploadPartInfo {
   public String getPartName() {
     return partName;
   }
+
+  @Override
+  public String toString() {
+    return "OmMultipartCommitUploadPartInfo{" +
+        "partName='" + partName + '\'' +
+        '}';
+  }
 }
