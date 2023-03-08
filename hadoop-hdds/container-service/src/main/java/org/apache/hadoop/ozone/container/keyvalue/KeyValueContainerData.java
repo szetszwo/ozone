@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.max;
+import static org.apache.hadoop.hdds.utils.db.DBDefinition.LOG;
 import static org.apache.hadoop.ozone.OzoneConsts.BLOCK_COMMIT_SEQUENCE_ID;
 import static org.apache.hadoop.ozone.OzoneConsts.CONTAINER_DB_TYPE_ROCKSDB;
 import static org.apache.hadoop.ozone.OzoneConsts.CHUNKS_PATH;
@@ -196,6 +197,12 @@ public class KeyValueContainerData extends ContainerData {
    * updates the blockCommitSequenceId.
    */
   public void updateBlockCommitSequenceId(long id) {
+    final long old = blockCommitSequenceId;
+    if (id < old) {
+      throw new IllegalStateException("Container " + getContainerID()
+          + " updateBlockCommitSequenceId from higher value " + old
+          + " to a lower value " + id);
+    }
     this.blockCommitSequenceId = id;
   }
 

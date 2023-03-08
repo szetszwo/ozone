@@ -180,6 +180,10 @@ public class DatanodeConfiguration {
     return Duration.ofMillis(recoveringContainerScrubInterval);
   }
 
+  public void setRecoveringContainerScrubInterval(Duration recoveringContainerScrubInterval) {
+    this.recoveringContainerScrubInterval = recoveringContainerScrubInterval.toMillis();
+  }
+
   public void setBlockDeletionInterval(Duration duration) {
     this.blockDeletionInterval = duration.toMillis();
   }

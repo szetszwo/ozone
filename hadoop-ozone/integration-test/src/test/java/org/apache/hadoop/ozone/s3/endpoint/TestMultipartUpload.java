@@ -20,21 +20,28 @@
 
 package org.apache.hadoop.ozone.s3.endpoint;
 
-import org.apache.hadoop.conf.StorageUnit;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
+import org.apache.hadoop.hdds.conf.StorageUnit;
+import org.apache.hadoop.hdds.scm.ScmConfig;
+import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
+import org.apache.hadoop.ozone.MiniOzoneClusterImpl;
+import org.apache.hadoop.ozone.OzoneConfigKeys;
 import org.apache.hadoop.ozone.client.ObjectStore;
 import org.apache.hadoop.ozone.client.OzoneBucket;
 import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.client.OzoneKeyDetails;
 import org.apache.hadoop.ozone.client.io.OzoneInputStream;
 import org.apache.hadoop.ozone.client.io.OzoneOutputStream;
+import org.apache.hadoop.ozone.container.common.statemachine.DatanodeConfiguration;
 import org.apache.hadoop.ozone.om.OMConfigKeys;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartCommitUploadPartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadCompleteInfo;
+import org.apache.ozone.test.GenericTestUtils;
+import org.apache.ratis.util.FileUtils;
 import org.apache.ratis.util.Preconditions;
 import org.apache.ratis.util.SizeInBytes;
 import org.apache.ratis.util.StringUtils;
@@ -48,8 +55,13 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.hadoop.hdds.client.ReplicationFactor;
 import org.apache.hadoop.hdds.client.ReplicationType;
+import org.slf4j.event.Level;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,12 +71,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_BLOCK_DELETING_SERVICE_INTERVAL;
-import static org.apache.hadoop.ozone.om.OMConfigKeys.OZONE_DEFAULT_BUCKET_LAYOUT;
-import static org.apache.hadoop.ozone.om.OMConfigKeys.OZONE_OM_RATIS_ENABLE_KEY;
+import java.util.function.IntPredicate;
 
 /**
  * Class to test Multipart upload end to end.
@@ -72,15 +82,17 @@ import static org.apache.hadoop.ozone.om.OMConfigKeys.OZONE_OM_RATIS_ENABLE_KEY;
 public class TestMultipartUpload {
   private static final Logger LOG =
       LoggerFactory.getLogger(TestMultipartUpload.class);
+  static Duration ONE_SECOND = Duration.ofSeconds(1);
 
   static class TimerLog {
     private final Timestamp ctime = Timestamp.currentTime();
     private final Map<String, Timestamp> startTimes = new ConcurrentHashMap<>();
 
-    void start(String name) {
+    AutoCloseable start(String name) {
       LOG.info("{}ms) {} start", ctime.elapsedTimeMs(), name);
       final Timestamp previous = startTimes.put(name, Timestamp.currentTime());
       Preconditions.assertNull(previous, "previous");
+      return () -> end(name);
     }
 
     void end(String name) {
@@ -97,34 +109,57 @@ public class TestMultipartUpload {
   private static final OzoneConfiguration CONF = new OzoneConfiguration();
   private static final ObjectEndpoint REST = new ObjectEndpoint();
 
-  private static MiniOzoneCluster cluster;
+  static final ExecutorService executor = Executors.newFixedThreadPool(32);
+  private static MiniOzoneClusterImpl cluster;
   private static OzoneClient client;
   private static OzoneBucket bucket;
 
   @BeforeClass
-  public static void init() throws Exception {
-    TIMER_LOG.start("init");
+  public static void initBeforeClass() throws Exception {
+    try (AutoCloseable auto = TIMER_LOG.start("init")) {
+      init();
+    }
+  }
+
+  static void init() throws Exception {
+    final File testDir = new File(GenericTestUtils.getTempPath(""));
+    FileUtils.deleteFully(testDir);
+    GenericTestUtils.setLogLevel(FileUtils.LOG, Level.TRACE);
+    FileUtils.createDirectories(testDir);
+    du(testDir);
+
     final int chunkSize = 16 << 10;
     final int flushSize = 2 * chunkSize;
     final int maxFlushSize = 2 * flushSize;
     final int blockSize = 2 * maxFlushSize;
+
     final BucketLayout layout = BucketLayout.FILE_SYSTEM_OPTIMIZED;
+    CONF.set(OMConfigKeys.OZONE_DEFAULT_BUCKET_LAYOUT, layout.name());
+    CONF.setBoolean(OMConfigKeys.OZONE_OM_RATIS_ENABLE_KEY, false);
 
-    CONF.setBoolean(OZONE_OM_RATIS_ENABLE_KEY, false);
-    CONF.set(OZONE_DEFAULT_BUCKET_LAYOUT, layout.name());
     CONF.setTimeDuration(OMConfigKeys.OZONE_DIR_DELETING_SERVICE_INTERVAL,
-        500, TimeUnit.MILLISECONDS);
-    CONF.setTimeDuration(OZONE_BLOCK_DELETING_SERVICE_INTERVAL,
-        100, TimeUnit.MILLISECONDS);
+        5, TimeUnit.SECONDS);
+    CONF.setTimeDuration(OzoneConfigKeys.OZONE_BLOCK_DELETING_SERVICE_INTERVAL,
+        5, TimeUnit.SECONDS);
 
-    cluster = MiniOzoneCluster.newBuilder(CONF)
+    final ScmConfig scmConf = CONF.getObject(ScmConfig.class);
+    scmConf.setBlockDeletionInterval(ONE_SECOND);
+    CONF.setFromObject(scmConf);
+    CONF.setStorageSize(ScmConfigKeys.OZONE_SCM_CONTAINER_SIZE, 1, StorageUnit.MB);
+
+    final DatanodeConfiguration datanodeConf = CONF.getObject(DatanodeConfiguration.class);
+    datanodeConf.setBlockDeletionInterval(ONE_SECOND);
+//    datanodeConf.setRecoveringContainerScrubInterval(ONE_SECOND);
+    CONF.setFromObject(datanodeConf);
+
+    cluster = (MiniOzoneClusterImpl) MiniOzoneCluster.newBuilder(CONF)
         .setNumDatanodes(5)
-        .setTotalPipelineNumLimit(10)
+        .setTotalPipelineNumLimit(1)
         .setBlockSize(blockSize)
         .setChunkSize(chunkSize)
         .setStreamBufferFlushSize(flushSize)
         .setStreamBufferMaxSize(maxFlushSize)
-        .setStreamBufferSizeUnit(StorageUnit.BYTES)
+        .setStreamBufferSizeUnit(org.apache.hadoop.conf.StorageUnit.BYTES)
         .build();
     cluster.waitForClusterToBeReady();
     cluster.getOzoneManager()
@@ -139,39 +174,177 @@ public class TestMultipartUpload {
 
     REST.setOzoneConfiguration(CONF);
     REST.setClient(client);
-
-    TIMER_LOG.end("init");
   }
 
   @AfterClass
-  public static void teardown() throws Exception {
+  public static void teardownAfterClass() throws Exception {
     if (client != null) {
       client.close();
     }
     if (cluster != null) {
-      cluster.shutdown();
+      cluster.stop();
     }
+    executor.shutdown();
+  }
+
+  static final int N = 10;
+
+  @Test
+  public void testMultipartNoDelete() throws Exception {
+    runTestMultipart(N, i -> false);
   }
 
   @Test
-  public void testMultipart() throws Exception {
-    TIMER_LOG.start("testMultipart");
-    final String keyName = "testKey";
-    final int numParts = 1_000;
-    uploadKey(keyName, numParts);
-    checkKey(keyName, numParts);
-
-    TIMER_LOG.end("testMultipart");
+  public void testMultipartDeleteAll() throws Exception {
+    runTestMultipart(N, i -> true);
   }
 
-  static void checkKey(String keyName, int numParts) throws Exception {
+  @Test
+  public void testMultipartDeleteAllExceptLast() throws Exception {
+    runTestMultipart(N, i -> i < N -1);
+  }
+
+  @Test
+  public void testMultipartDeleteLastKey() throws Exception {
+    runTestMultipart(N, i -> i == N -1);
+  }
+
+  @Test
+  public void testMultipartDeleteEven() throws Exception {
+    final int n = 10;
+    runTestMultipart(n, i -> i % 2 == 0);
+  }
+
+  @Test
+  public void testMultipartDeleteOdd() throws Exception {
+    final int n = 10;
+    runTestMultipart(n, i -> i % 2 == 1);
+  }
+
+  /**
+   * Repeating upload the same key name n times
+   * using multipart upload with 1000 parts and 8KB each.
+   *
+   * @param n the number of uploads
+   * @param decideToDelete decide if delete the i-th uploaded key.
+   */
+  static void runTestMultipart(int n, IntPredicate decideToDelete) throws Exception {
+    final String keyName = "testKey";
+    final int numParts = 1_000;
+
+    ByteGenerator generator = null;
+    boolean deleted = true;
+    for (int i = 0; i < n; i++) {
+      final String name = keyName + i;
+      generator = ByteGenerator.get(name);
+      try (AutoCloseable auto = TIMER_LOG.start(name)) {
+        uploadKey(keyName, numParts, generator);
+        checkKey(keyName, numParts, generator);
+
+        deleted = decideToDelete.test(i);
+        LOG.info("{}) delete? {}", i, deleted);
+        if (deleted) {
+          bucket.deleteKey(keyName);
+        }
+        Assert.assertEquals(!deleted, bucket.listKeys(keyName).hasNext());
+      }
+      cluster.printContainerInfo();
+    }
+
+
+    final File clusterDir = cluster.getDir();
+    int previousBlockFileCount = -1;
+    int age = 0;
+    for(int i = 0; ; i++) {
+      // run du to see the usage information
+      du(clusterDir);
+
+      // find .block files on disks
+      final int blockFileCount = find(clusterDir);
+      if (blockFileCount == previousBlockFileCount) {
+        age++;
+        if (age >= 3) {
+          Assert.fail("blockFileCount remains unchanged: " + blockFileCount);
+        }
+      } else {
+        previousBlockFileCount = blockFileCount;
+      }
+      LOG.info("{}) found {} block file(s) in {}", i, blockFileCount, clusterDir);
+      if (deleted && blockFileCount == 0) {
+        return;
+      }
+      final int expectedCount = 3*numParts;
+      if (!deleted) {
+        if (blockFileCount == expectedCount) {
+          checkKey(keyName, numParts, generator);
+          return;
+        }
+        if (blockFileCount < expectedCount) {
+          Assert.fail("blockFileCount = " + blockFileCount + " < " + numParts * 3);
+        }
+      }
+
+      // sleep and retry
+      Thread.sleep(5000);
+      if (!deleted) {
+        checkKey(keyName, numParts, generator);
+      }
+      cluster.printContainerInfo();
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
+    final File dir = new File(".");
+    LOG.info("dir {}", dir);
+    exec(dir, "pwd");
+    find(dir);
+  }
+
+  static Consumer<String> limitedPrint(int limit) {
+    final AtomicInteger count = new AtomicInteger();
+    return s -> {
+      if (count.getAndIncrement() >= limit) {
+        return;
+      }
+      System.out.println(s);
+    };
+  }
+
+  static int find(File dir) throws Exception {
+    return exec(dir, "find . -name *.block", limitedPrint(10));
+  }
+
+  static int du(File dir) throws Exception {
+    return exec(dir, "du -h -d 2");
+  }
+
+  static int exec(File dir, String cmd) throws Exception {
+    return exec(dir, cmd, System.out::println);
+  }
+
+  static int exec(File dir, String cmd, Consumer<String> println) throws Exception {
+    LOG.info("exec '{}' at {}", cmd, dir);
+
+    final Process p = Runtime.getRuntime().exec(cmd.split(" "), null, dir);
+    int count = 0;
+    try(BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+      for(String line; (line = in.readLine()) != null;) {
+        count++;
+        println.accept(line);
+      }
+    }
+    final int exit = p.waitFor();
+    Preconditions.assertSame(0, exit, cmd);
+    return count;
+  }
+
+  static void checkKey(String keyName, int numParts, ByteGenerator generator) throws Exception {
     LOG.info("checkKey: {} with {} parts", keyName, numParts);
     final OzoneKeyDetails details = bucket.getKey(keyName);
-    LOG.info("details = {}", details);
+    LOG.debug("details = {}", details);
     final long size = details.getDataSize();
     Assert.assertEquals(numParts * PART_SIZE, size);
 
-    final ByteGenerator generator = ByteGenerator.get(keyName);
     final byte[] buffer = new byte[4 << 10];
     try (OzoneInputStream in = bucket.readKey(keyName)) {
       for (int part = 1; part <= numParts; part++) {
@@ -180,8 +353,10 @@ public class TestMultipartUpload {
         for (int offset = 0; offset < PART_SIZE; ) {
           final int toRead = Math.min(PART_SIZE - offset, buffer.length);
           final int read = in.read(buffer, 0, toRead);
-          LOG.info("{}-{}.{}: read {}", keyName, part, offset,
-              bytes2HexShortString(buffer));
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("{}-{}.{}: read {}", keyName, part, offset,
+                bytes2HexShortString(buffer));
+          }
           try {
             verifier.accept(buffer, read);
           } catch (AssertionError e) {
@@ -196,7 +371,8 @@ public class TestMultipartUpload {
     }
   }
 
-  static void uploadKey(String keyName, int numParts) throws Exception {
+
+  static void uploadKey(String keyName, int numParts, ByteGenerator g) throws Exception {
     LOG.info("uploadKey: {} with {} parts", keyName, numParts);
     final OmMultipartInfo multipartInfo = bucket.initiateMultipartUpload(keyName,
         ReplicationConfig.fromTypeAndFactor(ReplicationType.RATIS, ReplicationFactor.THREE));
@@ -206,13 +382,12 @@ public class TestMultipartUpload {
     Assert.assertEquals(keyName, multipartInfo.getKeyName());
 
     final String uploadID = multipartInfo.getUploadID();
-    final ExecutorService executor = Executors.newFixedThreadPool(32);
     final List<CompletableFuture<OmMultipartCommitUploadPartInfo>> futures = new ArrayList<>();
     for(int i = 0; i < numParts; i++) {
       final int part = i + 1;
       final CompletableFuture<OmMultipartCommitUploadPartInfo> f
           = CompletableFuture.supplyAsync(
-              () -> uploadPart(keyName, part, uploadID), executor);
+              () -> uploadPart(keyName, part, uploadID, g.get(part)), executor);
       futures.add(f);
     }
 
@@ -238,9 +413,13 @@ public class TestMultipartUpload {
   }
 
   static OmMultipartCommitUploadPartInfo uploadPart(String keyName,
-      int part, String uploadID) {
-    LOG.info("uploadPart {} for {}", part, uploadID);
-    final Consumer<byte[]> random = ByteGenerator.get(keyName).get(part);
+      int part, String uploadID, Consumer<byte[]> random) {
+    if (part % 100 == 0) {
+      LOG.info("uploadPart {} for {}", part, uploadID);
+    } else {
+      LOG.debug("uploadPart {} for {}", part, uploadID);
+    }
+
     final int size = PART_SIZE;
     try {
       final OzoneOutputStream out = bucket.createMultipartKey(
@@ -249,8 +428,10 @@ public class TestMultipartUpload {
       for (int offset = 0; offset < size; ) {
         final int toWrite = Math.min(size - offset, buffer.length);
         random.accept(buffer);
-        LOG.info("{}-{}.{}: write {}", keyName, part, offset,
-            bytes2HexShortString(buffer));
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("{}-{}.{}: write {}", keyName, part, offset,
+              bytes2HexShortString(buffer));
+        }
         out.write(buffer, 0, toWrite);
         offset += toWrite;
       }
@@ -258,7 +439,7 @@ public class TestMultipartUpload {
 
       final OmMultipartCommitUploadPartInfo commitInfo
           = out.getCommitUploadPartInfo();
-      LOG.info("{}-{} commitInfo = {}", keyName, part, commitInfo);
+      LOG.debug("{}-{} commitInfo = {}", keyName, part, commitInfo);
       Assert.assertNotNull(commitInfo);
       Assert.assertNotNull(commitInfo.getPartName());
       return commitInfo;

@@ -183,13 +183,22 @@ public class BlockManagerImpl implements BlockManager {
             containerData.getBytesUsed());
 
         // Set Block Count for a container.
+        long oldBlockCount = -1;
         if (incrBlockCount) {
+          oldBlockCount = containerData.getBlockCount();
           db.getStore().getMetadataTable().putWithBatch(
               batch, containerData.blockCountKey(),
-              containerData.getBlockCount() + 1);
+              oldBlockCount + 1); //FIXME: non-atomic increment?
         }
 
         db.getStore().getBatchHandler().commitBatchOperation(batch);
+        if (oldBlockCount != -1) {
+          final long newBlockCount = containerData.getBlockCount();
+          if (newBlockCount != oldBlockCount) {
+            LOG.warn("Container {}: Unexpected block count changed from {} to {}",
+                containerData.getContainerID(), oldBlockCount, newBlockCount);
+          }
+        }
       }
 
       if (bcsId != 0) {

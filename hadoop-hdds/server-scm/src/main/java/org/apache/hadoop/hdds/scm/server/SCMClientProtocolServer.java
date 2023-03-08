@@ -749,7 +749,7 @@ public class SCMClientProtocolServer implements
   }
 
   @Override
-  public ScmInfo getScmInfo() throws IOException {
+  public ScmInfo getScmInfo() {
     boolean auditSuccess = true;
     try {
       ScmInfo.Builder builder =
@@ -768,12 +768,6 @@ public class SCMClientProtocolServer implements
         builder.setRatisPeerRoles(Arrays.asList(adddress));
       }
       return builder.build();
-    } catch (Exception ex) {
-      auditSuccess = false;
-      AUDIT.logReadFailure(
-          buildAuditMessageForFailure(SCMAction.GET_SCM_INFO, null, ex)
-      );
-      throw ex;
     } finally {
       if (auditSuccess) {
         AUDIT.logReadSuccess(

@@ -286,13 +286,15 @@ public class ContainerInfo implements Comparator<ContainerInfo>,
 
   @Override
   public String toString() {
-    return "ContainerInfo{"
-        + "id=" + containerID
-        + ", state=" + state
-        + ", pipelineID=" + pipelineID
-        + ", stateEnterTime=" + stateEnterTime
-        + ", owner=" + owner
-        + '}';
+    return "Container #" + containerID +
+        "{ state=" + state +
+        ", keys=" + numberOfKeys +
+        ", usedBytes=" + usedBytes +
+        ", deleteTxId=" + deleteTransactionId +
+        ", seqId=" + sequenceId +
+        ", replication=" + replicationConfig +
+        ", " + pipelineID +
+        '}';
   }
 
   @Override

@@ -31,18 +31,18 @@ import java.util.function.Consumer;
 class ByteGenerator {
   static final Map<String, ByteGenerator> CACHE = new ConcurrentHashMap<>();
 
-  static ByteGenerator get(String keyName) {
-    return CACHE.computeIfAbsent(keyName, ByteGenerator::new);
+  static ByteGenerator get(String name) {
+    return CACHE.computeIfAbsent(name, ByteGenerator::new);
   }
 
-  private final String keyName;
+  private final String name;
 
-  private ByteGenerator(String keyName) {
-    this.keyName = keyName;
+  private ByteGenerator(String name) {
+    this.name = name;
   }
 
   Consumer<byte[]> get(int part) {
-    final Random random = new Random(Objects.hash(keyName, part));
+    final Random random = new Random(Objects.hash(name, part));
     return random::nextBytes;
   }
 

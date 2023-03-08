@@ -58,6 +58,12 @@ public abstract class BackgroundService {
     this.serviceName = serviceName;
     this.serviceTimeoutInNanos = TimeDuration.valueOf(serviceTimeout, unit)
             .toLong(TimeUnit.NANOSECONDS);
+
+    LOG.info("new {} with interval {} and {} threads, timeout={}, {}",
+        serviceName, TimeUnit.MILLISECONDS.convert(interval, unit)/1000.0 + "s",
+        threadPoolSize,
+        TimeUnit.MILLISECONDS.convert(serviceTimeoutInNanos, TimeUnit.NANOSECONDS)/1000.0 + "s",
+        getClass());
     threadGroup = new ThreadGroup(serviceName);
     ThreadFactory threadFactory = new ThreadFactoryBuilder()
         .setThreadFactory(r -> new Thread(threadGroup, r))
@@ -104,6 +110,7 @@ public abstract class BackgroundService {
         LOG.debug("Running background service : {}", serviceName);
       }
       BackgroundTaskQueue tasks = getTasks();
+      LOG.info("{} return {} tasks", serviceName, tasks.size());
       if (tasks.isEmpty()) {
         // No task found, or some problems to init tasks
         // return and retry in next interval.

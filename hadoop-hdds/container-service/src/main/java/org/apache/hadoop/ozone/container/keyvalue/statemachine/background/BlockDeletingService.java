@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
@@ -135,10 +136,12 @@ public class BlockDeletingService extends BackgroundService {
   }
 
 
+  static final AtomicLong DELETE_BLOCK_COUNT = new AtomicLong();
+
   @Override
   public BackgroundTaskQueue getTasks() {
     BackgroundTaskQueue queue = new BackgroundTaskQueue();
-    List<ContainerBlockInfo> containers = Lists.newArrayList();
+    final List<ContainerBlockInfo> containers;
     try {
       // We at most list a number of containers a time,
       // in case there are too many containers and start too many workers.
@@ -154,6 +157,8 @@ public class BlockDeletingService extends BackgroundService {
         containerBlockInfos =
             new BlockDeletingTask(containerBlockInfo.containerData,
                 TASK_PRIORITY_DEFAULT, containerBlockInfo.numBlocksToDelete);
+        final long newDeleteBlockCount = DELETE_BLOCK_COUNT.addAndGet(containerBlockInfo.getBlocks());
+        LOG.info("adding {}, newDeleteBlockCount={}", containerBlockInfos, newDeleteBlockCount);
         queue.add(containerBlockInfos);
         totalBlocks += containerBlockInfo.numBlocksToDelete;
       }
@@ -280,6 +285,13 @@ public class BlockDeletingService extends BackgroundService {
       this.priority = priority;
       this.containerData = (KeyValueContainerData) containerName;
       this.blocksToDelete = blocksToDelete;
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName()
+          + "[Container " + containerData.getContainerID()
+          + ", blocksToDelete=" + blocksToDelete + "]";
     }
 
     @Override

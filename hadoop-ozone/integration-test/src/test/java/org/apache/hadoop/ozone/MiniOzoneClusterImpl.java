@@ -44,6 +44,7 @@ import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.scm.OzoneClientConfig;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.HddsTestUtils;
+import org.apache.hadoop.hdds.scm.container.ContainerInfo;
 import org.apache.hadoop.hdds.scm.ha.SCMHANodeDetails;
 import org.apache.hadoop.hdds.scm.ha.SCMHAUtils;
 import org.apache.hadoop.hdds.scm.ha.SCMRatisServerImpl;
@@ -438,17 +439,24 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
     shutdownHddsDatanode(getHddsDatanodeIndex(dn));
   }
 
-  public String getClusterId() throws IOException {
+  public String getClusterId() {
     return scm.getClientProtocolServer().getScmInfo().getClusterId();
+  }
+
+  public void printContainerInfo() {
+    final List<ContainerInfo> containers = scm.getContainerManager().getContainers();
+    LOG.info("{} container(s)", containers.size());
+    for(ContainerInfo c : containers) {
+      LOG.info("  {}", c);
+    }
   }
 
   @Override
   public void shutdown() {
+    final String name = getName();
+    final File baseDir = getDir();
+    LOG.info("Shutting down {} at {}", name, baseDir);
     try {
-      LOG.info("Shutting down the Mini Ozone Cluster");
-      File baseDir = new File(GenericTestUtils.getTempPath(
-          MiniOzoneClusterImpl.class.getSimpleName() + "-" +
-              getClusterId()));
       stop();
       FileUtils.deleteDirectory(baseDir);
       ContainerCache.getInstance(conf).shutdownCache();
@@ -460,7 +468,7 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
 
   @Override
   public void stop() {
-    LOG.info("Stopping the Mini Ozone Cluster");
+    LOG.info("Stopping {} at {}", getName(), getDir());
     stopOM(ozoneManager);
     stopDatanodes(hddsDatanodes);
     stopSCM(scm);
@@ -678,8 +686,7 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
           streamBufferSizeUnit.get());
       // MiniOzoneCluster should have global pipeline upper limit.
       conf.setInt(ScmConfigKeys.OZONE_SCM_RATIS_PIPELINE_LIMIT,
-          pipelineNumLimit >= DEFAULT_PIPELINE_LIMIT ?
-              pipelineNumLimit : DEFAULT_PIPELINE_LIMIT);
+          pipelineNumLimit);
       conf.setTimeDuration(OMConfigKeys.OZONE_OM_RATIS_MINIMUM_TIMEOUT_KEY,
           DEFAULT_RATIS_RPC_TIMEOUT_SEC, TimeUnit.SECONDS);
       SCMClientConfig scmClientConfig = conf.getObject(SCMClientConfig.class);
