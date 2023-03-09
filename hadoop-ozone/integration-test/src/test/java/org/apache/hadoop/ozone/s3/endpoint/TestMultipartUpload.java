@@ -42,6 +42,7 @@ import org.apache.hadoop.ozone.om.helpers.OmMultipartInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartUploadCompleteInfo;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ratis.util.FileUtils;
+import org.apache.ratis.util.JavaUtils;
 import org.apache.ratis.util.Preconditions;
 import org.apache.ratis.util.SizeInBytes;
 import org.apache.ratis.util.StringUtils;
@@ -63,6 +64,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -109,7 +111,6 @@ public class TestMultipartUpload {
   private static final OzoneConfiguration CONF = new OzoneConfiguration();
   private static final ObjectEndpoint REST = new ObjectEndpoint();
 
-  static final ExecutorService executor = Executors.newFixedThreadPool(32);
   private static MiniOzoneClusterImpl cluster;
   private static OzoneClient client;
   private static OzoneBucket bucket;
@@ -184,41 +185,62 @@ public class TestMultipartUpload {
     if (cluster != null) {
       cluster.stop();
     }
-    executor.shutdown();
   }
 
   static final int N = 10;
 
   @Test
-  public void testMultipartNoDelete() throws Exception {
+  public void testMultipartParallel() {
+    final int n = 2;
+    final ExecutorService executor = Executors.newFixedThreadPool(2);
+    final List<CompletableFuture<Void>> futures = new ArrayList<>();
+    try {
+      for(int i = 0; i < n; i++) {
+        final int id = i;
+        final CompletableFuture<Void> f = CompletableFuture.runAsync(
+            () -> runTestMultipart(N, null, id), executor);
+        futures.add(f);
+      }
+
+      JavaUtils.allOf(futures).join();
+      runTestMultipart(1, i -> false, n);
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
+  public void testMultipartNoDelete() {
     runTestMultipart(N, i -> false);
   }
 
   @Test
-  public void testMultipartDeleteAll() throws Exception {
+  public void testMultipartDeleteAll() {
     runTestMultipart(N, i -> true);
   }
 
   @Test
-  public void testMultipartDeleteAllExceptLast() throws Exception {
-    runTestMultipart(N, i -> i < N -1);
+  public void testMultipartDeleteAllExceptLast() {
+    runTestMultipart(N, i -> i < N - 1);
   }
 
   @Test
-  public void testMultipartDeleteLastKey() throws Exception {
-    runTestMultipart(N, i -> i == N -1);
+  public void testMultipartDeleteLastKey() {
+    runTestMultipart(N, i -> i == N - 1);
   }
 
   @Test
-  public void testMultipartDeleteEven() throws Exception {
-    final int n = 10;
-    runTestMultipart(n, i -> i % 2 == 0);
+  public void testMultipartDeleteEven() {
+    runTestMultipart(N, i -> i % 2 == 0);
   }
 
   @Test
-  public void testMultipartDeleteOdd() throws Exception {
-    final int n = 10;
-    runTestMultipart(n, i -> i % 2 == 1);
+  public void testMultipartDeleteOdd() {
+    runTestMultipart(N, i -> i % 2 == 1);
+  }
+
+  static void runTestMultipart(int n, IntPredicate decideToDelete) {
+    runTestMultipart(n, decideToDelete, 0);
   }
 
   /**
@@ -227,31 +249,45 @@ public class TestMultipartUpload {
    *
    * @param n the number of uploads
    * @param decideToDelete decide if delete the i-th uploaded key.
+   * @param testId For running in parallel
    */
-  static void runTestMultipart(int n, IntPredicate decideToDelete) throws Exception {
+  static void runTestMultipart(int n, IntPredicate decideToDelete, int testId) {
     final String keyName = "testKey";
     final int numParts = 1_000;
 
     ByteGenerator generator = null;
-    boolean deleted = true;
+    boolean deleted = false;
     for (int i = 0; i < n; i++) {
-      final String name = keyName + i;
+      final String name = testId + keyName + i;
       generator = ByteGenerator.get(name);
       try (AutoCloseable auto = TIMER_LOG.start(name)) {
         uploadKey(keyName, numParts, generator);
-        checkKey(keyName, numParts, generator);
+        if (decideToDelete != null) {
+          checkKey(keyName, numParts, generator);
 
-        deleted = decideToDelete.test(i);
-        LOG.info("{}) delete? {}", i, deleted);
-        if (deleted) {
-          bucket.deleteKey(keyName);
+          deleted = decideToDelete.test(i);
+          LOG.info("{}) delete? {}", i, deleted);
+          if (deleted) {
+            bucket.deleteKey(keyName);
+          }
+          Assert.assertEquals(!deleted, bucket.listKeys(keyName).hasNext());
         }
-        Assert.assertEquals(!deleted, bucket.listKeys(keyName).hasNext());
+      } catch (Exception e) {
+        throw new IllegalStateException("Failed to runTestMultipart " + name, e);
       }
       cluster.printContainerInfo();
     }
 
+    if (decideToDelete != null) {
+      try {
+        checkKey(keyName, numParts, generator, deleted);
+      } catch (Exception e) {
+        throw new IllegalStateException("Failed to checkKey", e);
+      }
+    }
+  }
 
+  static void checkKey(String keyName, int numParts, ByteGenerator generator, boolean deleted) throws Exception {
     final File clusterDir = cluster.getDir();
     int previousBlockFileCount = -1;
     int age = 0;
@@ -260,10 +296,13 @@ public class TestMultipartUpload {
       du(clusterDir);
 
       // find .block files on disks
-      final int blockFileCount = find(clusterDir);
+      final List<File> files = find(clusterDir);
+      cluster.verifyBlockFiles(files);
+
+      final int blockFileCount = files.size();
       if (blockFileCount == previousBlockFileCount) {
         age++;
-        if (age >= 3) {
+        if (age >= 10) {
           Assert.fail("blockFileCount remains unchanged: " + blockFileCount);
         }
       } else {
@@ -303,15 +342,25 @@ public class TestMultipartUpload {
   static Consumer<String> limitedPrint(int limit) {
     final AtomicInteger count = new AtomicInteger();
     return s -> {
-      if (count.getAndIncrement() >= limit) {
-        return;
+      final int previous = count.getAndIncrement();
+      if (previous < limit) {
+        System.out.println(s);
+      } else if (previous == limit) {
+        System.out.println("...");
       }
-      System.out.println(s);
     };
   }
 
-  static int find(File dir) throws Exception {
-    return exec(dir, "find . -name *.block", limitedPrint(10));
+  static Consumer<String> getFile(List<File> files) {
+    return s -> files.add(new File(s));
+  }
+
+
+  static List<File> find(File dir) throws Exception {
+    final List<File> files = new ArrayList<>();
+    final int count = exec(dir, "find . -name *.block", limitedPrint(10), getFile(files));
+    Assert.assertEquals(count, files.size());
+    return Collections.unmodifiableList(files);
   }
 
   static int du(File dir) throws Exception {
@@ -322,7 +371,7 @@ public class TestMultipartUpload {
     return exec(dir, cmd, System.out::println);
   }
 
-  static int exec(File dir, String cmd, Consumer<String> println) throws Exception {
+  static int exec(File dir, String cmd, Consumer<String>... consumers) throws Exception {
     LOG.info("exec '{}' at {}", cmd, dir);
 
     final Process p = Runtime.getRuntime().exec(cmd.split(" "), null, dir);
@@ -330,7 +379,10 @@ public class TestMultipartUpload {
     try(BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
       for(String line; (line = in.readLine()) != null;) {
         count++;
-        println.accept(line);
+
+        for(Consumer<String> c : consumers) {
+          c.accept(line);
+        }
       }
     }
     final int exit = p.waitFor();
@@ -382,6 +434,19 @@ public class TestMultipartUpload {
     Assert.assertEquals(keyName, multipartInfo.getKeyName());
 
     final String uploadID = multipartInfo.getUploadID();
+    final Map<Integer, String> parts;
+    final ExecutorService executor = Executors.newFixedThreadPool(32);
+    try {
+      parts = uploadKey(keyName, numParts, g, uploadID, executor);
+    } finally {
+      executor.shutdown();
+    }
+
+    completeUpload(keyName, parts, uploadID);
+  }
+
+  static Map<Integer, String> uploadKey(String keyName, int numParts, ByteGenerator g,
+      String uploadID, ExecutorService executor) {
     final List<CompletableFuture<OmMultipartCommitUploadPartInfo>> futures = new ArrayList<>();
     for(int i = 0; i < numParts; i++) {
       final int part = i + 1;
@@ -397,8 +462,7 @@ public class TestMultipartUpload {
       final String partName = futures.get(i).join().getPartName();
       parts.put(part, partName);
     }
-
-    completeUpload(keyName, parts, uploadID);
+    return parts;
   }
 
   static String bytes2HexShortString(byte[] bytes) {

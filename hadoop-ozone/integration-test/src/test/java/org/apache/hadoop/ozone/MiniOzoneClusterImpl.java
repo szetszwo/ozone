@@ -26,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +67,9 @@ import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.client.OzoneClientFactory;
 import org.apache.hadoop.ozone.common.Storage.StorageState;
 import org.apache.hadoop.ozone.container.common.DatanodeLayoutStorage;
+import org.apache.hadoop.ozone.container.common.helpers.BlockData;
 import org.apache.hadoop.ozone.container.common.utils.ContainerCache;
+import org.apache.hadoop.ozone.container.keyvalue.impl.ContainerBlockSnapshot;
 import org.apache.hadoop.ozone.container.replication.ReplicationServer.ReplicationConfig;
 import org.apache.hadoop.ozone.om.OMConfigKeys;
 import org.apache.hadoop.ozone.om.OMStorage;
@@ -449,6 +453,81 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
     for(ContainerInfo c : containers) {
       LOG.info("  {}", c);
     }
+  }
+
+  public Map<DatanodeDetails, Map<Long, ContainerBlockSnapshot>> getContainerBlockSnapshots() throws IOException {
+    final List<HddsDatanodeService> datanodes = getHddsDatanodes();
+    final Map<DatanodeDetails, Map<Long, ContainerBlockSnapshot>> map = new TreeMap<>();
+    for(HddsDatanodeService datanode: datanodes) {
+      final Map<Long, ContainerBlockSnapshot> snapshots = datanode.getDatanodeStateMachine()
+          .getContainer().getContainerBlockSnapshots();
+      map.put(datanode.getDatanodeDetails(), snapshots);
+    }
+    return map;
+  }
+
+  public void verifyBlockFiles(List<File> files) throws IOException {
+    final List<HddsDatanodeService> datanodes = getHddsDatanodes();
+    final Map<DatanodeDetails, Map<Long, ContainerBlockSnapshot>> snapshots = getContainerBlockSnapshots();
+
+    final List<BlockData> found = new ArrayList<>();
+
+    for(File f : files) {
+      final String blockPath = f.getPath();
+      final long blockId = getBlockId(blockPath);
+      final long containerId = getContainerId(blockPath);
+      final int datanodeIndex = getDatanodeIndex(blockPath);
+
+      final DatanodeDetails d = datanodes.get(datanodeIndex).getDatanodeDetails();
+      if (d == null) {
+        LOG.info("datanodeIndex {} not found: {}", datanodeIndex, blockPath);
+        continue;
+      }
+      final Map<Long, ContainerBlockSnapshot> datanode = snapshots.get(d);
+      final ContainerBlockSnapshot container = datanode.get(containerId);
+      if (container == null) {
+        LOG.info("containerId {} not found: {}", containerId, blockPath);
+        continue;
+      }
+      final BlockData block = container.getBlock(blockId);
+      if (block == null) {
+        LOG.info("block {} not found: {}", block, blockPath);
+        continue;
+      }
+
+      final long onDiskSize = f.length();
+      if (onDiskSize != block.getSize()) {
+        LOG.info("block {} size not matched: onDiskSize={}, {}", block, onDiskSize, blockPath);
+        continue;
+      }
+
+      found.add(block);
+    }
+  }
+
+  static int getDatanodeIndex(String blockPath) {
+    //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
+    final String datanode = "datanode-";
+    final int i = blockPath.indexOf(datanode) + datanode.length();
+    final int j = blockPath.indexOf("/data-", i);
+    return Integer.parseInt(blockPath.substring(i, j));
+  }
+
+  static long getContainerId(String blockPath) {
+    //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
+    final String containerDir = "containerDir";
+    final int c = blockPath.indexOf(containerDir);
+    final int i = blockPath.indexOf('/', c) + 1;
+    final int j = blockPath.indexOf("/chunks/", i);
+    return Long.parseLong(blockPath.substring(i, j));
+  }
+
+  static long getBlockId(String blockPath) {
+    //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
+    final String block = ".block";
+    final int i = blockPath.lastIndexOf('/') + 1;
+    final int j = blockPath.lastIndexOf(block);
+    return Long.parseLong(blockPath.substring(i, j));
   }
 
   @Override

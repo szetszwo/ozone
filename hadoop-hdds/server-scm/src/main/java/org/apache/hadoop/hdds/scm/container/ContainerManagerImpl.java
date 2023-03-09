@@ -149,13 +149,15 @@ public class ContainerManagerImpl implements ContainerManager {
                                            final int count) {
     scmContainerManagerMetrics.incNumListContainersOps();
     final List<ContainerID> containersIds =
-        new ArrayList<>(containerStateManager.getContainerIDs());
-    Collections.sort(containersIds);
+        containerStateManager.getContainerIDs().stream()
+            .filter(id -> id.compareTo(startID) >= 0)
+            .sorted()
+            .limit(count)
+            .collect(Collectors.toList());
     List<ContainerInfo> containers;
     lock.lock();
     try {
       containers = containersIds.stream()
-          .filter(id -> id.compareTo(startID) >= 0).limit(count)
           .map(containerStateManager::getContainer)
           .collect(Collectors.toList());
     } finally {

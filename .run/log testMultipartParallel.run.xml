@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="log testMultipartParallel" type="JUnit" factoryName="JUnit">
+    <output_file path="$PROJECT_DIR$/TestMultipartUpload.testMultipartParallel.log" is_save="true" />
+    <module name="ozone-integration-test" />
+    <option name="PACKAGE_NAME" value="org.apache.hadoop.ozone.s3.endpoint" />
+    <option name="MAIN_CLASS_NAME" value="org.apache.hadoop.ozone.s3.endpoint.TestMultipartUpload" />
+    <option name="METHOD_NAME" value="testMultipartParallel" />
+    <option name="TEST_OBJECT" value="method" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

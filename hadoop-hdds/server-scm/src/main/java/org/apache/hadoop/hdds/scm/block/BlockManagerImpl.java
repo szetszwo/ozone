@@ -86,8 +86,7 @@ public class BlockManagerImpl implements BlockManager, BlockmanagerMXBean {
    * @throws IOException
    */
   public BlockManagerImpl(final ConfigurationSource conf,
-                          final StorageContainerManager scm)
-      throws IOException {
+                          final StorageContainerManager scm) {
     Objects.requireNonNull(scm, "SCM cannot be null");
     this.scm = scm;
     this.pipelineManager = scm.getPipelineManager();
@@ -195,7 +194,7 @@ public class BlockManagerImpl implements BlockManager, BlockmanagerMXBean {
    * @return AllocatedBlock
    */
   private AllocatedBlock newBlock(ContainerInfo containerInfo)
-      throws NotLeaderException, TimeoutException {
+      throws TimeoutException {
     try {
       final Pipeline pipeline = pipelineManager
           .getPipeline(containerInfo.getPipelineID());

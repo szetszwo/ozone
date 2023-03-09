@@ -124,7 +124,7 @@ public class KeyValueHandler extends Handler {
       KeyValueHandler.class);
 
   private final ContainerType containerType;
-  private final BlockManager blockManager;
+  private final BlockManagerImpl blockManager;
   private final ChunkManager chunkManager;
   private final VolumeChoosingPolicy volumeChoosingPolicy;
   private final long maxContainerSize;
@@ -255,7 +255,7 @@ public class KeyValueHandler extends Handler {
   }
 
   @VisibleForTesting
-  public BlockManager getBlockManager() {
+  public BlockManagerImpl getBlockManager() {
     return this.blockManager;
   }
 

@@ -25,11 +25,13 @@ import java.util.List;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.StorageUnit;
+import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.ozone.container.common.helpers.BlockData;
+import org.apache.hadoop.ozone.container.common.interfaces.BlockIterator;
 import org.apache.hadoop.ozone.container.common.interfaces.Container;
 import org.apache.hadoop.ozone.container.common.interfaces.DBHandle;
 import org.apache.hadoop.ozone.container.keyvalue.KeyValueContainer;
@@ -271,6 +273,21 @@ public class BlockManagerImpl implements BlockManager {
       }
       return blockData;
     }
+  }
+
+  public ContainerBlockSnapshot getContainerBlockSnapshot(
+      KeyValueContainerData container, DatanodeDetails datanode)
+      throws IOException {
+    final ContainerBlockSnapshot snapshot = new ContainerBlockSnapshot(datanode, container);
+
+    try (DBHandle db = BlockUtils.getDB(container, config);
+         BlockIterator<BlockData> i = db.getStore().getBlockIterator(container.getContainerID())) {
+      for(; i.hasNext(); ) {
+        final BlockData b = i.nextBlock();
+        snapshot.putNonExisting(b.getBlockID().getLocalID(), b);
+      }
+    }
+    return snapshot;
   }
 
   /**

@@ -74,6 +74,10 @@ public abstract class BackgroundService {
     service = new PeriodicalTask();
   }
 
+  public String getServiceName() {
+    return serviceName;
+  }
+
   protected ExecutorService getExecutorService() {
     return this.exec;
   }
