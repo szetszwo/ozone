@@ -35,6 +35,8 @@ import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.container.common.impl.ContainerLayoutVersion;
 import org.apache.hadoop.ozone.container.common.impl.ContainerData;
 import org.apache.hadoop.ozone.container.common.interfaces.DBHandle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.nodes.Tag;
 
 
@@ -44,7 +46,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.max;
-import static org.apache.hadoop.hdds.utils.db.DBDefinition.LOG;
 import static org.apache.hadoop.ozone.OzoneConsts.BLOCK_COMMIT_SEQUENCE_ID;
 import static org.apache.hadoop.ozone.OzoneConsts.CONTAINER_DB_TYPE_ROCKSDB;
 import static org.apache.hadoop.ozone.OzoneConsts.CHUNKS_PATH;
@@ -64,6 +65,7 @@ import static org.apache.hadoop.ozone.container.metadata.DatanodeSchemaThreeDBDe
  * by the .container file.
  */
 public class KeyValueContainerData extends ContainerData {
+  static final Logger LOG = LoggerFactory.getLogger(KeyValueContainerData.class);
 
   // Yaml Tag used for KeyValueContainerData.
   public static final Tag KEYVALUE_YAML_TAG = new Tag("KeyValueContainerData");
@@ -198,12 +200,12 @@ public class KeyValueContainerData extends ContainerData {
    */
   public void updateBlockCommitSequenceId(long id) {
     final long old = blockCommitSequenceId;
-    if (id < old) {
-      throw new IllegalStateException("Container " + getContainerID()
-          + " updateBlockCommitSequenceId from higher value " + old
-          + " to a lower value " + id);
-    }
     this.blockCommitSequenceId = id;
+    if (id < old) {
+      LOG.error("Container " + getContainerID()
+          + " updateBlockCommitSequenceId from higher value " + old
+          + " to a lower value " + id, new Throwable("TRACE"));
+    }
   }
 
   /**

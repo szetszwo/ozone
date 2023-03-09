@@ -204,7 +204,7 @@ public class BlockManagerImpl implements BlockManager {
       }
 
       if (bcsId != 0) {
-        container.updateBlockCommitSequenceId(bcsId);
+        container.updateBlockCommitSequenceId(bcsId);  //FIXME: update to a lower value
       }
 
       // Increment block count and add block to pendingPutBlockCache
