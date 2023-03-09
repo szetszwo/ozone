@@ -33,7 +33,9 @@ import org.apache.hadoop.hdds.security.x509.SecurityConfig;
 import org.apache.hadoop.hdds.security.x509.certificate.client.CertificateClient;
 import org.apache.hadoop.hdds.utils.HAUtils;
 import org.apache.hadoop.hdds.utils.HddsServerUtil;
+import org.apache.hadoop.ozone.HddsDatanodeService;
 import org.apache.hadoop.ozone.container.common.helpers.ContainerMetrics;
+import org.apache.hadoop.ozone.container.common.impl.ContainerData;
 import org.apache.hadoop.ozone.container.common.impl.ContainerSet;
 import org.apache.hadoop.ozone.container.common.impl.HddsDispatcher;
 import org.apache.hadoop.ozone.container.common.impl.StorageLocationReport;
@@ -53,6 +55,9 @@ import org.apache.hadoop.ozone.container.common.volume.MutableVolumeSet;
 import org.apache.hadoop.ozone.container.common.volume.StorageVolume;
 import org.apache.hadoop.ozone.container.common.volume.StorageVolume.VolumeType;
 import org.apache.hadoop.ozone.container.common.volume.StorageVolumeChecker;
+import org.apache.hadoop.ozone.container.keyvalue.KeyValueContainerData;
+import org.apache.hadoop.ozone.container.keyvalue.KeyValueHandler;
+import org.apache.hadoop.ozone.container.keyvalue.impl.ContainerBlockSnapshot;
 import org.apache.hadoop.ozone.container.keyvalue.statemachine.background.BlockDeletingService;
 import org.apache.hadoop.ozone.container.keyvalue.statemachine.background.StaleRecoveringContainerScrubbingService;
 import org.apache.hadoop.ozone.container.replication.ReplicationServer;
@@ -71,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -97,6 +103,7 @@ public class OzoneContainer {
 
   private final HddsDispatcher hddsDispatcher;
   private final Map<ContainerType, Handler> handlers;
+  private final KeyValueHandler keyValueHandler;
   private final ConfigurationSource config;
   private final MutableVolumeSet volumeSet;
   private final MutableVolumeSet metaVolumeSet;
@@ -176,13 +183,18 @@ public class OzoneContainer {
       }
     };
 
+    KeyValueHandler kvHandler = null;
     for (ContainerType containerType : ContainerType.values()) {
-      handlers.put(containerType,
-          Handler.getHandlerForContainerType(
-              containerType, conf,
-              context.getParent().getDatanodeDetails().getUuidString(),
-              containerSet, volumeSet, metrics, icrSender));
+      final Handler h = Handler.getHandlerForContainerType(
+          containerType, conf,
+          context.getParent().getDatanodeDetails().getUuidString(),
+          containerSet, volumeSet, metrics, icrSender);
+      handlers.put(containerType, h);
+      if (h instanceof KeyValueHandler) {
+        kvHandler = (KeyValueHandler) h;
+      }
     }
+    this.keyValueHandler = kvHandler;
 
     SecurityConfig secConf = new SecurityConfig(conf);
     hddsDispatcher = new HddsDispatcher(config, containerSet, volumeSet,
@@ -257,8 +269,27 @@ public class OzoneContainer {
         new AtomicReference<>(InitializingStatus.UNINITIALIZED);
   }
 
+  public DatanodeDetails getDatanodeDetails() {
+    return datanodeDetails;
+  }
+
   public GrpcTlsConfig getTlsClientConfig() {
     return tlsClientConfig;
+  }
+
+  public Map<Long, ContainerBlockSnapshot> getContainerBlockSnapshots() throws IOException {
+    final ContainerSet containers = getContainerSet();
+    final Map<Long, ContainerBlockSnapshot> snapshots = new TreeMap<>();
+    for (Iterator<Container<?>> i = containers.getContainerIterator(); i.hasNext(); ) {
+      final ContainerData data = i.next().getContainerData();
+      snapshots.put(data.getContainerID(), getContainerBlockSnapshot((KeyValueContainerData) data));
+    }
+    return snapshots;
+  }
+
+  public ContainerBlockSnapshot getContainerBlockSnapshot(KeyValueContainerData container) throws IOException {
+    return keyValueHandler.getBlockManager()
+        .getContainerBlockSnapshot(container, datanodeDetails);
   }
 
   /**

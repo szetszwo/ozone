@@ -65,6 +65,7 @@ public class DatanodeDetails extends NodeImpl implements
    */
   private final UUID uuid;
   private final String uuidString;
+  private final String shortName;
 
   private String ipAddress;
   private String hostName;
@@ -106,6 +107,8 @@ public class DatanodeDetails extends NodeImpl implements
     super(hostName, networkLocation, NetConstants.NODE_COST_DEFAULT);
     this.uuid = uuid;
     this.uuidString = uuid.toString();
+    this.shortName = "dn" + uuidString.substring(uuidString.lastIndexOf('-'));
+
     this.ipAddress = ipAddress;
     this.hostName = hostName;
     this.ports = ports;
@@ -125,6 +128,8 @@ public class DatanodeDetails extends NodeImpl implements
         datanodeDetails.getCost());
     this.uuid = datanodeDetails.uuid;
     this.uuidString = uuid.toString();
+    this.shortName = "dn" + uuidString.substring(uuidString.lastIndexOf('-'));
+
     this.ipAddress = datanodeDetails.ipAddress;
     this.hostName = datanodeDetails.hostName;
     this.ports = datanodeDetails.ports;

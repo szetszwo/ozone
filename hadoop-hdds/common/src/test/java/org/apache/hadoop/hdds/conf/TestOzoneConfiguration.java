@@ -300,4 +300,15 @@ public class TestOzoneConfiguration {
     out.write("</tag>");
     out.write("</property>\n");
   }
+
+  @Test
+  public void testGetStorageSize() {
+    final OzoneConfiguration conf = new OzoneConfiguration();
+    final String key = "abc";
+    final long size = (1L << 60) - 1;
+    conf.setStorageSize(key, size, StorageUnit.BYTES);
+    final long computed = (long) conf.getStorageSize(key, "1G", StorageUnit.BYTES);
+    Assertions.assertEquals(size, computed);
+  }
+
 }

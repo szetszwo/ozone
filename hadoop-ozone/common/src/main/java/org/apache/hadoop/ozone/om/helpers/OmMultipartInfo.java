@@ -74,4 +74,14 @@ public class OmMultipartInfo {
   public String getUploadID() {
     return uploadID;
   }
+
+  @Override
+  public String toString() {
+    return "OmMultipartInfo{" +
+        "volume='" + volumeName + '\'' +
+        ", bucket='" + bucketName + '\'' +
+        ", key='" + keyName + '\'' +
+        ", uploadID='" + uploadID + '\'' +
+        '}';
+  }
 }

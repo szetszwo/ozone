@@ -67,4 +67,14 @@ public class OmMultipartUploadCompleteInfo {
   public void setHash(String hash) {
     this.hash = hash;
   }
+
+  @Override
+  public String toString() {
+    return "OmMultipartUploadCompleteInfo{" +
+        "volume='" + volume + '\'' +
+        ", bucket='" + bucket + '\'' +
+        ", key='" + key + '\'' +
+        ", hash='" + hash + '\'' +
+        '}';
+  }
 }

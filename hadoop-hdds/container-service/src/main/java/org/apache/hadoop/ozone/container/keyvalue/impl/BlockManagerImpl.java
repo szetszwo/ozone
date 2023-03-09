@@ -25,11 +25,13 @@ import java.util.List;
 import org.apache.hadoop.hdds.client.BlockID;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.StorageUnit;
+import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.ozone.container.common.helpers.BlockData;
+import org.apache.hadoop.ozone.container.common.interfaces.BlockIterator;
 import org.apache.hadoop.ozone.container.common.interfaces.Container;
 import org.apache.hadoop.ozone.container.common.interfaces.DBHandle;
 import org.apache.hadoop.ozone.container.keyvalue.KeyValueContainer;
@@ -183,17 +185,26 @@ public class BlockManagerImpl implements BlockManager {
             containerData.getBytesUsed());
 
         // Set Block Count for a container.
+        long oldBlockCount = -1;
         if (incrBlockCount) {
+          oldBlockCount = containerData.getBlockCount();
           db.getStore().getMetadataTable().putWithBatch(
               batch, containerData.blockCountKey(),
-              containerData.getBlockCount() + 1);
+              oldBlockCount + 1); //FIXME: non-atomic increment?
         }
 
         db.getStore().getBatchHandler().commitBatchOperation(batch);
+        if (oldBlockCount != -1) {
+          final long newBlockCount = containerData.getBlockCount();
+          if (newBlockCount != oldBlockCount) {
+            LOG.warn("Container {}: Unexpected block count changed from {} to {}",
+                containerData.getContainerID(), oldBlockCount, newBlockCount);
+          }
+        }
       }
 
       if (bcsId != 0) {
-        container.updateBlockCommitSequenceId(bcsId);
+        container.updateBlockCommitSequenceId(bcsId);  //FIXME: update to a lower value
       }
 
       // Increment block count and add block to pendingPutBlockCache
@@ -262,6 +273,21 @@ public class BlockManagerImpl implements BlockManager {
       }
       return blockData;
     }
+  }
+
+  public ContainerBlockSnapshot getContainerBlockSnapshot(
+      KeyValueContainerData container, DatanodeDetails datanode)
+      throws IOException {
+    final ContainerBlockSnapshot snapshot = new ContainerBlockSnapshot(datanode, container);
+
+    try (DBHandle db = BlockUtils.getDB(container, config);
+         BlockIterator<BlockData> i = db.getStore().getBlockIterator(container.getContainerID())) {
+      for(; i.hasNext(); ) {
+        final BlockData b = i.nextBlock();
+        snapshot.putNonExisting(b.getBlockID().getLocalID(), b);
+      }
+    }
+    return snapshot;
   }
 
   /**

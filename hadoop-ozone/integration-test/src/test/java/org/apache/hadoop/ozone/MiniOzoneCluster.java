@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.ozone;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +70,16 @@ public interface MiniOzoneCluster {
 
   static Builder newHABuilder(OzoneConfiguration conf) {
     return new MiniOzoneHAClusterImpl.Builder(conf);
+  }
+
+  String getClusterId();
+
+  default String getName() {
+    return getClass().getSimpleName() + "-" + getClusterId();
+  }
+
+  default File getDir() {
+    return new File(GenericTestUtils.getTempPath(getName()));
   }
 
   /**

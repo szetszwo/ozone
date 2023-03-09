@@ -106,4 +106,11 @@ public class OzoneKeyDetails extends OzoneKey {
   public OzoneInputStream getContent() throws IOException {
     return this.contentSupplier.get();
   }
+
+  @Override
+  public String toString() {
+    return super.toString() +
+        ", locations=" + ozoneKeyLocations;
+
+  }
 }

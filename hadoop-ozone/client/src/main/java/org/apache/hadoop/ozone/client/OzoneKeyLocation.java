@@ -90,4 +90,14 @@ public class OzoneKeyLocation {
     return keyOffset;
   }
 
+  @Override
+  public String toString() {
+    return "OzoneKeyLocation{" +
+        "containerID=" + containerID +
+        ", localID=" + localID +
+        ", length=" + length +
+        ", offset=" + offset +
+        ", keyOffset=" + keyOffset +
+        '}';
+  }
 }

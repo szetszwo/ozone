@@ -27,9 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
+import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
@@ -60,8 +62,6 @@ import org.apache.hadoop.hdds.protocol.proto
     .StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction;
 import org.apache.hadoop.ozone.container.common.statemachine.DatanodeConfiguration;
 
-import com.google.common.collect.Lists;
-
 import static org.apache.hadoop.ozone.OzoneConsts.SCHEMA_V1;
 import static org.apache.hadoop.ozone.OzoneConsts.SCHEMA_V2;
 import static org.apache.hadoop.ozone.OzoneConsts.SCHEMA_V3;
@@ -77,8 +77,11 @@ import org.slf4j.LoggerFactory;
 
 public class BlockDeletingService extends BackgroundService {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(BlockDeletingService.class);
+  static String getName(DatanodeDetails d) {
+    final String uuid = d.getUuidString();
+    return "dn" + uuid.substring(uuid.lastIndexOf('-'))
+        + "-" + BlockDeletingService.class.getSimpleName();
+  }
 
   private OzoneContainer ozoneContainer;
   private ContainerDeletionChoosingPolicy containerDeletionPolicy;
@@ -95,7 +98,7 @@ public class BlockDeletingService extends BackgroundService {
                               long serviceInterval, long serviceTimeout,
                               TimeUnit timeUnit, int workerSize,
                               ConfigurationSource conf) {
-    super("BlockDeletingService", serviceInterval, timeUnit,
+    super(getName(ozoneContainer.getDatanodeDetails()), serviceInterval, timeUnit,
         workerSize, serviceTimeout);
     this.ozoneContainer = ozoneContainer;
     try {
@@ -117,9 +120,9 @@ public class BlockDeletingService extends BackgroundService {
    */
   public static class ContainerBlockInfo {
     private final ContainerData containerData;
-    private final Long numBlocksToDelete;
+    private final long numBlocksToDelete;
 
-    public ContainerBlockInfo(ContainerData containerData, Long blocks) {
+    public ContainerBlockInfo(ContainerData containerData, long blocks) {
       this.containerData = containerData;
       this.numBlocksToDelete = blocks;
     }
@@ -128,17 +131,19 @@ public class BlockDeletingService extends BackgroundService {
       return containerData;
     }
 
-    public Long getBlocks() {
+    public long getBlocks() {
       return numBlocksToDelete;
     }
 
   }
 
 
+  private final AtomicLong deleteBlockCount = new AtomicLong();
+
   @Override
   public BackgroundTaskQueue getTasks() {
     BackgroundTaskQueue queue = new BackgroundTaskQueue();
-    List<ContainerBlockInfo> containers = Lists.newArrayList();
+    final List<ContainerBlockInfo> containers;
     try {
       // We at most list a number of containers a time,
       // in case there are too many containers and start too many workers.
@@ -154,6 +159,9 @@ public class BlockDeletingService extends BackgroundService {
         containerBlockInfos =
             new BlockDeletingTask(containerBlockInfo.containerData,
                 TASK_PRIORITY_DEFAULT, containerBlockInfo.numBlocksToDelete);
+        final long newDeleteBlockCount = deleteBlockCount.addAndGet(containerBlockInfo.getBlocks());
+        LOG.info("{}: adding {}, newDeleteBlockCount={}",
+            getServiceName(), containerBlockInfos, newDeleteBlockCount);
         queue.add(containerBlockInfos);
         totalBlocks += containerBlockInfo.numBlocksToDelete;
       }
@@ -280,6 +288,13 @@ public class BlockDeletingService extends BackgroundService {
       this.priority = priority;
       this.containerData = (KeyValueContainerData) containerName;
       this.blocksToDelete = blocksToDelete;
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName()
+          + "[Container " + containerData.getContainerID()
+          + ", blocksToDelete=" + blocksToDelete + "]";
     }
 
     @Override

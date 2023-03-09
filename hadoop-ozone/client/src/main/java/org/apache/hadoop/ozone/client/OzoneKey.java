@@ -187,4 +187,16 @@ public class OzoneKey {
     return replicationConfig;
   }
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() +
+        ": volume='" + volumeName + '\'' +
+        ", bucket='" + bucketName + '\'' +
+        ", name='" + name + '\'' +
+        ", dataSize=" + dataSize +
+        ", cTime=" + creationTime +
+        ", mTime=" + modificationTime +
+        ", replication=" + replicationConfig +
+        ", metadata=" + metadata;
+  }
 }
