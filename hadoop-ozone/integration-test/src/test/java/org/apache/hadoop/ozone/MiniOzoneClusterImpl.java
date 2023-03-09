@@ -25,8 +25,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.TreeMap;
@@ -103,6 +105,7 @@ import static org.apache.hadoop.ozone.recon.ReconServerConfigKeys.OZONE_RECON_DB
 import static org.apache.hadoop.ozone.recon.ReconServerConfigKeys.OZONE_RECON_OM_SNAPSHOT_DB_DIR;
 import static org.apache.hadoop.ozone.recon.ReconServerConfigKeys.OZONE_RECON_SCM_DB_DIR;
 import org.hadoop.ozone.recon.codegen.ReconSqlDbConfig;
+import org.jetbrains.annotations.NotNull;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -466,7 +469,7 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
     return map;
   }
 
-  static class BlockKey {
+  static final class BlockKey implements Comparable<BlockKey> {
     static int getDatanodeIndex(String blockPath) {
       //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
       final String datanode = "datanode-";
@@ -519,6 +522,35 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
 
     public int getDatanodeIndex() {
       return datanodeIndex;
+    }
+
+    static final Comparator<BlockKey> DN_CMP
+        = Comparator.comparingInt(BlockKey::getDatanodeIndex);
+    static final Comparator<BlockKey> CMP = DN_CMP
+        .thenComparingLong(BlockKey::getContainerId)
+        .thenComparingLong(BlockKey::getBlockId);
+
+    @Override
+    public int compareTo(@NotNull BlockKey that) {
+      return CMP.compare(this, that);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      } else if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      final BlockKey that = (BlockKey) obj;
+      return blockId == that.blockId
+          && containerId == that.containerId
+          && datanodeIndex == that.datanodeIndex;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(blockId, containerId, datanodeIndex);
     }
   }
 

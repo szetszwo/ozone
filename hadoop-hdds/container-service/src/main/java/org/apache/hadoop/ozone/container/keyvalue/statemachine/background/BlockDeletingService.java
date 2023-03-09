@@ -160,8 +160,7 @@ public class BlockDeletingService extends BackgroundService {
             new BlockDeletingTask(containerBlockInfo.containerData,
                 TASK_PRIORITY_DEFAULT, containerBlockInfo.numBlocksToDelete);
         final long newDeleteBlockCount = deleteBlockCount.addAndGet(containerBlockInfo.getBlocks());
-        LOG.info("{}: adding {}, newDeleteBlockCount={}",
-            getServiceName(), containerBlockInfos, newDeleteBlockCount);
+        LOG.info("adding {}, newDeleteBlockCount={}", containerBlockInfos, newDeleteBlockCount);
         queue.add(containerBlockInfos);
         totalBlocks += containerBlockInfo.numBlocksToDelete;
       }
