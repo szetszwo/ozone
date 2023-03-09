@@ -466,68 +466,107 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
     return map;
   }
 
-  public void verifyBlockFiles(List<File> files) throws IOException {
-    final List<HddsDatanodeService> datanodes = getHddsDatanodes();
-    final Map<DatanodeDetails, Map<Long, ContainerBlockSnapshot>> snapshots = getContainerBlockSnapshots();
+  static class BlockKey {
+    static int getDatanodeIndex(String blockPath) {
+      //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
+      final String datanode = "datanode-";
+      final int i = blockPath.indexOf(datanode) + datanode.length();
+      final int j = blockPath.indexOf("/data-", i);
+      return Integer.parseInt(blockPath.substring(i, j));
+    }
 
-    final List<BlockData> found = new ArrayList<>();
+    static long getContainerId(String blockPath) {
+      //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
+      final String containerDir = "containerDir";
+      final int c = blockPath.indexOf(containerDir);
+      final int i = blockPath.indexOf('/', c) + 1;
+      final int j = blockPath.indexOf("/chunks/", i);
+      return Long.parseLong(blockPath.substring(i, j));
+    }
 
-    for(File f : files) {
-      final String blockPath = f.getPath();
+    static long getBlockId(String blockPath) {
+      //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
+      final String block = ".block";
+      final int i = blockPath.lastIndexOf('/') + 1;
+      final int j = blockPath.lastIndexOf(block);
+      return Long.parseLong(blockPath.substring(i, j));
+    }
+
+    static BlockKey parse(String blockPath) {
       final long blockId = getBlockId(blockPath);
       final long containerId = getContainerId(blockPath);
       final int datanodeIndex = getDatanodeIndex(blockPath);
+      return new BlockKey(blockId, containerId, datanodeIndex);
+    }
 
+    private final long blockId;
+    private final long containerId;
+    private final int datanodeIndex;
+
+    BlockKey(long blockId, long containerId, int datanodeIndex) {
+      this.blockId = blockId;
+      this.containerId = containerId;
+      this.datanodeIndex = datanodeIndex;
+    }
+
+    public long getBlockId() {
+      return blockId;
+    }
+
+    public long getContainerId() {
+      return containerId;
+    }
+
+    public int getDatanodeIndex() {
+      return datanodeIndex;
+    }
+  }
+
+  public void verifyBlockFiles(List<File> files) throws IOException {
+    final List<HddsDatanodeService> datanodes = getHddsDatanodes();
+    final Map<DatanodeDetails, Map<Long, ContainerBlockSnapshot>> snapshots = getContainerBlockSnapshots();
+    final File dir = getDir();
+
+    final Map<BlockKey, BlockData> found = new TreeMap<>();
+
+    for(File f : files) {
+      final String blockPath = f.getPath();
+      final File blockFile = new File(dir, blockPath);
+      if (!blockFile.isFile()) {
+        LOG.info("Not a file: {}", blockPath);
+        continue;
+      }
+
+      final BlockKey blockKey = BlockKey.parse(blockPath);
+
+      final int datanodeIndex = blockKey.getDatanodeIndex();
       final DatanodeDetails d = datanodes.get(datanodeIndex).getDatanodeDetails();
       if (d == null) {
         LOG.info("datanodeIndex {} not found: {}", datanodeIndex, blockPath);
         continue;
       }
       final Map<Long, ContainerBlockSnapshot> datanode = snapshots.get(d);
+      final long containerId = blockKey.getContainerId();
       final ContainerBlockSnapshot container = datanode.get(containerId);
       if (container == null) {
         LOG.info("containerId {} not found: {}", containerId, blockPath);
         continue;
       }
-      final BlockData block = container.getBlock(blockId);
-      if (block == null) {
-        LOG.info("block {} not found: {}", block, blockPath);
+      final long blockId = blockKey.getBlockId();
+      final BlockData blockData = container.getBlock(blockId);
+      if (blockData == null) {
+        LOG.info("block {} not found: {}", blockData, blockPath);
         continue;
       }
 
-      final long onDiskSize = f.length();
-      if (onDiskSize != block.getSize()) {
-        LOG.info("block {} size not matched: onDiskSize={}, {}", block, onDiskSize, blockPath);
+      final long onDiskSize = blockFile.length();
+      if (onDiskSize != blockData.getSize()) {
+        LOG.info("block {} size not matched: onDiskSize={}, {}", blockData, onDiskSize, blockPath);
         continue;
       }
 
-      found.add(block);
+      found.put(blockKey, blockData);
     }
-  }
-
-  static int getDatanodeIndex(String blockPath) {
-    //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
-    final String datanode = "datanode-";
-    final int i = blockPath.indexOf(datanode) + datanode.length();
-    final int j = blockPath.indexOf("/data-", i);
-    return Integer.parseInt(blockPath.substring(i, j));
-  }
-
-  static long getContainerId(String blockPath) {
-    //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
-    final String containerDir = "containerDir";
-    final int c = blockPath.indexOf(containerDir);
-    final int i = blockPath.indexOf('/', c) + 1;
-    final int j = blockPath.indexOf("/chunks/", i);
-    return Long.parseLong(blockPath.substring(i, j));
-  }
-
-  static long getBlockId(String blockPath) {
-    //datanode-2/data-0/containers/hdds/36464ae8-81e0-4a63-a451-f2f932bee38b/current/containerDir0/25/chunks/111677748019203328.block
-    final String block = ".block";
-    final int i = blockPath.lastIndexOf('/') + 1;
-    final int j = blockPath.lastIndexOf(block);
-    return Long.parseLong(blockPath.substring(i, j));
   }
 
   @Override
