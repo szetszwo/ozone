@@ -450,11 +450,16 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
     return scm.getClientProtocolServer().getScmInfo().getClusterId();
   }
 
-  public void printContainerInfo() {
+  public void printContainerInfo(boolean forceClose) {
     final List<ContainerInfo> containers = scm.getContainerManager().getContainers();
     LOG.info("{} container(s)", containers.size());
     for(ContainerInfo c : containers) {
-      LOG.info("  {}", c);
+      if (forceClose && c.isOpen()) {
+        LOG.info("  FORCE CLOSE {}", c);
+        scm.getReplicationManager().sendCloseContainerEvent(c.containerID());
+      } else {
+        LOG.info("  {}", c);
+      }
     }
   }
 

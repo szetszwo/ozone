@@ -164,6 +164,10 @@ public class DatanodeDetails extends NodeImpl implements
     return uuidString;
   }
 
+  public String getShortName() {
+    return shortName;
+  }
+
   /**
    * Sets the IP address of Datanode.
    *

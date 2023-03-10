@@ -20,6 +20,7 @@
 
 package org.apache.hadoop.ozone.s3.endpoint;
 
+import org.apache.hadoop.hdds.HddsConfigKeys;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.conf.StorageUnit;
@@ -77,6 +78,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntPredicate;
+
+import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_COMMAND_STATUS_REPORT_INTERVAL;
+import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_CONTAINER_REPORT_INTERVAL;
+import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_HEARTBEAT_INTERVAL;
+import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_NODE_REPORT_INTERVAL;
+import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_PIPELINE_REPORT_INTERVAL;
+import static org.apache.hadoop.hdds.scm.ScmConfigKeys.HDDS_SCM_WATCHER_TIMEOUT;
+import static org.apache.hadoop.hdds.scm.ScmConfigKeys.OZONE_SCM_STALENODE_INTERVAL;
 
 /**
  * Class to test Multipart upload end to end.
@@ -146,12 +155,30 @@ public class TestMultipartUpload {
     final ScmConfig scmConf = CONF.getObject(ScmConfig.class);
     scmConf.setBlockDeletionInterval(ONE_SECOND);
     CONF.setFromObject(scmConf);
-    CONF.setStorageSize(ScmConfigKeys.OZONE_SCM_CONTAINER_SIZE, 1, StorageUnit.MB);
+    CONF.setStorageSize(ScmConfigKeys.OZONE_SCM_CONTAINER_SIZE,
+        1, StorageUnit.MB);
 
     final DatanodeConfiguration datanodeConf = CONF.getObject(DatanodeConfiguration.class);
     datanodeConf.setBlockDeletionInterval(ONE_SECOND);
 //    datanodeConf.setRecoveringContainerScrubInterval(ONE_SECOND);
     CONF.setFromObject(datanodeConf);
+
+    final int reportIntervalMs = 1000;
+    CONF.setTimeDuration(HDDS_HEARTBEAT_INTERVAL,
+        reportIntervalMs, TimeUnit.MILLISECONDS);
+    CONF.setTimeDuration(HDDS_CONTAINER_REPORT_INTERVAL,
+        reportIntervalMs, TimeUnit.MILLISECONDS);
+    CONF.setTimeDuration(HDDS_COMMAND_STATUS_REPORT_INTERVAL,
+        reportIntervalMs, TimeUnit.MILLISECONDS);
+    CONF.setTimeDuration(HDDS_NODE_REPORT_INTERVAL,
+        reportIntervalMs, TimeUnit.MILLISECONDS);
+    CONF.setTimeDuration(HDDS_PIPELINE_REPORT_INTERVAL,
+        reportIntervalMs, TimeUnit.MILLISECONDS);
+
+    CONF.setTimeDuration(HDDS_SCM_WATCHER_TIMEOUT,
+        reportIntervalMs, TimeUnit.MILLISECONDS);
+    CONF.setTimeDuration(OZONE_SCM_STALENODE_INTERVAL,
+        3, TimeUnit.SECONDS);
 
     cluster = (MiniOzoneClusterImpl) MiniOzoneCluster.newBuilder(CONF)
         .setNumDatanodes(5)
@@ -275,7 +302,7 @@ public class TestMultipartUpload {
       } catch (Exception e) {
         throw new IllegalStateException("Failed to runTestMultipart " + name, e);
       }
-      cluster.printContainerInfo();
+      cluster.printContainerInfo(false);
     }
 
     if (decideToDelete != null) {
@@ -319,7 +346,8 @@ public class TestMultipartUpload {
           return;
         }
         if (blockFileCount < expectedCount) {
-          Assert.fail("blockFileCount = " + blockFileCount + " < " + numParts * 3);
+          Assert.fail("blockFileCount = " + blockFileCount
+              + " < expectedCount = " + expectedCount);
         }
       }
 
@@ -328,7 +356,7 @@ public class TestMultipartUpload {
       if (!deleted) {
         checkKey(keyName, numParts, generator);
       }
-      cluster.printContainerInfo();
+      cluster.printContainerInfo(true);
     }
   }
 

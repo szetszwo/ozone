@@ -22,6 +22,9 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.hadoop.hdds.protocol.proto
     .StorageContainerDatanodeProtocolProtos.ContainerReportsProto;
 import org.apache.hadoop.hdds.utils.HddsServerUtil;
+import org.apache.hadoop.ozone.container.common.statemachine.DatanodeStateMachine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +33,7 @@ import static org.apache.hadoop.hdds.HddsConfigKeys
     .HDDS_CONTAINER_REPORT_INTERVAL;
 import static org.apache.hadoop.hdds.HddsConfigKeys
     .HDDS_CONTAINER_REPORT_INTERVAL_DEFAULT;
+import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_HEARTBEAT_INTERVAL;
 
 
 /**
@@ -49,6 +53,8 @@ import static org.apache.hadoop.hdds.HddsConfigKeys
  */
 public class ContainerReportPublisher extends
     ReportPublisher<ContainerReportsProto> {
+  static final Logger LOG =
+      LoggerFactory.getLogger(ContainerReportPublisher.class);
 
   private Long containerReportInterval = null;
 
@@ -60,8 +66,14 @@ public class ContainerReportPublisher extends
           HDDS_CONTAINER_REPORT_INTERVAL_DEFAULT,
           TimeUnit.MILLISECONDS);
 
+
+      final String name = getContext().getParent().getDatanodeDetails().getShortName();
+      LOG.info("{}: {} = {}ms", name, HDDS_CONTAINER_REPORT_INTERVAL, containerReportInterval);
+
       long heartbeatFrequency = HddsServerUtil.getScmHeartbeatInterval(
           getConf());
+
+      LOG.info("{}: {} = {}ms", name, HDDS_HEARTBEAT_INTERVAL, heartbeatFrequency);
 
       Preconditions.checkState(
           heartbeatFrequency <= containerReportInterval,

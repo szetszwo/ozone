@@ -17,6 +17,9 @@
  */
 package org.apache.hadoop.hdds.conf;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  * Defines read-only contract of Configuration objects.
  */
 public interface ConfigurationSource {
+  Logger LOG = LoggerFactory.getLogger(ConfigurationSource.class);
 
   String[] EMPTY_STRING_ARRAY = {};
 
@@ -259,29 +263,35 @@ public interface ConfigurationSource {
   default long getTimeDuration(String name, long defaultValue,
       TimeUnit unit) {
     String vStr = get(name);
+    final long t;
     if (null == vStr) {
-      return defaultValue;
+      t = defaultValue;
     } else {
-      return TimeDurationUtil.getTimeDurationHelper(name, vStr, unit);
+      t = TimeDurationUtil.getTimeDurationHelper(name, vStr, unit);
     }
+    LOG.info("{} = {} {} ({})", name, t, unit,
+        vStr == null? "default": "custom");
+    return t;
   }
 
   default long getTimeDuration(String name, String defaultValue,
       TimeUnit unit) {
-    String vStr = get(name);
+    final String vStr = get(name);
+    final long t;
     if (null == vStr) {
-      return TimeDurationUtil.getTimeDurationHelper(name, defaultValue, unit);
+      t = TimeDurationUtil.getTimeDurationHelper(name, defaultValue, unit);
     } else {
-      return TimeDurationUtil.getTimeDurationHelper(name, vStr, unit);
+      t = TimeDurationUtil.getTimeDurationHelper(name, vStr, unit);
     }
+    LOG.info("{} = {} {} ({})", name, t, unit,
+        vStr == null? "default": "custom");
+    return t;
   }
 
   default double getStorageSize(String name, String defaultValue,
       StorageUnit targetUnit) {
-    String vString = get(name);
-    if (vString == null) {
-      vString = defaultValue;
-    }
+    final String got = get(name);
+    final String vString = got != null? got: defaultValue;
 
     // Please note: There is a bit of subtlety here. If the user specifies
     // the default unit as "1GB", but the requested unit is MB, we will return
@@ -292,7 +302,10 @@ public interface ConfigurationSource {
     StorageSize measure = StorageSize.parse(vString);
 
     double byteValue = measure.getUnit().toBytes(measure.getValue());
-    return targetUnit.fromBytes(byteValue);
+    final double s = targetUnit.fromBytes(byteValue);
+    LOG.info("{} = {} {} ({})", name, (long)s, targetUnit,
+        got == null? "default": "custom");
+    return s;
   }
 
   default Collection<String> getTrimmedStringCollection(String key) {
