@@ -344,6 +344,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager {
 
   @Override
   public Table<String, OmMultipartKeyInfo> getMultipartInfoTable() {
+    //FIXME
     return multipartInfoTable;
   }
 

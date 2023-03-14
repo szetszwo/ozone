@@ -20,7 +20,6 @@
 
 package org.apache.hadoop.ozone.s3.endpoint;
 
-import org.apache.hadoop.hdds.HddsConfigKeys;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.conf.StorageUnit;
@@ -77,6 +76,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 
 import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_COMMAND_STATUS_REPORT_INTERVAL;
@@ -85,6 +85,7 @@ import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_HEARTBEAT_INTERVAL;
 import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_NODE_REPORT_INTERVAL;
 import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_PIPELINE_REPORT_INTERVAL;
 import static org.apache.hadoop.hdds.scm.ScmConfigKeys.HDDS_SCM_WATCHER_TIMEOUT;
+import static org.apache.hadoop.hdds.scm.ScmConfigKeys.OZONE_SCM_HA_RATIS_SNAPSHOT_THRESHOLD;
 import static org.apache.hadoop.hdds.scm.ScmConfigKeys.OZONE_SCM_STALENODE_INTERVAL;
 
 /**
@@ -180,6 +181,8 @@ public class TestMultipartUpload {
     CONF.setTimeDuration(OZONE_SCM_STALENODE_INTERVAL,
         3, TimeUnit.SECONDS);
 
+    CONF.setInt(OZONE_SCM_HA_RATIS_SNAPSHOT_THRESHOLD, 1);
+
     cluster = (MiniOzoneClusterImpl) MiniOzoneCluster.newBuilder(CONF)
         .setNumDatanodes(5)
         .setTotalPipelineNumLimit(1)
@@ -266,6 +269,11 @@ public class TestMultipartUpload {
     runTestMultipart(N, i -> i % 2 == 1);
   }
 
+  @Test
+  public void testOmDbSize() throws Exception {
+    runTestMultipart(1, null);
+  }
+
   static void runTestMultipart(int n, IntPredicate decideToDelete) {
     runTestMultipart(n, decideToDelete, 0);
   }
@@ -305,7 +313,7 @@ public class TestMultipartUpload {
       cluster.printContainerInfo(false);
     }
 
-    if (decideToDelete != null) {
+    if (n == 1 || decideToDelete != null) {
       try {
         checkKey(keyName, numParts, generator, deleted);
       } catch (Exception e) {
@@ -323,7 +331,7 @@ public class TestMultipartUpload {
       du(clusterDir);
 
       // find .block files on disks
-      final List<File> files = find(clusterDir);
+      final List<File> files = find(clusterDir, "*.block");
       cluster.verifyBlockFiles(files);
 
       final int blockFileCount = files.size();
@@ -362,9 +370,14 @@ public class TestMultipartUpload {
 
   public static void main(String[] args) throws Exception {
     final File dir = new File(".");
-    LOG.info("dir {}", dir);
     exec(dir, "pwd");
-    find(dir);
+
+    for(File testDir: find(dir, "test-dir")) {
+      if (testDir.isDirectory()) {
+        du(testDir);
+//        FileUtils.deleteFully(testDir);
+      }
+    }
   }
 
   static Consumer<String> limitedPrint(int limit) {
@@ -379,14 +392,18 @@ public class TestMultipartUpload {
     };
   }
 
-  static Consumer<String> getFile(List<File> files) {
-    return s -> files.add(new File(s));
+  static Consumer<String> addAnyFile(Consumer<File> addFile) {
+    return s -> addFile.accept(new File(s));
   }
 
+  static List<File> find(File dir, String pattern) throws Exception {
+    return find(dir, pattern, TestMultipartUpload::addAnyFile);
+  }
 
-  static List<File> find(File dir) throws Exception {
+  static List<File> find(File dir, String pattern,
+      Function<Consumer<File>, Consumer<String>> addFile) throws Exception {
     final List<File> files = new ArrayList<>();
-    final int count = exec(dir, "find . -name *.block", limitedPrint(10), getFile(files));
+    final int count = exec(dir, "find . -name " + pattern, limitedPrint(10), addFile.apply(files::add));
     Assert.assertEquals(count, files.size());
     return Collections.unmodifiableList(files);
   }
