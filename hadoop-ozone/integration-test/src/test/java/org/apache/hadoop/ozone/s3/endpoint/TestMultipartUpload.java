@@ -271,7 +271,9 @@ public class TestMultipartUpload {
 
   @Test
   public void testOmDbSize() throws Exception {
-    runTestMultipart(1, null);
+    try (AutoCloseable auto = TIMER_LOG.start("testOmDbSize")) {
+      runTestMultipart(1, null);
+    }
     du(cluster.getDir());
   }
 
