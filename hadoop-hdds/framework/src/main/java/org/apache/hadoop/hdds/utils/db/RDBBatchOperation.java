@@ -22,20 +22,19 @@ import org.apache.hadoop.hdds.utils.db.RocksDatabase.ColumnFamily;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedWriteBatch;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedWriteOptions;
 import org.apache.ratis.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static org.apache.hadoop.hdds.PrintUtils.byteSize2String;
+import static org.apache.hadoop.hdds.PrintUtils.print;
+import static org.apache.hadoop.hdds.PrintUtils.println;
+
 /**
  * Batch operation implementation for rocks db.
  */
 public class RDBBatchOperation implements BatchOperation {
-//  private static final Logger LOG
-//      = LoggerFactory.getLogger(RDBBatchOperation.class);
-
   private static final AtomicInteger OBJECT_COUNT = new AtomicInteger();
 
   private final String name = "Batch-" + OBJECT_COUNT.getAndIncrement();
@@ -57,30 +56,15 @@ public class RDBBatchOperation implements BatchOperation {
     return name;
   }
 
-  String toString(int byteSize) {
-    if (byteSize < 1024) {
-      return byteSize + " B";
-    }
-    final double k = byteSize / 1024.0;
-    if (k < 1024) {
-      return String.format("%.3f KB", k);
-    }
-    final double m = k / 1024.0;
-    if (m < 1024) {
-      return String.format("%.3f MB", m);
-    }
-    final double g = m / 1024.0;
-    return String.format("%.3f GB", g);
-  }
-
   String getBatchSizeString() {
     final int size = batchSize.get();
     if (size < 1024) {
       return "batchSize: " + size + " B";
     } else {
-      return "batchSize: " + size + " B (= " + toString(size) + ")";
+      return "batchSize: " + size + " B (= " + byteSize2String(size) + ")";
     }
   }
+
 
   public void commit(RocksDatabase db) throws IOException {
     println(() -> String.format("%s: commit (#put=%s, #del=%s): %s",
@@ -90,7 +74,7 @@ public class RDBBatchOperation implements BatchOperation {
 
   public void commit(RocksDatabase db, ManagedWriteOptions writeOptions)
       throws IOException {
-    println(() -> String.format("%s: commit (#put=%s, #del=%s): %s",
+    println(() -> String.format("%s: commit-with-writeOptions(#put=%s, #del=%s): %s",
         name, putCount, delCount, getBatchSizeString()));
     db.batchWrite(writeBatch, writeOptions);
   }
@@ -107,7 +91,7 @@ public class RDBBatchOperation implements BatchOperation {
     final int newDel = delCount.incrementAndGet();
     println(() -> String.format("%s: %s delete(key: %s B), newDel=%s, newBatchSize=%s%n  del key=%s",
         name, family.getName(), key.length, newDel,
-        toString(newBatchSize), StringUtils.bytes2HexString(key).toUpperCase()));
+        byteSize2String(newBatchSize), StringUtils.bytes2HexString(key).toUpperCase()));
     family.batchDelete(writeBatch, key);
   }
 
@@ -115,13 +99,13 @@ public class RDBBatchOperation implements BatchOperation {
       throws IOException {
     final int newBatchSize = batchSize.addAndGet(key.length + value.length);
     final int newPut = putCount.incrementAndGet();
-    println(() -> String.format("%s: %s put(key: %s B, value: %s), newPut=%s, newBatchSize=%s%n  put key=%s",
-        name, family.getName(), key.length, toString(value.length), newPut,
-        toString(newBatchSize), StringUtils.bytes2HexString(key).toUpperCase()));
-    family.batchPut(writeBatch, key, value);
-  }
 
-  void println(Supplier<String> message) {
-    System.out.println(message.get());
+    final Supplier<String> message = () -> String.format(
+        "%s: %s put(key: %s B, value: %s), newPut=%s, newBatchSize=%s%n  put key=%s",
+        name, family.getName(), key.length, byteSize2String(value.length), newPut,
+        byteSize2String(newBatchSize), StringUtils.bytes2HexString(key).toUpperCase());
+    print(value.length, message);
+
+    family.batchPut(writeBatch, key, value);
   }
 }

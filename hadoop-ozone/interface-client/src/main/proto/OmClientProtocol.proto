@@ -934,7 +934,7 @@ message FileChecksumProto {
   optional MD5MD5Crc32FileChecksumProto md5Crc = 3;
 }
 
-message KeyInfo {
+message KeyInfo { //1.5 KB each object
     required string volumeName = 1;
     required string bucketName = 2;
     required string keyName = 3;

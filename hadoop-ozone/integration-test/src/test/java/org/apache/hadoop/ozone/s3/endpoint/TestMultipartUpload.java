@@ -146,7 +146,7 @@ public class TestMultipartUpload {
 
     final BucketLayout layout = BucketLayout.FILE_SYSTEM_OPTIMIZED;
     CONF.set(OMConfigKeys.OZONE_DEFAULT_BUCKET_LAYOUT, layout.name());
-    CONF.setBoolean(OMConfigKeys.OZONE_OM_RATIS_ENABLE_KEY, false);
+    CONF.setBoolean(OMConfigKeys.OZONE_OM_RATIS_ENABLE_KEY, true);
 
     CONF.setTimeDuration(OMConfigKeys.OZONE_DIR_DELETING_SERVICE_INTERVAL,
         5, TimeUnit.SECONDS);
@@ -272,6 +272,7 @@ public class TestMultipartUpload {
   @Test
   public void testOmDbSize() throws Exception {
     runTestMultipart(1, null);
+    du(cluster.getDir());
   }
 
   static void runTestMultipart(int n, IntPredicate decideToDelete) {

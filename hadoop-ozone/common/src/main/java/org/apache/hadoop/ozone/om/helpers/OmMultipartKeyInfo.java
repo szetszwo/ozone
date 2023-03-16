@@ -20,10 +20,16 @@ import org.apache.hadoop.hdds.client.ECReplicationConfig;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.MultipartKeyInfo;
 import org.apache.hadoop.ozone.protocol.proto.OzoneManagerProtocolProtos.PartKeyInfo;
+import org.apache.ratis.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Supplier;
+
+import static org.apache.hadoop.hdds.PrintUtils.ONE_MB;
+import static org.apache.hadoop.hdds.PrintUtils.print;
+import static org.apache.hadoop.hdds.PrintUtils.println;
 
 /**
  * This class represents multipart upload information for a key, which holds
@@ -234,7 +240,14 @@ public class OmMultipartKeyInfo extends WithObjectID {
     }
 
     partKeyInfoList.forEach((key, value) -> builder.addPartKeyInfoList(value));
-    return builder.build();
+    final MultipartKeyInfo proto = builder.build();
+    final int serializedSize = proto.getSerializedSize();
+    final Supplier<String> message = () -> String.format(
+        "serializedSize=%s, numParts=%s",
+        serializedSize, partKeyInfoList.size());
+    print(serializedSize, message);
+
+    return proto;
   }
 
   @Override

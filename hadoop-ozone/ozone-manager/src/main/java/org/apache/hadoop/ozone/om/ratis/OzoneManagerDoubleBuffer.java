@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -56,6 +57,7 @@ import org.apache.hadoop.util.Daemon;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.ratis.util.ExitUtils;
 
+import static org.apache.hadoop.hdds.PrintUtils.println;
 import static org.apache.hadoop.ozone.OzoneConsts.TRANSACTION_INFO_KEY;
 
 /**
@@ -73,6 +75,10 @@ public final class OzoneManagerDoubleBuffer {
   private static final Logger LOG =
       LoggerFactory.getLogger(OzoneManagerDoubleBuffer.class);
 
+  private static final AtomicInteger SWAP_COUNT = new AtomicInteger();
+
+  private AtomicReference<String> name = new AtomicReference<>(
+      "Buffer-Swap-" + SWAP_COUNT.getAndIncrement());
   // Taken unbounded queue, if sync thread is taking too long time, we
   // might end up taking huge memory to add entries to the buffer.
   // TODO: We can avoid this using unbounded queue and use queue with
@@ -545,6 +551,9 @@ public final class OzoneManagerDoubleBuffer {
    * transactions to OM DB. This method swaps the currentBuffer and readyBuffer.
    */
   private synchronized void setReadyBuffer() {
+    final String swap = "Buffer-Swap-" + SWAP_COUNT.getAndIncrement();
+    name.set(swap);
+    LOG.info(swap);
     Queue<DoubleBufferEntry<OMClientResponse>> temp = currentBuffer;
     currentBuffer = readyBuffer;
     readyBuffer = temp;
