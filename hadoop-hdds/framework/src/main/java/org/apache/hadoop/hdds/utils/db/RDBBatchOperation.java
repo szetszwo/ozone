@@ -103,7 +103,7 @@ public class RDBBatchOperation implements BatchOperation {
       }
 
       /** Batch put the entire family cache. */
-      void batchPut(ManagedWriteBatch writeBatch) throws IOException {
+      void batchPut() throws IOException {
         for (Map.Entry<ByteArray, byte[]> op : putOps.entrySet()) {
           family.batchPut(writeBatch, op.getKey().bytes, op.getValue());
         }
@@ -171,9 +171,9 @@ public class RDBBatchOperation implements BatchOperation {
     }
 
     /** Batch put the entire cache. */
-    void batchPut(ManagedWriteBatch writeBatch) throws IOException {
+    void batchPut() throws IOException {
       for (Map.Entry<String, FamilyCache> e : map.entrySet()) {
-        e.getValue().batchPut(writeBatch);
+        e.getValue().batchPut();
       }
       map.clear();
     }
@@ -225,7 +225,7 @@ public class RDBBatchOperation implements BatchOperation {
   public void commit(RocksDatabase db) throws IOException {
     debug(() -> String.format("%s: commit %s",
         name, putOpCache.getCommitString()));
-    putOpCache.batchPut(writeBatch);
+    putOpCache.batchPut();
     db.batchWrite(writeBatch);
   }
 
@@ -233,7 +233,7 @@ public class RDBBatchOperation implements BatchOperation {
       throws IOException {
     debug(() -> String.format("%s: commit-with-writeOptions %s",
         name, putOpCache.getCommitString()));
-    putOpCache.batchPut(writeBatch);
+    putOpCache.batchPut();
     db.batchWrite(writeBatch, writeOptions);
   }
 
