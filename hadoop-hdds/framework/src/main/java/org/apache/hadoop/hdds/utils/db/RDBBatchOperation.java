@@ -135,21 +135,21 @@ public class RDBBatchOperation implements BatchOperation {
       void putOrDelete(byte[] key, Object val) {
         Preconditions.checkState(!isCommit, "%s is already committed.", this);
         final int keyLen = key.length;
-        final int valLen = val instanceof byte[]? ((byte[]) val).length: 0;
+        final int valLen = val instanceof byte[] ? ((byte[]) val).length : 0;
         batchSize += keyLen + valLen;
 
         final Object previousVal = ops.put(new ByteArray(key), val);
         if (previousVal != null) {
           final boolean isPut = previousVal instanceof byte[];
-          final int preLen = isPut? ((byte[]) previousVal).length: 0;
+          final int preLen = isPut ? ((byte[]) previousVal).length : 0;
           discardedSize += keyLen + preLen;
           discardedCount++;
           debug(() -> String.format("%s overwriting a previous %s", this,
-              isPut? "put (value: " + byteSize2String(preLen) + ")": "del"));
+              isPut ? "put (value: " + byteSize2String(preLen) + ")" : "del"));
         }
 
         debug(() -> String.format("%s %s, %s; key=%s", this,
-            valLen == 0? delString(keyLen) : putString(keyLen, valLen),
+            valLen == 0 ? delString(keyLen) : putString(keyLen, valLen),
             batchSizeDiscardedString(),
             StringUtils.bytes2HexString(key).toUpperCase()));
       }
