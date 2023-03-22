@@ -18,6 +18,7 @@
  */
 package org.apache.hadoop.hdds.utils.db;
 
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.hdds.utils.db.RocksDatabase.ColumnFamily;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedWriteBatch;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedWriteOptions;
@@ -39,17 +40,19 @@ import java.util.function.Supplier;
 public class RDBBatchOperation implements BatchOperation {
   static final Logger LOG = LoggerFactory.getLogger(RDBBatchOperation.class);
 
-  static void debug(Supplier<String> message) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("\n{}", message.get());
+  private static final Object DELETE_OP = new Object();
+
+  private static void debug(Supplier<String> message) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("\n{}", message.get());
     }
   }
 
-  static String byteSize2String(int length) {
-    return TraditionalBinaryPrefix.long2String(length, "B", 3);
+  private static String byteSize2String(long length) {
+    return TraditionalBinaryPrefix.long2String(length, "B", 2);
   }
 
-  static String countSize2String(int count, int size) {
+  private static String countSize2String(int count, long size) {
     return count + " (" + byteSize2String(size) + ")";
   }
 
@@ -57,12 +60,12 @@ public class RDBBatchOperation implements BatchOperation {
    * To implement {@link #equals(Object)} and {@link #hashCode()}
    * based on the contents of {@link #bytes}.
    * <p>
-   * Note that it is incorrect to use {@link #bytes#equals(Object)}
-   * and {@link #bytes#hashCode()} here since
+   * Note that it is incorrect to directly use
+   * {@link #bytes#equals(Object)} and {@link #bytes#hashCode()} here since
    * they do not use the contents of {@link #bytes} in the computations.
    * These methods simply inherit from {@link Object).
    */
-  static final class ByteArray {
+  private static final class ByteArray {
     private final byte[] bytes;
 
     ByteArray(byte[] bytes) {
@@ -86,14 +89,22 @@ public class RDBBatchOperation implements BatchOperation {
     }
   }
 
-  class PutOpCache {
-    class FamilyCache {
+  /** Cache and deduplicate db ops (put/delete). */
+  private class OpCache {
+    /** A cache for a {@link ColumnFamily}. */
+    private class FamilyCache {
       private final ColumnFamily family;
-      /** A (key -> value) map. */
-      private final Map<ByteArray, byte[]> putOps = new HashMap<>();
+      /**
+       * A (dbKey -> dbValue) map, where the dbKey type is {@link ByteArray}
+       * (see the javadoc of ByteArray) and the dbValue type is {@link Object}.
+       * When dbValue is a byte[], it represents a put-op.
+       * Otherwise, it represents a delete-op (dbValue is {@link #DELETE_OP)}).
+       */
+      private final Map<ByteArray, Object> ops = new HashMap<>();
+      private boolean isCommit;
 
-      private int batchSize;
-      private int discardedSize;
+      private long batchSize;
+      private long discardedSize;
       private int discardedCount;
       private int putCount;
       private int delCount;
@@ -102,80 +113,98 @@ public class RDBBatchOperation implements BatchOperation {
         this.family = family;
       }
 
-      /** Batch put the entire family cache. */
-      void batchPut() throws IOException {
-        for (Map.Entry<ByteArray, byte[]> op : putOps.entrySet()) {
-          family.batchPut(writeBatch, op.getKey().bytes, op.getValue());
+      /** Prepare batch write for the entire family. */
+      void prepareBatchWrite() throws IOException {
+        Preconditions.checkState(!isCommit, "%s is already committed.", this);
+        isCommit = true;
+        for (Map.Entry<ByteArray, Object> op : ops.entrySet()) {
+          final byte[] key = op.getKey().bytes;
+          final Object value = op.getValue();
+          if (value instanceof byte[]) {
+            family.batchPut(writeBatch, key, (byte[])value);
+          } else {
+            family.batchDelete(writeBatch, key);
+          }
         }
-        putOps.clear();
+        ops.clear();
+
+        debug(() -> String.format("  %s %s, #put=%s, #del=%s", this,
+            batchSizeDiscardedString(), putCount, delCount));
+      }
+
+      void putOrDelete(byte[] key, Object val) {
+        Preconditions.checkState(!isCommit, "%s is already committed.", this);
+        final int keyLen = key.length;
+        final int valLen = val instanceof byte[]? ((byte[]) val).length: 0;
+        batchSize += keyLen + valLen;
+
+        final Object previousVal = ops.put(new ByteArray(key), val);
+        if (previousVal != null) {
+          final boolean isPut = previousVal instanceof byte[];
+          final int preLen = isPut? ((byte[]) previousVal).length: 0;
+          discardedSize += keyLen + preLen;
+          discardedCount++;
+          debug(() -> String.format("%s overwriting a previous %s", this,
+              isPut? "put (value: " + byteSize2String(preLen) + ")": "del"));
+        }
+
+        debug(() -> String.format("%s %s, %s; key=%s", this,
+            valLen == 0? delString(keyLen) : putString(keyLen, valLen),
+            batchSizeDiscardedString(),
+            StringUtils.bytes2HexString(key).toUpperCase()));
       }
 
       void put(byte[] key, byte[] value) {
-        batchSize += key.length + value.length;
         putCount++;
-        final byte[] previousValue = putOps.put(new ByteArray(key), value);
-
-        if (previousValue != null) {
-          discardedSize += key.length + previousValue.length;
-          discardedCount++;
-          debug(() -> String.format("Overwriting a previous put(value: %s)",
-              byteSize2String(previousValue.length)));
-        }
-
-        debug(() -> String.format(
-            "%s: %s put(key: %s, value: %s), newPut=%s, %s; key=%s",
-            name, family.getName(), byteSize2String(key.length),
-            byteSize2String(value.length),
-            putCount, getBatchSizeDiscardedString(),
-            StringUtils.bytes2HexString(key).toUpperCase()));
+        putOrDelete(key, value);
       }
 
-      void remove(byte[] key) {
-        batchSize += key.length;
+      void delete(byte[] key) {
         delCount++;
-        final byte[] removed = putOps.remove(new ByteArray(key));
-        if (removed != null) {
-          discardedSize += key.length + removed.length;
-          discardedCount++;
-          debug(() -> String.format("Removed a previous put(value: %s)",
-              byteSize2String(removed.length)));
-        }
-
-        debug(() -> String.format(
-            "%s: %s delete(key: %s), newDel=%s, %s; key=%s",
-            name, family.getName(), byteSize2String(key.length),
-            delCount, getBatchSizeDiscardedString(),
-            StringUtils.bytes2HexString(key).toUpperCase()));
+        putOrDelete(key, DELETE_OP);
       }
 
-      String getBatchSizeDiscardedString() {
+      String putString(int keySize, int valueSize) {
+        return String.format("put(key: %s, value: %s), #put=%s",
+            byteSize2String(keySize), byteSize2String(valueSize), putCount);
+      }
+
+      String delString(int keySize) {
+        return String.format("del(key: %s), #del=%s",
+            byteSize2String(keySize), delCount);
+      }
+
+      String batchSizeDiscardedString() {
         return String.format("batchSize=%s, discarded: %s",
             byteSize2String(batchSize),
             countSize2String(discardedCount, discardedSize));
       }
+
+      @Override
+      public String toString() {
+        return name + ": " + family.getName();
+      }
     }
 
     /** A (family name -> {@link FamilyCache}) map. */
-    private final Map<String, FamilyCache> map = new HashMap<>();
+    private final Map<String, FamilyCache> name2cache = new HashMap<>();
 
-    void put(ColumnFamily family, byte[] key, byte[] value) {
-      map.computeIfAbsent(family.getName(), k -> new FamilyCache(family))
+    void put(ColumnFamily f, byte[] key, byte[] value) {
+      name2cache.computeIfAbsent(f.getName(), k -> new FamilyCache(f))
           .put(key, value);
     }
 
-    void remove(ColumnFamily family, byte[] key) {
-      final FamilyCache familyCache = map.get(family.getName());
-      if (familyCache != null) {
-        familyCache.remove(key);
-      }
+    void delete(ColumnFamily family, byte[] key) {
+      name2cache.computeIfAbsent(family.getName(), k -> new FamilyCache(family))
+          .delete(key);
     }
 
-    /** Batch put the entire cache. */
-    void batchPut() throws IOException {
-      for (Map.Entry<String, FamilyCache> e : map.entrySet()) {
-        e.getValue().batchPut();
+    /** Prepare batch write for the entire cache. */
+    void prepareBatchWrite() throws IOException {
+      for (Map.Entry<String, FamilyCache> e : name2cache.entrySet()) {
+        e.getValue().prepareBatchWrite();
       }
-      map.clear();
+      name2cache.clear();
     }
 
     String getCommitString() {
@@ -185,7 +214,7 @@ public class RDBBatchOperation implements BatchOperation {
       int discardedCount = 0;
       int discardedSize = 0;
 
-      for (FamilyCache f : map.values()) {
+      for (FamilyCache f : name2cache.values()) {
         putCount += f.putCount;
         delCount += f.delCount;
         opSize += f.batchSize;
@@ -207,7 +236,7 @@ public class RDBBatchOperation implements BatchOperation {
 
   private final String name = "Batch-" + BATCH_COUNT.getAndIncrement();
   private final ManagedWriteBatch writeBatch;
-  private final PutOpCache putOpCache = new PutOpCache();
+  private final OpCache opCache = new OpCache();
 
   public RDBBatchOperation() {
     writeBatch = new ManagedWriteBatch();
@@ -224,16 +253,16 @@ public class RDBBatchOperation implements BatchOperation {
 
   public void commit(RocksDatabase db) throws IOException {
     debug(() -> String.format("%s: commit %s",
-        name, putOpCache.getCommitString()));
-    putOpCache.batchPut();
+        name, opCache.getCommitString()));
+    opCache.prepareBatchWrite();
     db.batchWrite(writeBatch);
   }
 
   public void commit(RocksDatabase db, ManagedWriteOptions writeOptions)
       throws IOException {
     debug(() -> String.format("%s: commit-with-writeOptions %s",
-        name, putOpCache.getCommitString()));
-    putOpCache.batchPut();
+        name, opCache.getCommitString()));
+    opCache.prepareBatchWrite();
     db.batchWrite(writeBatch, writeOptions);
   }
 
@@ -244,12 +273,11 @@ public class RDBBatchOperation implements BatchOperation {
   }
 
   public void delete(ColumnFamily family, byte[] key) throws IOException {
-    putOpCache.remove(family, key);
-    family.batchDelete(writeBatch, key);
+    opCache.delete(family, key);
   }
 
   public void put(ColumnFamily family, byte[] key, byte[] value)
       throws IOException {
-    putOpCache.put(family, key, value);
+    opCache.put(family, key, value);
   }
 }
