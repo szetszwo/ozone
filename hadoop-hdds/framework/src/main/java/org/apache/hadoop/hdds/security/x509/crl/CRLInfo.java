@@ -18,14 +18,16 @@
 
 package org.apache.hadoop.hdds.security.x509.crl;
 
-import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.CRLInfoProto;
 import org.apache.hadoop.hdds.protocol.scm.proto.SCMUpdateServiceProtos;
 import org.apache.hadoop.hdds.security.exception.SCMSecurityException;
+import org.apache.hadoop.hdds.utils.db.Codec;
+import org.apache.hadoop.hdds.utils.db.DelegatedCodec;
+import org.apache.hadoop.hdds.utils.db.Proto2Codec;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.security.cert.CRLException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CRLEntry;
 import java.time.Instant;
@@ -38,10 +40,19 @@ import java.util.Objects;
 public class CRLInfo implements Comparator<CRLInfo>,
     Comparable<CRLInfo> {
 
-  private X509CRL x509CRL;
-  private long creationTimestamp;
-  private long crlSequenceID;
-  private Instant revocationTime;
+  private static final Codec<CRLInfo> CODEC = new DelegatedCodec<>(
+      Proto2Codec.get(CRLInfoProto.class),
+      CRLInfo::fromProto,
+      CRLInfo::getProtobuf);
+
+  public static Codec<CRLInfo> getCodec() {
+    return CODEC;
+  }
+
+  private final X509CRL x509CRL;
+  private final long creationTimestamp;
+  private final long crlSequenceID;
+  private final Instant revocationTime;
 
   private CRLInfo(X509CRL x509CRL, long creationTimestamp, long crlSequenceID) {
     assert ((x509CRL != null) &&
@@ -54,14 +65,16 @@ public class CRLInfo implements Comparator<CRLInfo>,
         entry.getRevocationDate().getTime());
   }
 
-  /**
-   * Constructor for CRLInfo. Needed for serialization findbugs.
-   */
-  public CRLInfo() {
+  static CRLInfo fromProto(CRLInfoProto proto) throws IOException {
+    try {
+      return CRLInfo.fromProtobuf(proto);
+    } catch (CRLException e) {
+      throw new IOException("Failed to get from proto", e);
+    }
   }
 
-  public static CRLInfo fromProtobuf(HddsProtos.CRLInfoProto info)
-      throws IOException, CRLException, CertificateException {
+  public static CRLInfo fromProtobuf(CRLInfoProto info)
+      throws IOException, CRLException {
     CRLInfo.Builder builder = new CRLInfo.Builder();
     return builder
         .setX509CRL(CRLCodec.getX509CRL(info.getX509CRL()))
@@ -70,11 +83,9 @@ public class CRLInfo implements Comparator<CRLInfo>,
         .build();
   }
 
-  public HddsProtos.CRLInfoProto getProtobuf() throws SCMSecurityException {
-    HddsProtos.CRLInfoProto.Builder builder =
-        HddsProtos.CRLInfoProto.newBuilder();
-
-    return builder.setX509CRL(CRLCodec.getPEMEncodedString(getX509CRL()))
+  public CRLInfoProto getProtobuf() throws SCMSecurityException {
+    return CRLInfoProto.newBuilder()
+        .setX509CRL(CRLCodec.getPEMEncodedString(getX509CRL()))
         .setCreationTimestamp(getCreationTimestamp())
         .setCrlSequenceID(getCrlSequenceID())
         .build();
@@ -82,9 +93,8 @@ public class CRLInfo implements Comparator<CRLInfo>,
 
   public static CRLInfo fromCRLProto3(
       SCMUpdateServiceProtos.CRLInfoProto info)
-      throws IOException, CRLException, CertificateException {
-    CRLInfo.Builder builder = new CRLInfo.Builder();
-    return builder
+      throws IOException, CRLException {
+    return new CRLInfo.Builder()
         .setX509CRL(CRLCodec.getX509CRL(info.getX509CRL()))
         .setCreationTimestamp(info.getCreationTimestamp())
         .setCrlSequenceID(info.getCrlSequenceID())
@@ -93,10 +103,8 @@ public class CRLInfo implements Comparator<CRLInfo>,
 
   public SCMUpdateServiceProtos.CRLInfoProto getCRLProto3()
       throws SCMSecurityException {
-    SCMUpdateServiceProtos.CRLInfoProto.Builder builder =
-        SCMUpdateServiceProtos.CRLInfoProto.newBuilder();
-
-    return builder.setX509CRL(CRLCodec.getPEMEncodedString(getX509CRL()))
+    return SCMUpdateServiceProtos.CRLInfoProto.newBuilder()
+        .setX509CRL(CRLCodec.getPEMEncodedString(getX509CRL()))
         .setCreationTimestamp(getCreationTimestamp())
         .setCrlSequenceID(getCrlSequenceID())
         .build();

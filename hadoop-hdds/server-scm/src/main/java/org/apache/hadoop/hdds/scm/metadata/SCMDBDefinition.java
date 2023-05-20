@@ -27,7 +27,6 @@ import org.apache.hadoop.hdds.scm.container.ContainerID;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
 import org.apache.hadoop.hdds.scm.container.common.helpers.MoveDataNodePair;
 import org.apache.hadoop.hdds.security.x509.certificate.CertInfo;
-import org.apache.hadoop.hdds.security.x509.crl.CRLInfoCodec;
 import org.apache.hadoop.hdds.utils.TransactionInfo;
 import org.apache.hadoop.hdds.security.x509.crl.CRLInfo;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
@@ -37,6 +36,7 @@ import org.apache.hadoop.hdds.utils.db.ByteStringCodec;
 import org.apache.hadoop.hdds.utils.db.DBColumnFamilyDefinition;
 import org.apache.hadoop.hdds.utils.db.DBDefinition;
 import org.apache.hadoop.hdds.utils.db.LongCodec;
+import org.apache.hadoop.hdds.utils.db.Proto2Codec;
 import org.apache.hadoop.hdds.utils.db.StringCodec;
 
 /**
@@ -51,7 +51,7 @@ public class SCMDBDefinition implements DBDefinition {
           Long.class,
           LongCodec.get(),
           DeletedBlocksTransaction.class,
-          new DeletedBlocksTransactionCodec());
+          Proto2Codec.get(DeletedBlocksTransaction.class));
 
   public static final DBColumnFamilyDefinition<BigInteger, X509Certificate>
       VALID_CERTS =
@@ -91,7 +91,7 @@ public class SCMDBDefinition implements DBDefinition {
           BigInteger.class,
           new BigIntegerCodec(),
           CertInfo.class,
-          new CertInfoCodec());
+          CertInfo.getCodec());
 
   public static final DBColumnFamilyDefinition<PipelineID, Pipeline>
       PIPELINES =
@@ -109,7 +109,7 @@ public class SCMDBDefinition implements DBDefinition {
           ContainerID.class,
           ContainerID.getCodec(),
           ContainerInfo.class,
-          new ContainerInfoCodec());
+          ContainerInfo.getCodec());
 
   public static final DBColumnFamilyDefinition<String, TransactionInfo>
       TRANSACTIONINFO =
@@ -126,7 +126,7 @@ public class SCMDBDefinition implements DBDefinition {
           Long.class,
           LongCodec.get(),
           CRLInfo.class,
-          new CRLInfoCodec());
+          CRLInfo.getCodec());
 
   public static final DBColumnFamilyDefinition<String, Long>
       CRL_SEQUENCE_ID =
@@ -154,7 +154,7 @@ public class SCMDBDefinition implements DBDefinition {
           ContainerID.class,
           ContainerID.getCodec(),
           MoveDataNodePair.class,
-          new MoveDataNodePairCodec());
+          MoveDataNodePair.getCodec());
 
   /**
    * Stores miscellaneous SCM metadata, including upgrade finalization status

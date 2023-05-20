@@ -20,6 +20,11 @@ package org.apache.hadoop.hdds.scm.container.common.helpers;
 
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.MoveDataNodePairProto;
+import org.apache.hadoop.hdds.utils.db.Codec;
+import org.apache.hadoop.hdds.utils.db.DelegatedCodec;
+import org.apache.hadoop.hdds.utils.db.Proto2Codec;
+import org.apache.hadoop.ozone.ClientVersion;
 import org.apache.ratis.util.Preconditions;
 
 import java.io.IOException;
@@ -29,6 +34,15 @@ import java.io.IOException;
  * datanodes of a move option.
  */
 public class MoveDataNodePair {
+  private static final Codec<MoveDataNodePair> CODEC = new DelegatedCodec<>(
+      Proto2Codec.get(MoveDataNodePairProto.class),
+      MoveDataNodePair::getFromProtobuf,
+      pair -> pair.getProtobufMessage(ClientVersion.CURRENT_VERSION));
+
+  public static Codec<MoveDataNodePair> getCodec() {
+    return CODEC;
+  }
+
   /**
    * source datanode of current move option.
    */

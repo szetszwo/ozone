@@ -379,7 +379,7 @@ public class SCMSecurityProtocolClientSideTranslatorPB implements
       try {
         CRLInfo crlInfo = CRLInfo.fromProtobuf(crlProto);
         result.add(crlInfo);
-      } catch (CRLException | CertificateException e) {
+      } catch (CRLException e) {
         throw new SCMSecurityException("Fail to parse CRL info", e);
       }
     }

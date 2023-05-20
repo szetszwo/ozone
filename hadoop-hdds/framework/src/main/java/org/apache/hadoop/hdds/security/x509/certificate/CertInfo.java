@@ -19,8 +19,12 @@
 package org.apache.hadoop.hdds.security.x509.certificate;
 
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.CertInfoProto;
 import org.apache.hadoop.hdds.security.exception.SCMSecurityException;
 import org.apache.hadoop.hdds.security.x509.certificate.utils.CertificateCodec;
+import org.apache.hadoop.hdds.utils.db.Codec;
+import org.apache.hadoop.hdds.utils.db.DelegatedCodec;
+import org.apache.hadoop.hdds.utils.db.Proto2Codec;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -35,20 +39,30 @@ import java.util.Objects;
  */
 public class CertInfo implements Comparator<CertInfo>,
     Comparable<CertInfo>, Serializable {
+  private static final Codec<CertInfo> CODEC = new DelegatedCodec<>(
+      Proto2Codec.get(CertInfoProto.class),
+      CertInfo::fromProto,
+      CertInfo::getProtobuf);
 
-  private X509Certificate x509Certificate;
+  public static Codec<CertInfo> getCodec() {
+    return CODEC;
+  }
+
+  private final X509Certificate x509Certificate;
   // Timestamp when the certificate got persisted in the DB.
-  private long timestamp;
+  private final long timestamp;
 
   private CertInfo(X509Certificate x509Certificate, long timestamp) {
     this.x509Certificate = x509Certificate;
     this.timestamp = timestamp;
   }
 
-  /**
-   * Constructor for CertInfo. Needed for serialization findbugs.
-   */
-  public CertInfo() {
+  static CertInfo fromProto(CertInfoProto info) throws IOException {
+    try {
+      return fromProtobuf(info);
+    } catch (CertificateException e) {
+      throw new IOException("Failed to get from proto " + info, e);
+    }
   }
 
   public static CertInfo fromProtobuf(HddsProtos.CertInfoProto info)

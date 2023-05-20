@@ -30,6 +30,9 @@ import org.apache.hadoop.hdds.client.ECReplicationConfig;
 import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
+import org.apache.hadoop.hdds.utils.db.Codec;
+import org.apache.hadoop.hdds.utils.db.DelegatedCodec;
+import org.apache.hadoop.hdds.utils.db.Proto2Codec;
 import org.apache.hadoop.util.Time;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,6 +50,14 @@ public class ContainerInfo implements Comparator<ContainerInfo>,
   private static final String SERIALIZATION_ERROR_MSG = "Java serialization not"
       + " supported. Use protobuf instead.";
 
+  private static final Codec<ContainerInfo> CODEC = new DelegatedCodec<>(
+      Proto2Codec.get(HddsProtos.ContainerInfoProto.class),
+      ContainerInfo::fromProtobuf,
+      ContainerInfo::getProtobuf);
+
+  public static Codec<ContainerInfo> getCodec() {
+    return CODEC;
+  }
 
   private HddsProtos.LifeCycleState state;
   @JsonIgnore
