@@ -78,6 +78,7 @@ import org.apache.hadoop.ozone.om.OMStorage;
 import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.ozone.recon.ConfigurationProvider;
 import org.apache.hadoop.ozone.recon.ReconServer;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.ozone.test.GenericTestUtils;
@@ -447,7 +448,7 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
       DefaultMetricsSystem.shutdown();
 
       ManagedRocksObjectMetrics.INSTANCE.assertNoLeaks();
-      CodecBuffer.assertNoLeaks();
+      ByteBufInterface.assertNoLeaks();
     } catch (IOException e) {
       LOG.error("Exception while shutting down the cluster.", e);
     }

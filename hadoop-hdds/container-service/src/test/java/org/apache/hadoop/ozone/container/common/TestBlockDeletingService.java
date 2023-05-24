@@ -68,6 +68,7 @@ import org.apache.hadoop.ozone.container.metadata.DatanodeStoreSchemaThreeImpl;
 import org.apache.hadoop.ozone.container.metadata.DatanodeStoreSchemaTwoImpl;
 import org.apache.hadoop.ozone.container.ozoneimpl.OzoneContainer;
 import org.apache.hadoop.ozone.container.testutils.BlockDeletingServiceTestImpl;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ozone.test.GenericTestUtils.LogCapturer;
 import org.junit.After;
@@ -158,7 +159,7 @@ public class TestBlockDeletingService {
   public void cleanup() throws IOException {
     BlockUtils.shutdownCache(conf);
     FileUtils.deleteDirectory(testRoot);
-    CodecBuffer.assertNoLeaks();
+    ByteBufInterface.assertNoLeaks();
   }
 
   private static final DispatcherContext WRITE_STAGE =

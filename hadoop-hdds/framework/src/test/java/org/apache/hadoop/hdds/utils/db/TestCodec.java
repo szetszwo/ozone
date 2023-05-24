@@ -25,10 +25,11 @@ import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hdds.utils.db.RDBBatchOperation.Bytes;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static org.apache.hadoop.ozone.util.ByteBufInterface.gc;
 
 /**
  * Test {@link Codec} implementations.
@@ -36,22 +37,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class TestCodec {
   static final Logger LOG = LoggerFactory.getLogger(TestCodec.class);
   static final int NUM_LOOPS = 10;
-
-  /** Force gc to check leakage. */
-  static void gc() throws InterruptedException {
-    // use WeakReference to detect gc
-    Object obj = new Object();
-    final WeakReference<Object> weakRef = new WeakReference<>(obj);
-    obj = null;
-
-    // loop until gc has completed.
-    for (int i = 0; weakRef.get() != null; i++) {
-      LOG.info("gc {}", i);
-      System.gc();
-      Thread.sleep(100);
-    }
-    CodecBuffer.assertNoLeaks();
-  }
 
   @Test
   public void testIntegerCodec() throws Exception {

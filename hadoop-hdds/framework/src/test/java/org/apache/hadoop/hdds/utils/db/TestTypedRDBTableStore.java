@@ -32,6 +32,7 @@ import java.util.Set;
 import org.apache.hadoop.hdds.StringUtils;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedColumnFamilyOptions;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedDBOptions;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 
@@ -91,7 +92,7 @@ public class TestTypedRDBTableStore {
     if (rdbStore != null) {
       rdbStore.close();
     }
-    CodecBuffer.assertNoLeaks();
+    ByteBufInterface.assertNoLeaks();
   }
 
   @Test

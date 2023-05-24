@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hdds.utils.db;
 
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.apache.ratis.thirdparty.io.netty.buffer.ByteBuf;
 import org.apache.ratis.thirdparty.io.netty.buffer.ByteBufAllocator;
 import org.apache.ratis.thirdparty.io.netty.buffer.ByteBufInputStream;
@@ -33,14 +34,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
 /**
  * A buffer used by {@link Codec}
  * for supporting RocksDB direct {@link ByteBuffer} APIs.
  */
-public final class CodecBuffer implements AutoCloseable {
+public final class CodecBuffer implements ByteBufInterface, AutoCloseable {
   public static final Logger LOG = LoggerFactory.getLogger(CodecBuffer.class);
 
   private static final ByteBufAllocator POOL
@@ -61,16 +61,6 @@ public final class CodecBuffer implements AutoCloseable {
     return new CodecBuffer(Unpooled.wrappedBuffer(array));
   }
 
-  private static final AtomicInteger LEAK_COUNT = new AtomicInteger();
-
-  /** Assert the number of leak detected is zero. */
-  public static void assertNoLeaks() {
-    final long leak = LEAK_COUNT.get();
-    if (leak > 0) {
-      throw new AssertionError("Found " + leak + " leaked objects, check logs");
-    }
-  }
-
   private final ByteBuf buf;
   private final CompletableFuture<Void> released = new CompletableFuture<>();
 
@@ -79,23 +69,14 @@ public final class CodecBuffer implements AutoCloseable {
     assertRefCnt(1);
   }
 
-  private void assertRefCnt(int expected) {
-    Preconditions.assertSame(expected, buf.refCnt(), "refCnt");
+  @Override
+  public ByteBuf getByteBuf() {
+    return buf;
   }
 
   @Override
-  protected void finalize() throws Throwable {
-    // leak detection
-    final int capacity = buf.capacity();
-    if (!released.isDone() && capacity > 0) {
-      final int refCnt = buf.refCnt();
-      if (refCnt > 0) {
-        final int leak = LEAK_COUNT.incrementAndGet();
-        LOG.warn("LEAK {}: {}, refCnt={}, capacity={}",
-            leak, this, refCnt, capacity);
-        buf.release(refCnt);
-      }
-    }
+  public void finalize() throws Throwable {
+    detectLeak(released.isDone());
     super.finalize();
   }
 

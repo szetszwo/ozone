@@ -17,13 +17,21 @@
  */
 package org.apache.hadoop.ozone.client.io;
 
+import javassist.bytecode.ByteArray;
 import org.apache.hadoop.fs.Syncable;
+import org.apache.hadoop.hdds.scm.storage.ByteBufferStreamOutput;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
+import org.apache.ratis.thirdparty.io.netty.buffer.ByteBuf;
+import org.apache.ratis.thirdparty.io.netty.buffer.ByteBufAllocator;
+import org.apache.ratis.thirdparty.io.netty.buffer.PooledByteBufAllocator;
+import org.apache.ratis.util.Preconditions;
 import org.apache.ratis.util.function.CheckedFunction;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An {@link OutputStream} first write data to a buffer up to the capacity.
@@ -31,25 +39,41 @@ import java.util.Objects;
  * When {@link #flush()}, {@link #hflush()}, {@link #hsync()}
  * or {@link #close()} is invoked,
  * it will force flushing the buffer and {@link OutputStream} selection.
+ * <p>
+ * This class, like many implementation of {@link OutputStream},
+ * is not threadsafe.
  *
  * @param <OUT> The underlying {@link OutputStream} type.
  */
 public class SelectorOutputStream<OUT extends OutputStream>
     extends OutputStream implements Syncable {
-  /** A threadsafe buffer backed by a byte[]. */
-  static final class ByteArrayBuffer {
-    private byte[] array;
-    /** Write offset of {@link #array}. */
-    private int offset = 0;
+  private static final ByteBufAllocator POOL
+      = PooledByteBufAllocator.DEFAULT;
 
-    private ByteArrayBuffer(int capacity) {
-      this.array = new byte[capacity];
+  /** A buffer to store data prior {@link OutputStream} selection. */
+  static final class Buffer implements ByteBufInterface {
+    private final int capacity;
+    private final ByteBuf buf = POOL.directBuffer();
+
+    private Buffer(int capacity) {
+      this.capacity = capacity;
+    }
+
+    @Override
+    public ByteBuf getByteBuf() {
+      return buf;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+      detectLeak(buf.refCnt() == 0);
+      super.finalize();
     }
 
     private void assertRemaining(int outstandingBytes) {
-      Objects.requireNonNull(array, "array == null");
+      assertRefCnt(1);
 
-      final int remaining = array.length - offset;
+      final int remaining = capacity - buf.writerIndex();
       if (remaining < 0) {
         throw new IllegalStateException("remaining = " + remaining + " <= 0");
       }
@@ -59,29 +83,34 @@ public class SelectorOutputStream<OUT extends OutputStream>
       }
     }
 
-    synchronized void write(byte b) {
+    void write(int b) {
       assertRemaining(1);
-      array[offset] = b;
-      offset++;
+      buf.writeByte(b);
     }
 
-    synchronized void write(byte[] src, int srcOffset, int length) {
+    void write(byte[] src, int srcOffset, int length) {
       Objects.requireNonNull(src, "src == null");
       assertRemaining(length);
-      System.arraycopy(src, srcOffset, array, offset, length);
-      offset += length;
+      buf.writeBytes(src, srcOffset, length);
     }
 
-    synchronized <OUT extends OutputStream> OUT selectAndClose(
+    <OUT extends OutputStream> OUT trySelect(
         int outstandingBytes, boolean force,
         CheckedFunction<Integer, OUT, IOException> selector)
         throws IOException {
       assertRemaining(0);
-      final int required = offset + outstandingBytes;
-      if (force || required > array.length) {
+      final int readable = buf.readableBytes();
+      final int required = readable + outstandingBytes;
+      if (force || required > capacity) {
         final OUT out = selector.apply(required);
-        out.write(array, 0, offset);
-        array = null;
+        if (out instanceof ByteBufferStreamOutput
+            && buf.nioBufferCount() > 0) {
+          ((ByteBufferStreamOutput) out).write(
+              buf.nioBuffer().asReadOnlyBuffer());
+        } else {
+          buf.readBytes(out, readable);
+        }
+        buf.release();
         return out;
       }
       return null;
@@ -89,31 +118,24 @@ public class SelectorOutputStream<OUT extends OutputStream>
   }
 
   /** To select the underlying {@link OutputStream}. */
-  final class Underlying {
+  private final class Underlying {
     /** Select an {@link OutputStream} by the number of bytes. */
     private final CheckedFunction<Integer, OUT, IOException> selector;
-    private volatile OUT out;
+    private OUT out;
 
     private Underlying(CheckedFunction<Integer, OUT, IOException> selector) {
       this.selector = selector;
     }
 
-    private OUT select(int outstandingBytes, boolean force) throws IOException {
-      OUT selected = out;
-      if (selected == null) {
-        synchronized (this) {
-          selected = out;
-          if (selected == null) {
-            out = buffer.selectAndClose(outstandingBytes, force, selector);
-            selected = out;
-          }
-        }
+    OUT select(int outstandingBytes, boolean force) throws IOException {
+      if (out == null) {
+        out = buffer.trySelect(outstandingBytes, force, selector);
       }
-      return selected;
+      return out;
     }
   }
 
-  private final ByteArrayBuffer buffer;
+  private final Buffer buffer;
   private final Underlying underlying;
 
   /**
@@ -125,7 +147,7 @@ public class SelectorOutputStream<OUT extends OutputStream>
    */
   public SelectorOutputStream(int selectionThreshold,
       CheckedFunction<Integer, OUT, IOException> selector) {
-    this.buffer = new ByteArrayBuffer(selectionThreshold);
+    this.buffer = new Buffer(selectionThreshold);
     this.underlying = new Underlying(selector);
   }
 
@@ -139,7 +161,7 @@ public class SelectorOutputStream<OUT extends OutputStream>
     if (out != null) {
       out.write(b);
     } else {
-      buffer.write((byte) b);
+      buffer.write(b);
     }
   }
 

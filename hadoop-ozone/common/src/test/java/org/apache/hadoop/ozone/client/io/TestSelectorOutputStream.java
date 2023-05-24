@@ -18,6 +18,7 @@
 package org.apache.hadoop.ozone.client.io;
 
 import org.apache.hadoop.fs.Syncable;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.apache.ratis.util.MemoizedSupplier;
 import org.apache.ratis.util.function.CheckedConsumer;
 import org.apache.ratis.util.function.CheckedFunction;
@@ -116,6 +117,7 @@ public class TestSelectorOutputStream {
     runTestSelector(10, 2, Op.FLUSH);
     runTestSelector(10, 10, Op.FLUSH);
     runTestSelector(10, 20, Op.FLUSH);
+    ByteBufInterface.gc();
   }
 
   @Test
@@ -123,6 +125,7 @@ public class TestSelectorOutputStream {
     runTestSelector(10, 2, Op.CLOSE);
     runTestSelector(10, 10, Op.CLOSE);
     runTestSelector(10, 20, Op.CLOSE);
+    ByteBufInterface.gc();
   }
 
   @Test
@@ -130,15 +133,17 @@ public class TestSelectorOutputStream {
     runTestSelector(10, 2, Op.HFLUSH, true);
     runTestSelector(10, 10, Op.HFLUSH, true);
     runTestSelector(10, 20, Op.HFLUSH, true);
+    ByteBufInterface.gc();
   }
 
   @Test
-  public void testHflushNonSyncable() {
+  public void testHflushNonSyncable() throws Exception {
     final IllegalStateException thrown = Assertions.assertThrows(
         IllegalStateException.class,
         () -> runTestSelector(10, 2, Op.HFLUSH, false));
     LOG.info("thrown", thrown);
     Assertions.assertTrue(thrown.getMessage().contains("not Syncable"));
+    ByteBufInterface.gc();
   }
 
   @Test
@@ -146,14 +151,16 @@ public class TestSelectorOutputStream {
     runTestSelector(10, 2, Op.HSYNC, true);
     runTestSelector(10, 10, Op.HSYNC, true);
     runTestSelector(10, 20, Op.HSYNC, true);
+    ByteBufInterface.gc();
   }
 
   @Test
-  public void testHSyncNonSyncable() {
+  public void testHSyncNonSyncable() throws Exception {
     final IllegalStateException thrown = Assertions.assertThrows(
         IllegalStateException.class,
         () -> runTestSelector(10, 2, Op.HSYNC, false));
     LOG.info("thrown", thrown);
     Assertions.assertTrue(thrown.getMessage().contains("not Syncable"));
+    ByteBufInterface.gc();
   }
 }

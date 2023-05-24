@@ -39,6 +39,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedColumnFamilyOptions;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedDBOptions;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedWriteOptions;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,7 +98,7 @@ public class TestRDBStore {
     if (rdbStore != null) {
       rdbStore.close();
     }
-    CodecBuffer.assertNoLeaks();
+    ByteBufInterface.assertNoLeaks();
   }
 
   public void insertRandomData(RDBStore dbStore, int familyIndex)

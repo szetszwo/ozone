@@ -30,6 +30,7 @@ import org.apache.hadoop.hdds.utils.db.TableConfig;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedColumnFamilyOptions;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedDBOptions;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -133,7 +134,7 @@ public class TestRDBSnapshotProvider {
     if (testDir.exists()) {
       FileUtil.fullyDelete(testDir);
     }
-    CodecBuffer.assertNoLeaks();
+    ByteBufInterface.assertNoLeaks();
   }
 
   @Test

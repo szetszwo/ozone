@@ -51,6 +51,7 @@ import org.apache.hadoop.ozone.container.keyvalue.helpers.KeyValueContainerUtil;
 import org.apache.hadoop.ozone.container.metadata.AbstractDatanodeStore;
 import org.apache.hadoop.ozone.container.metadata.DatanodeStore;
 import org.apache.hadoop.ozone.container.replication.CopyContainerCompression;
+import org.apache.hadoop.ozone.util.ByteBufInterface;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.hadoop.util.DiskChecker;
 
@@ -164,7 +165,7 @@ public class TestKeyValueContainer {
 
   @After
   public void after() {
-    CodecBuffer.assertNoLeaks();
+    ByteBufInterface.assertNoLeaks();
   }
 
   @Test
