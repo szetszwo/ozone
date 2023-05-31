@@ -46,14 +46,32 @@ public final class CodecBuffer implements AutoCloseable {
   private static final ByteBufAllocator POOL
       = PooledByteBufAllocator.DEFAULT;
 
-  /** Allocate a direct buffer. */
-  public static CodecBuffer allocateDirect(int exactSize) {
-    return new CodecBuffer(POOL.directBuffer(exactSize, exactSize));
+  /**
+   * Allocate a direct buffer.
+   *
+   * @param capacity
+   *        the exact capacity of the returned buffer if it is non-negative,
+   *        Otherwise, the initial capacity of the returned buffer is -size
+   *        and the capacity may increase if necessary.
+   */
+  public static CodecBuffer allocateDirect(int capacity) {
+    final ByteBuf buf = capacity < 0? POOL.directBuffer(-capacity)
+        : POOL.directBuffer(capacity, capacity);
+    return new CodecBuffer(buf);
   }
 
-  /** Allocate a heap buffer. */
-  public static CodecBuffer allocateHeap(int exactSize) {
-    return new CodecBuffer(POOL.heapBuffer(exactSize, exactSize));
+  /**
+   * Allocate a heap buffer.
+   *
+   * @param capacity
+   *        the exact capacity of the returned buffer if it is non-negative,
+   *        Otherwise, the initial capacity of the returned buffer is -size
+   *        and the capacity may increase if necessary.
+   */
+  public static CodecBuffer allocateHeap(int capacity) {
+    final ByteBuf buf = capacity < 0? POOL.heapBuffer(-capacity)
+        : POOL.heapBuffer(capacity, capacity);
+    return new CodecBuffer(buf);
   }
 
   /** Wrap the given array. */
@@ -237,7 +255,7 @@ public final class CodecBuffer implements AutoCloseable {
    * @return this object.
    * @throws IOException in case the source throws an {@link IOException}.
    */
-  CodecBuffer put(
+  public CodecBuffer put(
       CheckedFunction<OutputStream, Integer, IOException> source)
       throws IOException {
     assertRefCnt(1);

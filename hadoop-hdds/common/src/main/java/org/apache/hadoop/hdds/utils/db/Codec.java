@@ -68,6 +68,17 @@ public interface Codec<T> {
   }
 
   /**
+   * Serialize the given object to bytes.
+   *
+   * @param object The object to be serialized.
+   * @return a heap buffer storing the serialized bytes.
+   */
+  default CodecBuffer toHeapCodecBuffer(@Nonnull T object)
+      throws IOException {
+    return toCodecBuffer(object, CodecBuffer::allocateHeap);
+  }
+
+  /**
    * Deserialize an object from the given buffer.
    *
    * @param buffer Storing the serialized bytes of an object.
