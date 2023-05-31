@@ -54,7 +54,7 @@
 
   <property>
     <name>dfs.container.ratis.datastream.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <tag>OZONE, CONTAINER, RATIS, DATASTREAM</tag>
     <description>It specifies whether to enable data stream of container.</description>
   </property>
@@ -3726,7 +3726,7 @@
 
   <property>
     <name>ozone.fs.datastream.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <tag>OZONE, DATANODE</tag>
     <description>
       To enable/disable filesystem write via ratis streaming.
@@ -3918,5 +3918,55 @@
     <description>
       Max numbers of keys changed allowed for a snapshot diff job.
     </description>
+  </property>
+
+
+  <!-- For streaming -->
+  <property>
+    <name>ozone.client.checksum.type</name>
+    <value>NONE</value>
+  </property>
+  <property>
+    <name>ozone.client.datastream.window.size</name>
+    <value>1G</value>
+  </property>
+  <property>
+    <name>ozone.client.datastream.buffer.flush.size</name>
+    <value>1G</value>
+  </property>
+  <property>
+    <name>ozone.client.datastream.pipeline.mode</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>scm.container.client.max.size</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>hdds.ratis.raft.netty.dataStream.client.worker-group.share</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>hdds.ratis.raft.netty.dataStream.client.worker-group.size</name>
+    <value>100</value>
+  </property>
+
+  <property>
+    <name>hdds.ratis.client.retry.policy</name>
+    <value>org.apache.hadoop.hdds.ratis.retrypolicy.RetryLimitedPolicyCreator</value>
+  </property>
+  <property>
+    <name>hdds.ratis.client.retrylimited.max.retries</name>
+    <value>5</value>
+  </property>
+  <property>
+    <name>hdds.ratis.raft.client.rpc.request.timeout</name>
+    <value>10s</value>
+  </property>
+  <property>
+    <name>hdds.ratis.raft.client.rpc.watch.request.timeout</name>
+    <value>30s</value>
   </property>
 </configuration>
