@@ -43,6 +43,8 @@ public interface KeyPrefixContainer {
 
   String getKeyPrefix();
 
+  byte[] getKeyPrefixBytes();
+
   long getKeyVersion();
 
   ContainerKeyPrefix toContainerKeyPrefix();

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.ozone.recon.api.types;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -34,12 +35,14 @@ final class ContainerKeyPrefixImpl
 
   private final long containerId;
   private final String keyPrefix;
+  private final byte[] keyPrefixBytes;
   private final long keyVersion;
 
   private ContainerKeyPrefixImpl(long containerId, String keyPrefix,
       long keyVersion) {
     this.containerId = containerId;
     this.keyPrefix = keyPrefix;
+    this.keyPrefixBytes = keyPrefix.getBytes(StandardCharsets.UTF_8);
     this.keyVersion = keyVersion;
   }
 
@@ -51,6 +54,11 @@ final class ContainerKeyPrefixImpl
   @Override
   public String getKeyPrefix() {
     return keyPrefix;
+  }
+
+  @Override
+  public byte[] getKeyPrefixBytes() {
+    return keyPrefixBytes;
   }
 
   @Override

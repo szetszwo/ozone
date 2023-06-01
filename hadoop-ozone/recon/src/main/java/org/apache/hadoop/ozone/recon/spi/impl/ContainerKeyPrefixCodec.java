@@ -18,18 +18,16 @@
 
 package org.apache.hadoop.ozone.recon.spi.impl;
 
-import static org.apache.commons.compress.utils.CharsetNames.UTF_8;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.ozone.recon.api.types.ContainerKeyPrefix;
 import org.apache.hadoop.hdds.utils.db.Codec;
+import org.apache.hadoop.hdds.utils.db.CodecBuffer;
+import org.apache.hadoop.hdds.utils.db.StringCodec;
+import org.apache.hadoop.ozone.recon.api.types.ContainerKeyPrefix;
+import org.apache.ratis.util.Preconditions;
 
-import com.google.common.base.Preconditions;
-import com.google.common.primitives.Longs;
+import javax.annotation.Nonnull;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.function.IntFunction;
 
 /**
  * Codec to serialize/deserialize {@link ContainerKeyPrefix}.
@@ -38,6 +36,26 @@ public final class ContainerKeyPrefixCodec
     implements Codec<ContainerKeyPrefix> {
 
   private static final String KEY_DELIMITER = "_";
+  private static final byte[] KEY_DELIMITER_BYTES
+      = KEY_DELIMITER.getBytes(StandardCharsets.UTF_8);
+
+
+  static boolean isNonEmpty(String s) {
+    return s != null && !s.isEmpty();
+  }
+
+  static int getSerializedSizeUpperBound(ContainerKeyPrefix object) {
+    int upperBound = Long.BYTES; // containerId
+    final String keyPrefix = object.getKeyPrefix();
+    if (isNonEmpty(keyPrefix)) {
+      upperBound += KEY_DELIMITER_BYTES.length
+          + StringCodec.get().getSerializedSizeUpperBound(keyPrefix);
+    }
+    if (object.getKeyVersion() != -1) {
+      upperBound += KEY_DELIMITER_BYTES.length + Long.BYTES;
+    }
+    return upperBound;
+  }
 
   private static final Codec<ContainerKeyPrefix> INSTANCE =
       new ContainerKeyPrefixCodec();
@@ -51,50 +69,55 @@ public final class ContainerKeyPrefixCodec
   }
 
   @Override
-  public byte[] toPersistedFormat(ContainerKeyPrefix containerKeyPrefix)
-      throws IOException {
-    Preconditions.checkNotNull(containerKeyPrefix,
-            "Null object can't be converted to byte array.");
-    byte[] containerIdBytes = Longs.toByteArray(containerKeyPrefix
-        .getContainerId());
-
-    //Prefix seek can be done only with containerId. In that case, we can
-    // expect the key and version to be undefined.
-    if (StringUtils.isNotEmpty(containerKeyPrefix.getKeyPrefix())) {
-      byte[] keyPrefixBytes = (KEY_DELIMITER +
-          containerKeyPrefix.getKeyPrefix()).getBytes(UTF_8);
-      containerIdBytes = ArrayUtils.addAll(containerIdBytes, keyPrefixBytes);
-    }
-
-    if (containerKeyPrefix.getKeyVersion() != -1) {
-      containerIdBytes = ArrayUtils.addAll(containerIdBytes, KEY_DELIMITER
-          .getBytes(UTF_8));
-      containerIdBytes = ArrayUtils.addAll(containerIdBytes, Longs.toByteArray(
-          containerKeyPrefix.getKeyVersion()));
-    }
-    return containerIdBytes;
+  public boolean supportCodecBuffer() {
+    return true;
   }
 
   @Override
-  public ContainerKeyPrefix fromPersistedFormat(byte[] rawData)
-      throws IOException {
+  public CodecBuffer toCodecBuffer(@Nonnull ContainerKeyPrefix object,
+      IntFunction<CodecBuffer> allocator) {
+    final CodecBuffer buffer = allocator.apply(
+        getSerializedSizeUpperBound(object));
+    buffer.putLong(object.getContainerId());
+    final String keyPrefix = object.getKeyPrefix();
+    if (isNonEmpty(keyPrefix)) {
+      buffer.put(KEY_DELIMITER_BYTES).putUtf8(keyPrefix);
+    }
+    final long keyVersion = object.getKeyVersion();
+    if (keyVersion != -1) {
+      buffer.put(KEY_DELIMITER_BYTES).putLong(keyVersion);
+    }
+    return buffer;
+  }
 
-    // First 8 bytes is the containerId.
-    long containerIdFromDB = ByteBuffer.wrap(ArrayUtils.subarray(
-        rawData, 0, Long.BYTES)).getLong();
-    // When reading from byte[], we can always expect to have the containerId,
-    // key and version parts in the byte array.
-    byte[] keyBytes = ArrayUtils.subarray(rawData,
-        Long.BYTES + 1,
-        rawData.length - Long.BYTES - 1);
-    String keyPrefix = new String(keyBytes, UTF_8);
+  static CodecBuffer skipKeyDelimiter(CodecBuffer buffer) {
+    final String d = buffer.getUtf8(KEY_DELIMITER_BYTES.length);
+    Preconditions.assertTrue(Objects.equals(d, KEY_DELIMITER),
+        () -> "Unexpected key delimiter: \"" + d
+            + "\", KEY_DELIMITER = \"" + KEY_DELIMITER + "\"");
+    return buffer;
+  }
 
-    // Last 8 bytes is the key version.
-    byte[] versionBytes = ArrayUtils.subarray(rawData,
-        rawData.length - Long.BYTES,
-        rawData.length);
-    long version = ByteBuffer.wrap(versionBytes).getLong();
-    return ContainerKeyPrefix.get(containerIdFromDB, keyPrefix, version);
+  @Override
+  public ContainerKeyPrefix fromCodecBuffer(@Nonnull CodecBuffer buffer) {
+    final long containerId = buffer.getLong();
+    final int keyPrefixLength = buffer.readableBytes()
+        - Long.BYTES - KEY_DELIMITER_BYTES.length;
+    final String keyPrefix = skipKeyDelimiter(buffer).getUtf8(keyPrefixLength);
+    final long keyVersion = skipKeyDelimiter(buffer).getLong();
+    return ContainerKeyPrefix.get(containerId, keyPrefix, keyVersion);
+  }
+
+  @Override
+  public byte[] toPersistedFormat(ContainerKeyPrefix object) {
+    try (CodecBuffer buffer = toCodecBuffer(object, CodecBuffer::allocateHeap)) {
+      return buffer.getArray();
+    }
+  }
+
+  @Override
+  public ContainerKeyPrefix fromPersistedFormat(byte[] rawData) {
+    return fromCodecBuffer(CodecBuffer.wrap(rawData));
   }
 
   @Override

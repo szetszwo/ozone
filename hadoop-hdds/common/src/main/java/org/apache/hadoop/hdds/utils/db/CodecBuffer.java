@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
@@ -216,6 +218,27 @@ public final class CodecBuffer implements AutoCloseable {
   }
 
   /**
+   * Similar to {@link ByteBuffer#getLong()}.
+   *
+   * @return this object.
+   */
+  public long getLong() {
+    return buf.readLong();
+  }
+
+  /**
+   * Similar to {@link ByteBuffer#getLong()}.
+   *
+   * @return this object.
+   */
+  public String getUtf8(int length) {
+    final int r = buf.readerIndex();
+    final String s = buf.toString(r, length, StandardCharsets.UTF_8);
+    buf.setIndex(r + length, buf.writerIndex());
+    return s;
+  }
+
+  /**
    * Similar to {@link ByteBuffer#putShort(short)}.
    *
    * @return this object.
@@ -247,6 +270,20 @@ public final class CodecBuffer implements AutoCloseable {
     buf.writeLong(n);
     return this;
   }
+
+  /**
+   * Similar to
+   * (1) {@link String#getBytes(Charset)} with {@link StandardCharsets#UTF_8};
+   * (2) {@link ByteBuffer#put(byte[])}.
+   *
+   * @return this object.
+   */
+  public CodecBuffer putUtf8(String s) {
+    assertRefCnt(1);
+    buf.writeCharSequence(s, StandardCharsets.UTF_8);
+    return this;
+  }
+
 
   /**
    * Similar to {@link ByteBuffer#put(byte[])}.
