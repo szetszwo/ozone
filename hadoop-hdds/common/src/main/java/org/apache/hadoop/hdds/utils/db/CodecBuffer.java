@@ -189,6 +189,27 @@ public final class CodecBuffer implements AutoCloseable {
     return buf.nioBuffer().asReadOnlyBuffer();
   }
 
+  /**
+   * @return an array containing the readable bytes.
+   * @see #readableBytes()
+   */
+  public byte[] getArray() {
+    final int readable = readableBytes();
+    if (buf.hasArray()) {
+      // Try getting the underlying to avoid copying
+      final byte[] array = buf.array();
+      if (array.length == readable) {
+        Preconditions.assertSame(0, buf.readerIndex(), "readerIndex");
+        return array;
+      }
+    }
+
+    // Copy the readable bytes
+    final byte[] array = new byte[readable];
+    buf.readBytes(array);
+    return array;
+  }
+
   /** @return an {@link InputStream} reading from this buffer. */
   public InputStream getInputStream() {
     return new ByteBufInputStream(buf.duplicate());
