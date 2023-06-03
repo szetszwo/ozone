@@ -56,6 +56,7 @@ public interface ContainerKeyPrefix {
     return CodecImpl.INSTANCE;
   }
 
+  /** Implementing {@link Codec} for {@link ContainerKeyPrefix}. */
   final class CodecImpl extends ContainerKeyPrefixImpl.CodecBase {
     private static final Codec<ContainerKeyPrefix> INSTANCE = new CodecImpl();
 

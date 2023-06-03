@@ -58,6 +58,7 @@ public interface KeyPrefixContainer {
     return CodecImpl.CODEC;
   }
 
+  /** Implementing {@link Codec} for {@link KeyPrefixContainer}. */
   final class CodecImpl extends ContainerKeyPrefixImpl.CodecBase {
     /**
      * Serialization:
@@ -67,9 +68,9 @@ public interface KeyPrefixContainer {
      * Deserialization:
      * (d1) Use {@link CodecImpl} to deserialize.
      * (d2) Use {@link ContainerKeyPrefix#toKeyPrefixContainer()}.
-     *      Note that, since the object was serialized from a
-     *      {@link KeyPrefixContainer}, {@link ContainerKeyPrefix#getKeyPrefix()}
-     *      is always non-empty.
+     *      Note that,
+     *      since the object was serialized from a {@link KeyPrefixContainer},
+     *      {@link ContainerKeyPrefix#getKeyPrefix()} is always non-empty.
      */
     private static final Codec<KeyPrefixContainer> CODEC = new DelegatedCodec<>(
         new CodecImpl(),

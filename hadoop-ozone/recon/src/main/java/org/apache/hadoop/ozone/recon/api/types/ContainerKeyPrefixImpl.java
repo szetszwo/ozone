@@ -23,10 +23,11 @@ import org.apache.hadoop.hdds.utils.db.StringCodec;
 import org.apache.ratis.util.Preconditions;
 
 import javax.annotation.Nonnull;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.IntFunction;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * An implementation of both {@link ContainerKeyPrefix}
@@ -113,11 +114,11 @@ final class ContainerKeyPrefixImpl
    * These two codecs are essentially the same
    * except for the serialization ordering.
    */
-  static abstract class CodecBase implements Codec<ContainerKeyPrefix> {
+  abstract static class CodecBase implements Codec<ContainerKeyPrefix> {
     /** A delimiter to separate fields in the serializations. */
     public static class Delimiter {
       private static final String VALUE = "_";
-      private static final byte[] BYTES = VALUE.getBytes(StandardCharsets.UTF_8);
+      private static final byte[] BYTES = VALUE.getBytes(UTF_8);
       private static final byte[] COPY = Arrays.copyOf(BYTES, BYTES.length);
 
       static byte[] getBytes() {
@@ -155,8 +156,8 @@ final class ContainerKeyPrefixImpl
     }
 
     @Override
-    public abstract CodecBuffer toCodecBuffer(@Nonnull ContainerKeyPrefix object,
-        IntFunction<CodecBuffer> allocator);
+    public abstract CodecBuffer toCodecBuffer(
+        @Nonnull ContainerKeyPrefix object, IntFunction<CodecBuffer> allocator);
 
     @Override
     public abstract ContainerKeyPrefix fromCodecBuffer(
