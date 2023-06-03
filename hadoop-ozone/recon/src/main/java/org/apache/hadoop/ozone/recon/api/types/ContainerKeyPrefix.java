@@ -18,6 +18,12 @@
 
 package org.apache.hadoop.ozone.recon.api.types;
 
+import org.apache.hadoop.hdds.utils.db.Codec;
+import org.apache.hadoop.hdds.utils.db.CodecBuffer;
+
+import javax.annotation.Nonnull;
+import java.util.function.IntFunction;
+
 /**
  * Class to encapsulate the Key information needed for the Recon container DB.
  * Currently, it is the containerId and the whole key + key version.
@@ -45,4 +51,37 @@ public interface ContainerKeyPrefix {
   long getKeyVersion();
 
   KeyPrefixContainer toKeyPrefixContainer();
+
+  static Codec<ContainerKeyPrefix> getCodec() {
+    return CodecImpl.INSTANCE;
+  }
+
+  final class CodecImpl extends ContainerKeyPrefixImpl.CodecBase {
+    private static final Codec<ContainerKeyPrefix> INSTANCE = new CodecImpl();
+
+    private CodecImpl() {
+      // singleton
+    }
+
+    @Override
+    public CodecBuffer toCodecBuffer(@Nonnull ContainerKeyPrefix object,
+        IntFunction<CodecBuffer> allocator) {
+      return allocator.apply(getSerializedSizeUpperBound(object))
+          .putLong(object.getContainerId())
+          .put(Delimiter.getBytes())
+          .putUtf8(object.getKeyPrefix())
+          .put(Delimiter.getBytes())
+          .putLong(object.getKeyVersion());
+    }
+
+    @Override
+    public ContainerKeyPrefix fromCodecBuffer(@Nonnull CodecBuffer buffer) {
+      final long containerId = buffer.getLong();
+      final int keyPrefixLength = buffer.readableBytes()
+          - Long.BYTES - 2 * Delimiter.length();
+      final String keyPrefix = Delimiter.skip(buffer).getUtf8(keyPrefixLength);
+      final long keyVersion = Delimiter.skip(buffer).getLong();
+      return ContainerKeyPrefix.get(containerId, keyPrefix, keyVersion);
+    }
+  }
 }
