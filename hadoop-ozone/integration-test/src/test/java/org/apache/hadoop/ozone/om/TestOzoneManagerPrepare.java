@@ -73,7 +73,7 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
   private static final String KEY_PREFIX = "key";
 
   // Maximum time to wait for conditions involving Ratis logs.
-  private static final int WAIT_TIMEOUT_MILLIS = 120000;
+  private static final int WAIT_TIMEOUT_MILLIS = 120_000;
   private static final long PREPARE_FLUSH_WAIT_TIMEOUT_SECONDS = 120L;
   private static final long PREPARE_FLUSH_INTERVAL_SECONDS = 5L;
 
@@ -157,7 +157,7 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
     final int shutdownOMIndex = 2;
     List<OzoneManager> runningOms = cluster.getOzoneManagersList();
 
-    String volumeName1 = VOLUME + UUID.randomUUID().toString();
+    String volumeName1 = VOLUME + UUID.randomUUID();
     // Create keys with all 3 OMs up.
     Set<String> writtenKeysBeforeOmShutDown = writeKeysAndWaitForLogs(
         volumeName1, 10, runningOms);
@@ -174,6 +174,7 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
         writeKeysAndWaitForLogs(volumeName2, 10, runningOms);
 
     long prepareIndex = submitPrepareRequest();
+    LOG.info("XXX prepareIndex={}", prepareIndex);
 
     // Check that the two live OMs are prepared.
     assertClusterPrepared(prepareIndex, runningOms);
