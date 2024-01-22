@@ -96,22 +96,16 @@ public class TestOzoneManagerPrepare extends TestOzoneManagerHA {
    */
   @BeforeEach
   void setup() throws Exception {
-    initInstanceVariables();
+    if (cluster == null) {
+      initInstanceVariables();
+    } else {
+      cluster.restartOzoneManager();
+    }
 
     LOG.info("Waiting for OM leader election");
     waitForLeaderToBeReady();
     submitCancelPrepareRequest();
     assertClusterNotPrepared();
-  }
-
-  /**
-   * Reset cluster between tests.
-   */
-  @AfterEach
-  void resetCluster() throws Exception {
-    if (cluster != null) {
-      cluster.restartOzoneManager();
-    }
   }
 
   /**
