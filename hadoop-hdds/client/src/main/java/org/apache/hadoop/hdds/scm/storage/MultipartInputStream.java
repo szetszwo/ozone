@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.FSExceptionMessages;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -92,8 +93,21 @@ public class MultipartInputStream extends ExtendedInputStream {
       // Get the current partStream and read data from it
       PartInputStream current = partStreams.get(partIndex);
       int numBytesToRead = getNumBytesToRead(strategy, current);
-      int numBytesRead = strategy
-          .readFromBlock((InputStream) current, numBytesToRead);
+      int numBytesRead = -1;
+      for(int i = 0; i < 10 &&  numBytesRead == -1; i++) {
+        numBytesToRead = strategy.readFromBlock((InputStream) current, numBytesToRead);
+        if (numBytesToRead == -1) {
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            final InterruptedIOException iioe = new InterruptedIOException("Interrupted when reading "
+                + numBytesToRead + " bytes using " + strategy.getClass().getSimpleName());
+            iioe.initCause(e);
+            throw iioe;
+          }
+        }
+      }
       checkPartBytesRead(numBytesToRead, numBytesRead, current);
       totalReadLen += numBytesRead;
 
