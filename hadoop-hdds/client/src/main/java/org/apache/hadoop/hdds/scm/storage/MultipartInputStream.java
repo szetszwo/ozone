@@ -92,11 +92,11 @@ public class MultipartInputStream extends ExtendedInputStream {
 
       // Get the current partStream and read data from it
       PartInputStream current = partStreams.get(partIndex);
-      int numBytesToRead = getNumBytesToRead(strategy, current);
+      final int numBytesToRead = getNumBytesToRead(strategy, current);
       int numBytesRead = -1;
-      for(int i = 0; i < 10 &&  numBytesRead == -1; i++) {
-        numBytesToRead = strategy.readFromBlock((InputStream) current, numBytesToRead);
-        if (numBytesToRead == -1) {
+      for(int i = 0; i < 10 && numBytesRead == -1; i++) {
+        numBytesRead = strategy.readFromBlock((InputStream) current, numBytesToRead);
+        if (numBytesRead == -1) {
           try {
             Thread.sleep(100);
           } catch (InterruptedException e) {
