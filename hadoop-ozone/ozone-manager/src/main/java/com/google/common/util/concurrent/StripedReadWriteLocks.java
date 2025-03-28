@@ -19,13 +19,17 @@ package com.google.common.util.concurrent;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class StripedReadWriteLocks {
+/**
+ * Similar to {@link Striped} except that
+ * the get methods in this class
+ * return {@link StripedLock} which includes the stripe index.
+ */
+public final class StripedReadWriteLocks {
 
   public static StripedReadWriteLocks newInstance(int stripes, boolean fair) {
     final Striped<ReentrantReadWriteLock> striped = Striped.custom(
@@ -39,21 +43,21 @@ public class StripedReadWriteLocks {
     this.striped = striped;
   }
 
-  public StripedLock get(Object obj) {
-    final int index = striped.indexFor(obj);
+  public <K> StripedLock<K> get(K key) {
+    final int index = striped.indexFor(key);
     final ReentrantReadWriteLock lock = striped.getAt(index);
-    return new StripedLock(lock, index);
+    return new StripedLock<>(key, lock, index);
   }
 
-  public Iterable<StripedLock> bulkGet(Iterable<?> objects) {
+  public <K> Iterable<StripedLock<K>> bulkGet(Iterable<K> keys) {
     final Map<Integer, ReentrantReadWriteLock> sorted = new TreeMap<>();
-    final List<StripedLock> list = new ArrayList<>();
-    for (Object obj : objects) {
-      final int index = striped.indexFor(obj);
+    final List<StripedLock<K>> list = new ArrayList<>();
+    for (K k : keys) {
+      final int index = striped.indexFor(k);
       final ReentrantReadWriteLock lock = sorted.computeIfAbsent(index, striped::getAt);
-      list.add(new StripedLock(lock, index));
+      list.add(new StripedLock<>(k, lock, index));
     }
-    list.sort(Comparator.naturalOrder());
+    list.sort(StripedLock.getComparator());
     return Collections.unmodifiableList(list);
   }
 }

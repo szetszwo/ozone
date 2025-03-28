@@ -1,13 +1,20 @@
 package org.apache.hadoop.ozone.om.lock.granular;
 
-import jakarta.annotation.Nonnull;
 import org.apache.ratis.util.Preconditions;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 /** Locks for components volume, bucket and keys. */
-public class OmComponentLock implements Comparable<OmComponentLock> {
+public class OmComponentLock {
+  private static final Comparator<OmComponentLock> COMPARATOR
+      = Comparator.comparing(OmComponentLock::getComponent)
+      .thenComparingInt(OmComponentLock::getStripeIndex);
+
+  public static Comparator<OmComponentLock> getComparator() {
+    return COMPARATOR;
+  }
 
   public enum Component {
     VOLUME, BUCKET, KEY
@@ -33,6 +40,14 @@ public class OmComponentLock implements Comparable<OmComponentLock> {
     this.stripeLock = type == Type.READ ? stripeLock.readLock() : stripeLock.writeLock();
   }
 
+  Component getComponent() {
+    return component;
+  }
+
+  int getStripeIndex() {
+    return stripeIndex;
+  }
+
   void acquire() {
     Preconditions.assertTrue(!locked, () -> this + " is already acquired");
     stripeLock.lock();
@@ -45,11 +60,6 @@ public class OmComponentLock implements Comparable<OmComponentLock> {
     stripeLock.unlock();
   }
 
-  @Override
-  public int compareTo(@Nonnull OmComponentLock that) {
-    final int diff = this.component.compareTo(that.component);
-    return diff != 0 ? diff : Integer.compare(this.stripeIndex, that.stripeIndex);
-  }
 
   @Override
   public String toString() {

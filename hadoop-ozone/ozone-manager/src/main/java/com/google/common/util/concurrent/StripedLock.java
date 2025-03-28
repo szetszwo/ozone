@@ -17,29 +17,38 @@
 
 package com.google.common.util.concurrent;
 
-import jakarta.annotation.Nonnull;
-
+import java.util.Comparator;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class StripedLock implements Comparable<StripedLock> {
+/** Locks obtained from {@link Striped}. */
+public class StripedLock<K> {
+  private static final Comparator<StripedLock<?>> COMPARATOR = Comparator.comparingInt(StripedLock::getIndex);
+
+  public static Comparator<StripedLock<?>> getComparator() {
+    return COMPARATOR;
+  }
+
+  private final K stripeKey;
   private final ReentrantReadWriteLock lock;
+  /** Stripe index. */
   private final int index;
 
-  StripedLock(ReentrantReadWriteLock lock, int index) {
+  StripedLock(K stripeKey, ReentrantReadWriteLock lock, int index) {
+    this.stripeKey = stripeKey;
     this.lock = lock;
     this.index = index;
+  }
+
+  public K getStripeKey() {
+    return stripeKey;
   }
 
   public ReentrantReadWriteLock getLock() {
     return lock;
   }
 
+  /** @return the stripe index. */
   public int getIndex() {
     return index;
-  }
-
-  @Override
-  public int compareTo(@Nonnull StripedLock that) {
-    return Integer.compare(this.index, that.index);
   }
 }

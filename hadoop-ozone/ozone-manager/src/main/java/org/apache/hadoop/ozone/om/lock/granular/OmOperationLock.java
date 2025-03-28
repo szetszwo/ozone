@@ -104,7 +104,7 @@ public abstract class OmOperationLock {
     private CompCompLocks(OmComponentLock first, OmComponentLock second) {
       this.first = Objects.requireNonNull(first, "first == null");
       this.second = Objects.requireNonNull(second, "second == null");
-      Preconditions.assertTrue(first.compareTo(second) < 0,
+      Preconditions.assertTrue(OmComponentLock.getComparator().compare(first, second) < 0,
           () -> "Unexpect order: first = " + first + " >= second = " + second);
     }
 
@@ -133,7 +133,7 @@ public abstract class OmOperationLock {
       OmComponentLock prev = first;
       for (OmComponentLock current : second) {
         final OmComponentLock previous = prev; // need final for Supplier
-        Preconditions.assertTrue(previous.compareTo(current) < 0,
+        Preconditions.assertTrue(OmComponentLock.getComparator().compare(previous, current) < 0,
             () -> "Unexpect order: previous = " + previous + " >= current = " + current
                 + ", first = " + first + ", second = " + second);
         prev = current;
