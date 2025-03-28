@@ -16,14 +16,13 @@
  */
 package org.apache.hadoop.ozone.om.lock.granular;
 
-import com.google.common.util.concurrent.Striped;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
-import org.apache.hadoop.hdds.utils.SimpleStriped;
+import com.google.common.util.concurrent.StripedReadWriteLock;
 import org.apache.hadoop.ozone.om.lock.granular.OmComponentLock.Component;
 import org.apache.hadoop.ozone.om.lock.granular.OmComponentLock.Type;
 import org.apache.ratis.util.UncheckedAutoCloseable;
@@ -32,29 +31,33 @@ import org.apache.ratis.util.UncheckedAutoCloseable;
  * Manage locking of volume, bucket and keys.
  */
 public class OmLockManager {
-  private final Striped<ReadWriteLock> volumeLocks =  SimpleStriped.readWriteLock(1 << 10, true);
-  private final Striped<ReadWriteLock> bucketLocks = SimpleStriped.readWriteLock(1 << 12, true);
-  private final Striped<ReadWriteLock> keyLocks = SimpleStriped.readWriteLock(1 << 16, true);
+  private final StripedReadWriteLock volumeLocks =  StripedReadWriteLock.newInstance(1 << 10, true);
+  private final StripedReadWriteLock bucketLocks = StripedReadWriteLock.newInstance(1 << 12, true);
+  private final StripedReadWriteLock keyLocks = StripedReadWriteLock.newInstance(1 << 16, true);
+
+  static OmComponentLock newOmComponentLock(String name, Component component, Type type,
+      StripedReadWriteLock.LockAndIndex lock) {
+    return new OmComponentLock(name, component, type, lock.getIndex(), lock.getLock());
+  }
 
   private OmComponentLock newVolumeLock(Type type, String name) {
-    return new OmComponentLock(name, Component.VOLUME, type, volumeLocks.get(name));
+    return newOmComponentLock(name, Component.VOLUME, type, volumeLocks.get(name));
   }
 
   private OmComponentLock newBucketLock(Type type, String name) {
-    return new OmComponentLock(name, Component.BUCKET, type, bucketLocks.get(name));
+    return newOmComponentLock(name, Component.BUCKET, type, bucketLocks.get(name));
   }
 
   private OmComponentLock newKeyLock(Type type, String name) {
-    return new OmComponentLock(name, Component.KEY, type, keyLocks.get(name));
+    return newOmComponentLock(name, Component.KEY, type, keyLocks.get(name));
   }
 
   private List<OmComponentLock> newKeyLocks(Type type, List<String> names) {
     final List<OmComponentLock> list = new ArrayList<>();
     final Iterator<String> i = names.iterator();
-    for(ReadWriteLock lock : keyLocks.bulkGet(names)) {
-      list.add(new OmComponentLock(i.next(), Component.KEY, type, lock));
+    for(StripedReadWriteLock.LockAndIndex lock : keyLocks.bulkGet(names)) {
+      list.add(newOmComponentLock(i.next(), Component.KEY, type, lock));
     }
-    list.sort(Comparator.naturalOrder());
     return Collections.unmodifiableList(list);
   }
 
@@ -79,7 +82,7 @@ public class OmLockManager {
   /**
    * Acquire the OM operation lock for the given bucket and key.
    * <p>
-   * try (OmOperationLock ignored = lockManager.acquireObsLock("buck1", "key1")) {
+   * try (UncheckedAutoCloseable ignored = lockManager.acquireObsLock("buck1", "key1")) {
    *   // op code
    * }
    */

@@ -20,37 +20,39 @@ public class OmComponentLock implements Comparable<OmComponentLock> {
   private final String name;
   private final Component component;
   private final Type type;
-  private final Lock lock;
+  private final int stripeIndex;
+  private final Lock stripeLock;
   private boolean locked = false;
 
-  OmComponentLock(String name, Component component, Type type, ReadWriteLock lock) {
-    Objects.requireNonNull(lock, "lock == null");
+  OmComponentLock(String name, Component component, Type type, int stripeIndex, ReadWriteLock stripeLock) {
+    Objects.requireNonNull(stripeLock, "lock == null");
     this.name = Objects.requireNonNull(name, "name == null");
     this.component = Objects.requireNonNull(component, "component == null");
     this.type = Objects.requireNonNull(type, "type == null");
-    this.lock = type == Type.READ ? lock.readLock() : lock.writeLock();
+    this.stripeIndex = stripeIndex;
+    this.stripeLock = type == Type.READ ? stripeLock.readLock() : stripeLock.writeLock();
   }
 
   void acquire() {
     Preconditions.assertTrue(!locked, () -> this + " is already acquired");
-    lock.lock();
+    stripeLock.lock();
     locked = true;
   }
 
   void release() {
     Preconditions.assertTrue(locked, () -> this + " is NOT yet acquired");
     locked = false;
-    lock.unlock();
+    stripeLock.unlock();
   }
 
   @Override
   public int compareTo(@Nonnull OmComponentLock that) {
     final int diff = this.component.compareTo(that.component);
-    return diff != 0 ? diff : this.name.compareTo(that.name);
+    return diff != 0 ? diff : Integer.compare(this.stripeIndex, that.stripeIndex);
   }
 
   @Override
   public String toString() {
-    return name + ":" + component + "_" + type + ":" + (locked ? "LOCKED" : "unlocked");
+    return name + ":" + component + "_" + type + ":s" + stripeIndex + "-" + (locked ? "LOCKED" : "unlocked");
   }
 }

@@ -23,7 +23,13 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Locks for operations such as creating a key, reading a key, etc.
+ * For operations such as creating a key, reading a key, etc.
+ * A {@link OmOperationLock} encapsulates one or more {@link OmComponentLock}s.
+ * <p>
+ * final OmOperationLock lock = ...;
+ * try (UncheckedAutoCloseable ignored = acquire()) {
+ *   // execute the operation
+ * }
  */
 public abstract class OmOperationLock {
   static class TimeInfo {
@@ -133,7 +139,6 @@ public abstract class OmOperationLock {
         prev = current;
       }
     }
-
 
     @Override
     void acquireImpl() {
