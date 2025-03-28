@@ -1608,7 +1608,7 @@ public class SCMNodeManager implements NodeManager {
   @Override
   public void setContainers(DatanodeDetails datanodeDetails,
       Set<ContainerID> containerIds) throws NodeNotFoundException {
-    nodeStateManager.setContainers(datanodeDetails.getID(), containerIds);
+    nodeStateManager.replaceContainersForTesting(datanodeDetails.getID(), containerIds);
   }
 
   /**
