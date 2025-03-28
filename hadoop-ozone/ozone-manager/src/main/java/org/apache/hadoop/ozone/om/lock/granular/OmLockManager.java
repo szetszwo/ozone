@@ -16,13 +16,12 @@
  */
 package org.apache.hadoop.ozone.om.lock.granular;
 
+import com.google.common.util.concurrent.StripedLock;
+import com.google.common.util.concurrent.StripedReadWriteLocks;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
-import com.google.common.util.concurrent.StripedReadWriteLock;
 import org.apache.hadoop.ozone.om.lock.granular.OmComponentLock.Component;
 import org.apache.hadoop.ozone.om.lock.granular.OmComponentLock.Type;
 import org.apache.ratis.util.UncheckedAutoCloseable;
@@ -31,12 +30,11 @@ import org.apache.ratis.util.UncheckedAutoCloseable;
  * Manage locking of volume, bucket and keys.
  */
 public class OmLockManager {
-  private final StripedReadWriteLock volumeLocks =  StripedReadWriteLock.newInstance(1 << 10, true);
-  private final StripedReadWriteLock bucketLocks = StripedReadWriteLock.newInstance(1 << 12, true);
-  private final StripedReadWriteLock keyLocks = StripedReadWriteLock.newInstance(1 << 16, true);
+  private final StripedReadWriteLocks volumeLocks =  StripedReadWriteLocks.newInstance(1 << 10, true);
+  private final StripedReadWriteLocks bucketLocks = StripedReadWriteLocks.newInstance(1 << 12, true);
+  private final StripedReadWriteLocks keyLocks = StripedReadWriteLocks.newInstance(1 << 16, true);
 
-  static OmComponentLock newOmComponentLock(String name, Component component, Type type,
-      StripedReadWriteLock.LockAndIndex lock) {
+  static OmComponentLock newOmComponentLock(String name, Component component, Type type, StripedLock lock) {
     return new OmComponentLock(name, component, type, lock.getIndex(), lock.getLock());
   }
 
@@ -55,7 +53,7 @@ public class OmLockManager {
   private List<OmComponentLock> newKeyLocks(Type type, List<String> names) {
     final List<OmComponentLock> list = new ArrayList<>();
     final Iterator<String> i = names.iterator();
-    for(StripedReadWriteLock.LockAndIndex lock : keyLocks.bulkGet(names)) {
+    for(StripedLock lock : keyLocks.bulkGet(names)) {
       list.add(newOmComponentLock(i.next(), Component.KEY, type, lock));
     }
     return Collections.unmodifiableList(list);

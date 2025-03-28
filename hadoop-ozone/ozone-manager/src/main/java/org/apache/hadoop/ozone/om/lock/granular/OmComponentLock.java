@@ -25,7 +25,7 @@ public class OmComponentLock implements Comparable<OmComponentLock> {
   private boolean locked = false;
 
   OmComponentLock(String name, Component component, Type type, int stripeIndex, ReadWriteLock stripeLock) {
-    Objects.requireNonNull(stripeLock, "lock == null");
+    Objects.requireNonNull(stripeLock, "stripeLock == null");
     this.name = Objects.requireNonNull(name, "name == null");
     this.component = Objects.requireNonNull(component, "component == null");
     this.type = Objects.requireNonNull(type, "type == null");
