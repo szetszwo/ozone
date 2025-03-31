@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto.Type;
+import org.apache.hadoop.hdds.utils.EnumCounters;
 import org.apache.hadoop.ozone.container.common.helpers.CommandHandlerMetrics;
 import org.apache.hadoop.ozone.container.common.statemachine.SCMConnectionManager;
 import org.apache.hadoop.ozone.container.common.statemachine.StateContext;
@@ -116,10 +117,10 @@ public final class CommandDispatcher {
    * queued commands.
    * @return A Map of CommandType where the value is the queued command count.
    */
-  public Map<Type, Integer> getQueuedCommandCount() {
-    Map<Type, Integer> counts = new HashMap<>();
+  public EnumCounters<Type> getQueuedCommandCount() {
+    EnumCounters<Type> counts = new EnumCounters<>(Type.class);
     for (Map.Entry<Type, CommandHandler> entry : handlerMap.entrySet()) {
-      counts.put(entry.getKey(), entry.getValue().getQueuedCount());
+      counts.set(entry.getKey(), entry.getValue().getQueuedCount());
     }
     return counts;
   }

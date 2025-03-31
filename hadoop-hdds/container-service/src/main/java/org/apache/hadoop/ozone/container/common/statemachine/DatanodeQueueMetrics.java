@@ -25,26 +25,20 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.text.WordUtils;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto;
+import org.apache.hadoop.hdds.utils.EnumCounters;
 import org.apache.hadoop.metrics2.MetricsCollector;
 import org.apache.hadoop.metrics2.MetricsInfo;
 import org.apache.hadoop.metrics2.MetricsRecordBuilder;
 import org.apache.hadoop.metrics2.MetricsSource;
 import org.apache.hadoop.metrics2.annotation.Metrics;
 import org.apache.hadoop.metrics2.lib.DefaultMetricsSystem;
-import org.apache.hadoop.metrics2.lib.MetricsRegistry;
 import org.apache.hadoop.ozone.OzoneConsts;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Class contains metrics related to Datanode queues.
  */
 @Metrics(about = "Datanode Queue Metrics", context = OzoneConsts.OZONE)
 public final class DatanodeQueueMetrics implements MetricsSource {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(DatanodeQueueMetrics.class);
-
   public static final String METRICS_SOURCE_NAME =
       DatanodeQueueMetrics.class.getSimpleName();
 
@@ -59,9 +53,7 @@ public final class DatanodeQueueMetrics implements MetricsSource {
   public static final String PIPELINE_ACTION_QUEUE_PREFIX =
       "PipelineActionQueue";
 
-  private MetricsRegistry registry;
-
-  private DatanodeStateMachine datanodeStateMachine;
+  private final DatanodeStateMachine datanodeStateMachine;
   private static DatanodeQueueMetrics instance;
 
   private Map<SCMCommandProto.Type, MetricsInfo> stateContextCommandQueueMap;
@@ -71,7 +63,6 @@ public final class DatanodeQueueMetrics implements MetricsSource {
   private Map<InetSocketAddress, MetricsInfo> pipelineActionQueueMap;
 
   public DatanodeQueueMetrics(DatanodeStateMachine datanodeStateMachine) {
-    this.registry = new MetricsRegistry(METRICS_SOURCE_NAME);
     this.datanodeStateMachine = datanodeStateMachine;
 
     initializeQueues();
@@ -114,12 +105,12 @@ public final class DatanodeQueueMetrics implements MetricsSource {
   public void getMetrics(MetricsCollector collector, boolean b) {
     MetricsRecordBuilder builder = collector.addRecord(METRICS_SOURCE_NAME);
 
-    Map<SCMCommandProto.Type, Integer> tmpMap =
+    EnumCounters<SCMCommandProto.Type> tmpMap =
         datanodeStateMachine.getContext().getCommandQueueSummary();
     for (Map.Entry<SCMCommandProto.Type, MetricsInfo> entry:
         stateContextCommandQueueMap.entrySet()) {
       builder.addGauge(entry.getValue(),
-          (long) tmpMap.getOrDefault(entry.getKey(), 0));
+          tmpMap.get(entry.getKey()));
     }
 
     tmpMap = datanodeStateMachine.getCommandDispatcher()
@@ -127,7 +118,7 @@ public final class DatanodeQueueMetrics implements MetricsSource {
     for (Map.Entry<SCMCommandProto.Type, MetricsInfo> entry:
         commandDispatcherQueueMap.entrySet()) {
       builder.addGauge(entry.getValue(),
-          (long) tmpMap.getOrDefault(entry.getKey(), 0));
+          tmpMap.get(entry.getKey()));
     }
 
     for (Map.Entry<InetSocketAddress, MetricsInfo> entry:

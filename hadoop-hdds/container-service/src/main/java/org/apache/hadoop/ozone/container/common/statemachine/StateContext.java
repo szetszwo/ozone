@@ -68,6 +68,7 @@ import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolPro
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.PipelineReport;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.PipelineReportsProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto;
+import org.apache.hadoop.hdds.utils.EnumCounters;
 import org.apache.hadoop.ozone.container.common.states.DatanodeState;
 import org.apache.hadoop.ozone.container.common.states.datanode.InitDatanodeState;
 import org.apache.hadoop.ozone.container.common.states.datanode.RunningDatanodeState;
@@ -788,12 +789,12 @@ public class StateContext {
     this.addCmdStatus(command);
   }
 
-  public Map<SCMCommandProto.Type, Integer> getCommandQueueSummary() {
-    Map<SCMCommandProto.Type, Integer> summary = new HashMap<>();
+  public EnumCounters<SCMCommandProto.Type> getCommandQueueSummary() {
+    final EnumCounters<SCMCommandProto.Type> summary = new EnumCounters<>(SCMCommandProto.Type.class);
     lock.lock();
     try {
       for (SCMCommand<?> cmd : commandQueue) {
-        summary.put(cmd.getType(), summary.getOrDefault(cmd.getType(), 0) + 1);
+        summary.increment(cmd.getType());
       }
     } finally {
       lock.unlock();

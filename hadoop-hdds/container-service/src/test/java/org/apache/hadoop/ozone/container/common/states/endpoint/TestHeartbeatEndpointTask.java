@@ -31,9 +31,7 @@ import static org.mockito.Mockito.when;
 import com.google.protobuf.Proto2Utils;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalLong;
 import java.util.UUID;
 import org.apache.hadoop.hdds.client.ECReplicationConfig;
@@ -50,6 +48,7 @@ import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolPro
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMHeartbeatRequestProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMHeartbeatResponseProto;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutVersionManager;
+import org.apache.hadoop.hdds.utils.EnumCounters;
 import org.apache.hadoop.ozone.container.common.statemachine.DatanodeStateMachine;
 import org.apache.hadoop.ozone.container.common.statemachine.DatanodeStateMachine.DatanodeStates;
 import org.apache.hadoop.ozone.container.common.statemachine.EndpointStateMachine;
@@ -66,6 +65,14 @@ public class TestHeartbeatEndpointTask {
 
   private static final InetSocketAddress TEST_SCM_ENDPOINT =
       new InetSocketAddress("test-scm-1", 9861);
+
+  static StateContext newStateContext(ConfigurationSource conf) {
+    DatanodeStateMachine datanodeStateMachine =
+        mock(DatanodeStateMachine.class);
+    when(datanodeStateMachine.getQueuedCommandCount())
+        .thenReturn(new EnumCounters<>(SCMCommandProto.Type.class));
+    return new StateContext(conf, DatanodeStates.RUNNING, datanodeStateMachine, "");
+  }
 
   @Test
   public void handlesReconstructContainerCommand() throws Exception {
@@ -93,10 +100,7 @@ public class TestHeartbeatEndpointTask {
                 .build());
 
     OzoneConfiguration conf = new OzoneConfiguration();
-    DatanodeStateMachine datanodeStateMachine =
-        mock(DatanodeStateMachine.class);
-    StateContext context = new StateContext(conf, DatanodeStates.RUNNING,
-        datanodeStateMachine, "");
+    StateContext context = newStateContext(conf);
 
     // WHEN
     HeartbeatEndpointTask task = getHeartbeatEndpointTask(conf, context, scm);
@@ -104,7 +108,7 @@ public class TestHeartbeatEndpointTask {
 
     // THEN
     assertEquals(1, context.getCommandQueueSummary()
-        .get(reconstructECContainersCommand).intValue());
+        .get(reconstructECContainersCommand));
   }
 
   @Test
@@ -125,8 +129,7 @@ public class TestHeartbeatEndpointTask {
                 .build());
 
     OzoneConfiguration conf = new OzoneConfiguration();
-    StateContext context = new StateContext(conf, DatanodeStates.RUNNING,
-        mock(DatanodeStateMachine.class), "");
+    StateContext context = newStateContext(conf);
     context.setTermOfLeaderSCM(1);
     HeartbeatEndpointTask endpointTask = getHeartbeatEndpointTask(
         conf, context, scm);
@@ -145,8 +148,7 @@ public class TestHeartbeatEndpointTask {
   @Test
   public void testheartbeatWithNodeReports() throws Exception {
     OzoneConfiguration conf = new OzoneConfiguration();
-    StateContext context = new StateContext(conf, DatanodeStates.RUNNING,
-        mock(DatanodeStateMachine.class), "");
+    StateContext context = newStateContext(conf);
 
     StorageContainerDatanodeProtocolClientSideTranslatorPB scm =
         mock(
@@ -177,8 +179,7 @@ public class TestHeartbeatEndpointTask {
   @Test
   public void testheartbeatWithContainerReports() throws Exception {
     OzoneConfiguration conf = new OzoneConfiguration();
-    StateContext context = new StateContext(conf, DatanodeStates.RUNNING,
-        mock(DatanodeStateMachine.class), "");
+    StateContext context = newStateContext(conf);
 
     StorageContainerDatanodeProtocolClientSideTranslatorPB scm =
         mock(
@@ -209,8 +210,7 @@ public class TestHeartbeatEndpointTask {
   @Test
   public void testheartbeatWithCommandStatusReports() throws Exception {
     OzoneConfiguration conf = new OzoneConfiguration();
-    StateContext context = new StateContext(conf, DatanodeStates.RUNNING,
-        mock(DatanodeStateMachine.class), "");
+    StateContext context = newStateContext(conf);
 
     StorageContainerDatanodeProtocolClientSideTranslatorPB scm =
         mock(
@@ -242,8 +242,7 @@ public class TestHeartbeatEndpointTask {
   @Test
   public void testheartbeatWithContainerActions() throws Exception {
     OzoneConfiguration conf = new OzoneConfiguration();
-    StateContext context = new StateContext(conf, DatanodeStates.RUNNING,
-        mock(DatanodeStateMachine.class), "");
+    StateContext context = newStateContext(conf);
 
     StorageContainerDatanodeProtocolClientSideTranslatorPB scm =
         mock(
@@ -279,11 +278,11 @@ public class TestHeartbeatEndpointTask {
     StateContext context = new StateContext(conf, DatanodeStates.RUNNING,
         datanodeStateMachine, "");
 
-    // Return a Map of command counts when the heartbeat logic requests it
-    final Map<SCMCommandProto.Type, Integer> commands = new HashMap<>();
+    // command counts when the heartbeat logic requests it
+    final EnumCounters<SCMCommandProto.Type> commands = new EnumCounters<>(SCMCommandProto.Type.class);
     int count = 1;
     for (SCMCommandProto.Type cmd : SCMCommandProto.Type.values()) {
-      commands.put(cmd, count++);
+      commands.set(cmd, count++);
     }
     when(datanodeStateMachine.getQueuedCommandCount())
         .thenReturn(commands);
@@ -318,10 +317,10 @@ public class TestHeartbeatEndpointTask {
     assertTrue(heartbeat.hasContainerActions());
     assertTrue(heartbeat.hasCommandQueueReport());
     CommandQueueReportProto queueCount = heartbeat.getCommandQueueReport();
-    assertEquals(queueCount.getCommandCount(), commands.size());
-    assertEquals(queueCount.getCountCount(), commands.size());
-    for (int i = 0; i < commands.size(); i++) {
-      assertEquals(commands.get(queueCount.getCommand(i)).intValue(),
+    assertEquals(queueCount.getCommandCount(), commands.numCounters());
+    assertEquals(queueCount.getCountCount(), commands.numCounters());
+    for (int i = 0; i < commands.numCounters(); i++) {
+      assertEquals(commands.get(queueCount.getCommand(i)),
           queueCount.getCount(i));
     }
   }

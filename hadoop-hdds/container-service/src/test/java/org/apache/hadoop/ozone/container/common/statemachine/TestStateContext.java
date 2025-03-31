@@ -59,6 +59,7 @@ import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolPro
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.PipelineReportsProto;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
+import org.apache.hadoop.hdds.utils.EnumCounters;
 import org.apache.hadoop.ozone.container.common.impl.ContainerSet;
 import org.apache.hadoop.ozone.container.common.statemachine.DatanodeStateMachine.DatanodeStates;
 import org.apache.hadoop.ozone.container.common.states.DatanodeState;
@@ -707,13 +708,13 @@ public class TestStateContext {
     ctx.addCommand(new ClosePipelineCommand(PipelineID.randomId()));
     ctx.addCommand(new CloseContainerCommand(1, PipelineID.randomId()));
 
-    Map<SCMCommandProto.Type, Integer> summary = ctx.getCommandQueueSummary();
+    final EnumCounters<SCMCommandProto.Type> summary = ctx.getCommandQueueSummary();
     assertEquals(3,
-        summary.get(SCMCommandProto.Type.replicateContainerCommand).intValue());
+        summary.get(SCMCommandProto.Type.replicateContainerCommand));
     assertEquals(2,
-        summary.get(SCMCommandProto.Type.closePipelineCommand).intValue());
+        summary.get(SCMCommandProto.Type.closePipelineCommand));
     assertEquals(1,
-        summary.get(SCMCommandProto.Type.closeContainerCommand).intValue());
+        summary.get(SCMCommandProto.Type.closeContainerCommand));
   }
 
   @Test
