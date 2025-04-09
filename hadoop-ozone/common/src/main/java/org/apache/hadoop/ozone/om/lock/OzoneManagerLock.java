@@ -24,6 +24,7 @@ import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_MANAGER_STRIPED_LOCK
 import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_MANAGER_STRIPED_LOCK_SIZE_PREFIX;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.SimpleStriped;
 import com.google.common.util.concurrent.Striped;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +41,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.utils.CompositeKey;
-import org.apache.hadoop.hdds.utils.SimpleStriped;
 import org.apache.hadoop.ipc.ProcessingDetails.Timing;
 import org.apache.hadoop.ipc.Server;
 import org.apache.hadoop.util.Time;
