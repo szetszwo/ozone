@@ -35,12 +35,12 @@ import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationFactor;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
-import org.apache.hadoop.hdds.utils.db.RocksDBConfiguration;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.ozone.OzoneAcl;
 import org.apache.hadoop.ozone.freon.FreonSubcommand;
 import org.apache.hadoop.ozone.om.OMStorage;
 import org.apache.hadoop.ozone.om.OmMetadataManagerImpl;
+import org.apache.hadoop.ozone.om.codec.OMDBDefinition;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo.Builder;
@@ -95,16 +95,10 @@ public class GeneratorOm extends BaseGenerator implements
 
     File metaDir = OMStorage.getOmDbDir(config);
 
-    RocksDBConfiguration rocksDBConfiguration =
-        config.getObject(RocksDBConfiguration.class);
-
     DBStoreBuilder dbStoreBuilder =
-        DBStoreBuilder.newBuilder(config,
-            rocksDBConfiguration)
+        DBStoreBuilder.newBuilder(config, OMDBDefinition.get())
             .setName(OM_DB_NAME)
             .setPath(metaDir.toPath());
-
-    OmMetadataManagerImpl.addOMTablesAndCodecs(dbStoreBuilder);
 
     omDb = dbStoreBuilder.build();
 

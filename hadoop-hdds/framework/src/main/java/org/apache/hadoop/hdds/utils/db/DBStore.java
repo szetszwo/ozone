@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import org.apache.hadoop.hdds.annotation.InterfaceStability;
 import org.apache.hadoop.hdds.utils.db.cache.TableCache;
+import org.apache.hadoop.hdds.utils.db.cache.TableCache.CacheType;
 import org.apache.ozone.rocksdiff.RocksDBCheckpointDiffer;
 
 /**
@@ -72,6 +73,12 @@ public interface DBStore extends Closeable, BatchOperationHandler {
   <KEY, VALUE> Table<KEY, VALUE> getTable(String name,
       Class<KEY> keyType, Class<VALUE> valueType,
       TableCache.CacheType cacheType) throws IOException;
+
+  /** The same as getTable(name, keyCodec, valueCodec, CacheType.PARTIAL_CACHE). */
+  default <KEY, VALUE> TypedTable<KEY, VALUE> getTable(String name, Codec<KEY> keyCodec, Codec<VALUE> valueCodec)
+      throws IOException {
+    return getTable(name, keyCodec, valueCodec, CacheType.PARTIAL_CACHE);
+  }
 
   /**
    * Gets table store with implict key/value conversion.

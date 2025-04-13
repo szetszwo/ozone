@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hdds.utils.CollectionUtils;
+import org.apache.hadoop.hdds.utils.db.cache.TableCache.CacheType;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedColumnFamilyOptions;
 
 /**
@@ -65,8 +66,12 @@ public class DBColumnFamilyDefinition<KEY, VALUE> {
     this.cfOptions = null;
   }
 
-  public Table<KEY, VALUE> getTable(DBStore db) throws IOException {
-    return db.getTable(tableName, getKeyType(), getValueType());
+  public TypedTable<KEY, VALUE> getTable(DBStore db) throws IOException {
+    return db.getTable(tableName, keyCodec, valueCodec);
+  }
+
+  public TypedTable<KEY, VALUE> getTable(DBStore db, CacheType cacheType) throws IOException {
+    return db.getTable(tableName, keyCodec, valueCodec, cacheType);
   }
 
   public String getName() {

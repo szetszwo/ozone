@@ -172,7 +172,7 @@ class TestInterSCMGrpcProtocolService {
 
   private DBStore dbStore() throws IOException {
     DBStore dbStoreMock = mock(DBStore.class);
-    doReturn(trInfoTable()).when(dbStoreMock).getTable(any(), any(), any());
+    doReturn(trInfoTable()).when(dbStoreMock).getTable(any(), (Class<?>)any(), (Class<?>)any());
     doReturn(checkPoint()).when(dbStoreMock).getCheckpoint(anyBoolean());
     return dbStoreMock;
   }

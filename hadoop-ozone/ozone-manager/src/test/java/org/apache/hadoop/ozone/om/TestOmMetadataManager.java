@@ -38,7 +38,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -57,6 +56,7 @@ import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.utils.TransactionInfo;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
+import org.apache.hadoop.ozone.om.codec.OMDBDefinition;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.exceptions.OMException.ResultCodes;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
@@ -958,7 +958,7 @@ public class TestOmMetadataManager {
   @Test
   public void testAllTablesAreProperInOMMetadataManagerImpl() {
     Set<String> tablesByDefinition =
-        new HashSet<>(Arrays.asList(OmMetadataManagerImpl.ALL_TABLES));
+        new HashSet<>(OMDBDefinition.get().getColumnFamilyNames());
     Set<String> tablesInManager = omMetadataManager.listTableNames();
 
     assertEquals(tablesByDefinition, tablesInManager);

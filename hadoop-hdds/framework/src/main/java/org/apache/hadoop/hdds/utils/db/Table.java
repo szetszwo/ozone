@@ -238,7 +238,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
   /**
    * Create the metrics datasource that emits table cache metrics.
    */
-  default TableCacheMetrics createCacheMetrics() throws IOException {
+  default TableCacheMetrics createCacheMetrics() {
     throw new NotImplementedException("getCacheValue is not implemented");
   }
 
