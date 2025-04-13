@@ -25,6 +25,7 @@ import static org.apache.hadoop.ozone.OzoneConsts.OM_KEY_PREFIX;
 import static org.apache.hadoop.ozone.OzoneConsts.OM_SNAPSHOT_CHECKPOINT_DIR;
 import static org.apache.hadoop.ozone.OzoneConsts.OM_SNAPSHOT_DIFF_DIR;
 import static org.apache.hadoop.ozone.OzoneConsts.SNAPSHOT_INFO_TABLE;
+import static org.apache.ratis.util.JavaUtils.getClassSimpleName;
 
 import com.google.common.base.Preconditions;
 import java.io.File;
@@ -59,6 +60,7 @@ import org.slf4j.LoggerFactory;
 public class RDBStore implements DBStore {
   private static final Logger LOG =
       LoggerFactory.getLogger(RDBStore.class);
+  private final String dbName;
   private final RocksDatabase db;
   private final File dbLocation;
   private final CodecRegistry codecRegistry;
@@ -89,6 +91,7 @@ public class RDBStore implements DBStore {
     Preconditions.checkNotNull(dbFile, "DB file location cannot be null");
     Preconditions.checkNotNull(families);
     Preconditions.checkArgument(!families.isEmpty());
+    this.dbName = getClassSimpleName(getClass()) + "[" + dbFile + "]";
     this.maxDbUpdatesSizeThreshold = maxDbUpdatesSizeThreshold;
     codecRegistry = registry;
     dbLocation = dbFile;
@@ -289,10 +292,10 @@ public class RDBStore implements DBStore {
   }
 
   @Override
-  public RDBTable getTable(String name) throws IOException {
+  public RDBTable getTable(String name) throws RocksDatabaseException {
     final ColumnFamily handle = db.getColumnFamily(name);
     if (handle == null) {
-      throw new IOException("No such table in this DB. TableName : " + name);
+      throw new RocksDatabaseException("Table " + name + " not found in " + this);
     }
     return new RDBTable(this.db, handle, rdbMetrics);
   }
@@ -307,7 +310,9 @@ public class RDBStore implements DBStore {
   @Override
   public <K, V> TypedTable<K, V> getTable(
       String name, Codec<K> keyCodec, Codec<V> valueCodec, TableCache.CacheType cacheType) throws IOException {
-    return new TypedTable<>(getTable(name), keyCodec, valueCodec, cacheType);
+    final TypedTable<K, V> table = new TypedTable<>(getTable(name), keyCodec, valueCodec, cacheType);
+    LOG.info("Created {} from {}", table, this);
+    return table;
   }
 
   @Override
@@ -489,5 +494,10 @@ public class RDBStore implements DBStore {
 
   public RDBMetrics getMetrics() {
     return rdbMetrics;
+  }
+
+  @Override
+  public String toString() {
+    return dbName;
   }
 }

@@ -117,21 +117,16 @@ public final class DBStoreBuilder {
 
   public static DBStoreBuilder newBuilder(ConfigurationSource configuration,
       DBDefinition definition) {
+    return newBuilder(configuration, definition, null);
+  }
 
-    DBStoreBuilder builder = newBuilder(configuration);
-    builder.applyDBDefinition(definition);
-
-    return builder;
+  public static DBStoreBuilder newBuilder(ConfigurationSource conf, DBDefinition definition, File metadataDir) {
+    return newBuilder(conf).applyDBDefinition(definition, metadataDir);
   }
 
   public static DBStoreBuilder newBuilder(ConfigurationSource configuration) {
-    return newBuilder(configuration,
+    return new DBStoreBuilder(configuration,
         configuration.getObject(RocksDBConfiguration.class));
-  }
-
-  public static DBStoreBuilder newBuilder(ConfigurationSource configuration,
-      RocksDBConfiguration rocksDBConfiguration) {
-    return new DBStoreBuilder(configuration, rocksDBConfiguration);
   }
 
   private DBStoreBuilder(ConfigurationSource configuration,
@@ -173,21 +168,20 @@ public final class DBStoreBuilder {
     return metadataDir;
   }
 
-  private void applyDBDefinition(DBDefinition definition) {
+  private DBStoreBuilder applyDBDefinition(DBDefinition definition, File metadataDir) {
     // Set metadata dirs.
-    File metadataDir = getDBDirPath(definition, configuration);
+    if (metadataDir == null) {
+      metadataDir = getDBDirPath(definition, configuration);
+    }
 
     setName(definition.getName());
     setPath(Paths.get(metadataDir.getPath()));
 
     // Add column family names and codecs.
-    for (DBColumnFamilyDefinition columnFamily :
-        definition.getColumnFamilies()) {
-
+    for (DBColumnFamilyDefinition<?, ?> columnFamily : definition.getColumnFamilies()) {
       addTable(columnFamily.getName(), columnFamily.getCfOptions());
-      addCodec(columnFamily.getKeyType(), columnFamily.getKeyCodec());
-      addCodec(columnFamily.getValueType(), columnFamily.getValueCodec());
     }
+    return this;
   }
 
   private void setDBOptionsProps(ManagedDBOptions dbOptions) {

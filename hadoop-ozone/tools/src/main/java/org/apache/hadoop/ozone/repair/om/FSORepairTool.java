@@ -36,6 +36,7 @@ import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.OmUtils;
 import org.apache.hadoop.ozone.om.OmMetadataManagerImpl;
+import org.apache.hadoop.ozone.om.codec.OMDBDefinition;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
 import org.apache.hadoop.ozone.om.helpers.OmDirectoryInfo;
@@ -105,6 +106,7 @@ public class FSORepairTool extends RepairTool {
       Impl repairTool = new Impl();
       repairTool.run();
     } catch (Exception ex) {
+      LOG.error("FSO repair failed", ex);
       throw new IllegalArgumentException("FSO repair failed: " + ex.getMessage());
     }
 
@@ -134,27 +136,13 @@ public class FSORepairTool extends RepairTool {
       this.unreferencedStats = new ReportStatistics(0, 0, 0);
 
       this.store = getStoreFromPath(omDBPath);
-      volumeTable = store.getTable(OmMetadataManagerImpl.VOLUME_TABLE,
-          String.class,
-          OmVolumeArgs.class);
-      bucketTable = store.getTable(OmMetadataManagerImpl.BUCKET_TABLE,
-          String.class,
-          OmBucketInfo.class);
-      directoryTable = store.getTable(OmMetadataManagerImpl.DIRECTORY_TABLE,
-          String.class,
-          OmDirectoryInfo.class);
-      fileTable = store.getTable(OmMetadataManagerImpl.FILE_TABLE,
-          String.class,
-          OmKeyInfo.class);
-      deletedDirectoryTable = store.getTable(OmMetadataManagerImpl.DELETED_DIR_TABLE,
-          String.class,
-          OmKeyInfo.class);
-      deletedTable = store.getTable(OmMetadataManagerImpl.DELETED_TABLE,
-          String.class,
-          RepeatedOmKeyInfo.class);
-      snapshotInfoTable = store.getTable(OmMetadataManagerImpl.SNAPSHOT_INFO_TABLE,
-          String.class,
-          SnapshotInfo.class);
+      this.volumeTable = OMDBDefinition.VOLUME_TABLE.getTable(store);
+      this.bucketTable = OMDBDefinition.BUCKET_TABLE.getTable(store);
+      this.directoryTable = OMDBDefinition.DIRECTORY_TABLE.getTable(store);
+      this.fileTable = OMDBDefinition.FILE_TABLE.getTable(store);
+      this.deletedDirectoryTable = OMDBDefinition.DELETED_DIR_TABLE.getTable(store);
+      this.deletedTable = OMDBDefinition.DELETED_TABLE.getTable(store);
+      this.snapshotInfoTable = OMDBDefinition.SNAPSHOT_INFO_TABLE.getTable(store);
     }
 
     public Report run() throws Exception {

@@ -63,7 +63,6 @@ import org.apache.hadoop.hdds.utils.db.DBColumnFamilyDefinition;
 import org.apache.hadoop.hdds.utils.db.DBDefinition;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
-import org.apache.hadoop.hdds.utils.db.RocksDBConfiguration;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.io.retry.RetryPolicies;
 import org.apache.hadoop.io.retry.RetryPolicy;
@@ -309,10 +308,8 @@ public final class HAUtils {
 
   public static DBStore loadDB(OzoneConfiguration configuration, File metaDir,
       String dbName, DBDefinition definition) throws IOException {
-    RocksDBConfiguration rocksDBConfiguration =
-        configuration.getObject(RocksDBConfiguration.class);
     DBStoreBuilder dbStoreBuilder =
-        DBStoreBuilder.newBuilder(configuration, rocksDBConfiguration)
+        DBStoreBuilder.newBuilder(configuration)
             .setName(dbName)
             .setPath(Paths.get(metaDir.getPath()));
     // Add column family names and codecs.
