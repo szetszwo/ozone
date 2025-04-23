@@ -29,7 +29,6 @@ import static org.apache.hadoop.ozone.OzoneConfigKeys.OZONE_OM_DELTA_UPDATE_DATA
 import static org.rocksdb.RocksDB.DEFAULT_COLUMN_FAMILY;
 
 import com.google.common.base.Preconditions;
-import com.google.protobuf.MessageLite;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -91,7 +90,6 @@ public final class DBStoreBuilder {
   // any options. On build, this will be replaced with defaultCfOptions.
   private Map<String, ManagedColumnFamilyOptions> cfOptions;
   private ConfigurationSource configuration;
-  private final CodecRegistry.Builder registry = CodecRegistry.newBuilder();
   private String rocksDbStat;
   // RocksDB column family write buffer size
   private long rocksDbCfWriteBufferSize;
@@ -112,16 +110,16 @@ public final class DBStoreBuilder {
    */
   public static DBStore createDBStore(ConfigurationSource configuration,
       DBDefinition definition) throws IOException {
-    return newBuilder(configuration, definition).build();
+    return newBuilder(configuration, definition, null, null).build();
   }
 
-  public static DBStoreBuilder newBuilder(ConfigurationSource configuration,
-      DBDefinition definition) {
-    return newBuilder(configuration, definition, null);
+  public static DBStoreBuilder newBuilder(ConfigurationSource conf, DBDefinition definition, File dbDir) {
+    return newBuilder(conf, definition, dbDir.getName(), dbDir.getParentFile().toPath());
   }
 
-  public static DBStoreBuilder newBuilder(ConfigurationSource conf, DBDefinition definition, File metadataDir) {
-    return newBuilder(conf).applyDBDefinition(definition, metadataDir);
+  public static DBStoreBuilder newBuilder(ConfigurationSource conf, DBDefinition definition,
+      String name, Path metadataDir) {
+    return newBuilder(conf).apply(definition, name, metadataDir);
   }
 
   public static DBStoreBuilder newBuilder(ConfigurationSource configuration) {
@@ -168,14 +166,17 @@ public final class DBStoreBuilder {
     return metadataDir;
   }
 
-  private DBStoreBuilder applyDBDefinition(DBDefinition definition, File metadataDir) {
+  private DBStoreBuilder apply(DBDefinition definition, String name, Path metadataDir) {
+    if (name == null) {
+      name = definition.getName();
+    }
+    setName(name);
+
     // Set metadata dirs.
     if (metadataDir == null) {
-      metadataDir = getDBDirPath(definition, configuration);
+      metadataDir = getDBDirPath(definition, configuration).toPath();
     }
-
-    setName(definition.getName());
-    setPath(Paths.get(metadataDir.getPath()));
+    setPath(metadataDir);
 
     // Add column family names and codecs.
     for (DBColumnFamilyDefinition<?, ?> columnFamily : definition.getColumnFamilies()) {
@@ -200,7 +201,7 @@ public final class DBStoreBuilder {
    *
    * @return DBStore
    */
-  public DBStore build() throws IOException {
+  public RDBStore build() throws IOException {
     if (StringUtil.isBlank(dbname) || (dbPath == null)) {
       LOG.error("Required Parameter missing.");
       throw new IOException("Required parameter is missing. Please make sure "
@@ -223,7 +224,7 @@ public final class DBStoreBuilder {
       }
 
       return new RDBStore(dbFile, rocksDBOption, statistics, writeOptions, tableConfigs,
-          registry.build(), openReadOnly, dbJmxBeanNameName, enableCompactionDag,
+          openReadOnly, dbJmxBeanNameName, enableCompactionDag,
           maxDbUpdatesSizeThreshold, createCheckpointDirs, configuration,
           enableRocksDbMetrics);
     } finally {
@@ -249,15 +250,6 @@ public final class DBStoreBuilder {
       ManagedColumnFamilyOptions options) {
     cfOptions.put(tableName, options);
     return this;
-  }
-
-  public <T> DBStoreBuilder addCodec(Class<T> type, Codec<T> codec) {
-    registry.addCodec(type, codec);
-    return this;
-  }
-
-  public <T extends MessageLite> DBStoreBuilder addProto2Codec(T type) {
-    return addCodec((Class<T>)type.getClass(), Proto2Codec.get(type));
   }
 
   public DBStoreBuilder setDBOptions(ManagedDBOptions option) {

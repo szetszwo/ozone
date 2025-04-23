@@ -370,8 +370,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
     omEpoch = 0;
     int maxOpenFiles = conf.getInt(OZONE_OM_SNAPSHOT_DB_MAX_OPEN_FILES, OZONE_OM_SNAPSHOT_DB_MAX_OPEN_FILES_DEFAULT);
 
-    this.store = newDBStoreBuilder(conf, dir)
-        .setName(name)
+    this.store = newDBStoreBuilder(conf, name, dir)
         .setOpenReadOnly(true)
         .disableDefaultCFAutoCompaction(true)
         .setMaxNumberOfOpenFiles(maxOpenFiles)
@@ -412,8 +411,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
       final boolean enableRocksDBMetrics = conf.getBoolean(
           OZONE_OM_SNAPSHOT_ROCKSDB_METRICS_ENABLED,
           OZONE_OM_SNAPSHOT_ROCKSDB_METRICS_ENABLED_DEFAULT);
-      this.store = newDBStoreBuilder(conf, metaDir)
-          .setName(dbName)
+      this.store = newDBStoreBuilder(conf, dbName, metaDir)
           .setOpenReadOnly(false)
           .disableDefaultCFAutoCompaction(true)
           .setMaxNumberOfOpenFiles(maxOpenFiles)
@@ -545,7 +543,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
   }
 
   public static DBStore loadDB(OzoneConfiguration configuration, File metaDir, int maxOpenFiles) throws IOException {
-    return newDBStoreBuilder(configuration, metaDir)
+    return newDBStoreBuilder(configuration, null, metaDir)
         .setOpenReadOnly(false)
         .setEnableCompactionDag(true)
         .setCreateCheckpointDirs(true)
@@ -554,8 +552,8 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
         .build();
   }
 
-  protected static DBStoreBuilder newDBStoreBuilder(OzoneConfiguration conf, File dir) {
-    return DBStoreBuilder.newBuilder(conf, OMDBDefinition.get(), dir);
+  protected static DBStoreBuilder newDBStoreBuilder(OzoneConfiguration conf, String name, File dir) {
+    return DBStoreBuilder.newBuilder(conf, OMDBDefinition.get(), name, dir.toPath());
   }
 
   /**

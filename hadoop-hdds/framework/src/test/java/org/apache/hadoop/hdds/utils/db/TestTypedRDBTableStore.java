@@ -44,6 +44,7 @@ import org.apache.hadoop.hdds.StringUtils;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
+import org.apache.hadoop.hdds.utils.db.cache.TableCache.CacheType;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedColumnFamilyOptions;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedDBOptions;
 import org.apache.ozone.test.GenericTestUtils;
@@ -69,7 +70,6 @@ public class TestTypedRDBTableStore {
           "Ninth", "Ten");
   private RDBStore rdbStore = null;
   private ManagedDBOptions options = null;
-  private CodecRegistry codecRegistry;
 
   @BeforeEach
   public void setUp(@TempDir File tempDir) throws Exception {
@@ -91,9 +91,6 @@ public class TestTypedRDBTableStore {
     }
     rdbStore = TestRDBStore.newRDBStore(tempDir, options, configSet,
         MAX_DB_UPDATES_SIZE_THRESHOLD);
-
-    codecRegistry = CodecRegistry.newBuilder().build();
-
   }
 
   @AfterEach
@@ -121,12 +118,13 @@ public class TestTypedRDBTableStore {
     }
   }
 
+  static TypedTable<String, String> newTypedTable(RDBTable rawTable) throws IOException {
+    return new TypedTable<>(rawTable, StringCodec.get(), StringCodec.get(), CacheType.PARTIAL_CACHE);
+  }
+
   private Table<String, String> createTypedTable(String name)
       throws IOException {
-    return new TypedTable<String, String>(
-        rdbStore.getTable(name),
-        codecRegistry,
-        String.class, String.class);
+    return newTypedTable(rdbStore.getTable(name));
   }
 
   @Test
@@ -252,8 +250,7 @@ public class TestTypedRDBTableStore {
     RDBTable rdbTable = mock(RDBTable.class);
     when(rdbTable.iterator((CodecBuffer) null))
         .thenThrow(new IOException());
-    try (Table<String, String> testTable = new TypedTable<>(rdbTable,
-        codecRegistry, String.class, String.class)) {
+    try (Table<String, String> testTable = newTypedTable(rdbTable)) {
       assertThrows(IOException.class, testTable::iterator);
     }
   }
@@ -409,10 +406,9 @@ public class TestTypedRDBTableStore {
 
   @Test
   public void testByteArrayTypedTable() throws Exception {
+    final Codec<byte[]> codec = ByteArrayCodec.get();
     try (Table<byte[], byte[]> testTable = new TypedTable<>(
-            rdbStore.getTable("Ten"),
-            codecRegistry,
-            byte[].class, byte[].class)) {
+        rdbStore.getTable("Ten"), codec, codec, CacheType.PARTIAL_CACHE)) {
       byte[] key = new byte[] {1, 2, 3};
       byte[] value = new byte[] {4, 5, 6};
       testTable.put(key, value);

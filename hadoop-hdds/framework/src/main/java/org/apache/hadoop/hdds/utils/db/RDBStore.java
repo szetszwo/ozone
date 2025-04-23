@@ -63,7 +63,6 @@ public class RDBStore implements DBStore {
   private final String dbName;
   private final RocksDatabase db;
   private final File dbLocation;
-  private final CodecRegistry codecRegistry;
   private RocksDBStoreMetrics metrics;
   private final RDBCheckpointManager checkPointManager;
   private final String checkpointsParentDir;
@@ -80,7 +79,7 @@ public class RDBStore implements DBStore {
   @SuppressWarnings("parameternumber")
   public RDBStore(File dbFile, ManagedDBOptions dbOptions, ManagedStatistics statistics,
                   ManagedWriteOptions writeOptions, Set<TableConfig> families,
-                  CodecRegistry registry, boolean readOnly,
+                  boolean readOnly,
                   String dbJmxBeanName, boolean enableCompactionDag,
                   long maxDbUpdatesSizeThreshold,
                   boolean createCheckpointDirs,
@@ -93,7 +92,6 @@ public class RDBStore implements DBStore {
     Preconditions.checkArgument(!families.isEmpty());
     this.dbName = getClassSimpleName(getClass()) + "[" + dbFile + "]";
     this.maxDbUpdatesSizeThreshold = maxDbUpdatesSizeThreshold;
-    codecRegistry = registry;
     dbLocation = dbFile;
     this.dbOptions = dbOptions;
     this.statistics = statistics;
@@ -301,25 +299,11 @@ public class RDBStore implements DBStore {
   }
 
   @Override
-  public <K, V> TypedTable<K, V> getTable(String name,
-      Class<K> keyType, Class<V> valueType) throws IOException {
-    return new TypedTable<>(getTable(name), codecRegistry, keyType,
-        valueType);
-  }
-
-  @Override
   public <K, V> TypedTable<K, V> getTable(
       String name, Codec<K> keyCodec, Codec<V> valueCodec, TableCache.CacheType cacheType) throws IOException {
     final TypedTable<K, V> table = new TypedTable<>(getTable(name), keyCodec, valueCodec, cacheType);
     LOG.info("Created {} from {}", table, this);
     return table;
-  }
-
-  @Override
-  public <K, V> Table<K, V> getTable(String name,
-      Class<K> keyType, Class<V> valueType,
-      TableCache.CacheType cacheType) throws IOException {
-    return new TypedTable<>(getTable(name), codecRegistry, keyType, valueType, cacheType);
   }
 
   @Override

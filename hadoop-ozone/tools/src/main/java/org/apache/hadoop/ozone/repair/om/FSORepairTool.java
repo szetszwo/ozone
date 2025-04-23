@@ -30,10 +30,13 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
+import org.apache.hadoop.hdds.utils.db.ByteArrayCodec;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
+import org.apache.hadoop.hdds.utils.db.StringCodec;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
+import org.apache.hadoop.hdds.utils.db.TypedTable;
 import org.apache.hadoop.ozone.OmUtils;
 import org.apache.hadoop.ozone.om.OmMetadataManagerImpl;
 import org.apache.hadoop.ozone.om.codec.OMDBDefinition;
@@ -80,6 +83,7 @@ import picocli.CommandLine;
 public class FSORepairTool extends RepairTool {
   private static final Logger LOG = LoggerFactory.getLogger(FSORepairTool.class);
   private static final String REACHABLE_TABLE = "reachable";
+  private static final byte[] EMPTY_BYTE_ARRAY = {};
 
   @CommandLine.Option(names = {"--db"},
       required = true,
@@ -126,6 +130,7 @@ public class FSORepairTool extends RepairTool {
     private final Table<String, RepeatedOmKeyInfo> deletedTable;
     private final Table<String, SnapshotInfo> snapshotInfoTable;
     private DBStore reachableDB;
+    private TypedTable<String, byte[]> reachableTable;
     private final ReportStatistics reachableStats;
     private final ReportStatistics unreachableStats;
     private final ReportStatistics unreferencedStats;
@@ -449,7 +454,7 @@ public class FSORepairTool extends RepairTool {
     private void addReachableEntry(OmVolumeArgs volume, OmBucketInfo bucket, WithObjectID object) throws IOException {
       String reachableKey = buildReachableKey(volume, bucket, object);
       // No value is needed for this table.
-      reachableDB.getTable(REACHABLE_TABLE, String.class, byte[].class).put(reachableKey, new byte[]{});
+      reachableTable.put(reachableKey, EMPTY_BYTE_ARRAY);
     }
 
     /**
@@ -459,7 +464,7 @@ public class FSORepairTool extends RepairTool {
     protected boolean isReachable(String fileOrDirKey) throws IOException {
       String reachableParentKey = buildReachableParentKey(fileOrDirKey);
 
-      return reachableDB.getTable(REACHABLE_TABLE, String.class, byte[].class).get(reachableParentKey) != null;
+      return reachableTable.get(reachableParentKey) != null;
     }
 
     private void openReachableDB() throws IOException {
@@ -476,6 +481,7 @@ public class FSORepairTool extends RepairTool {
           .setPath(reachableDBFile.getParentFile().toPath())
           .addTable(REACHABLE_TABLE)
           .build();
+      reachableTable = reachableDB.getTable(REACHABLE_TABLE, StringCodec.get(), ByteArrayCodec.get());
     }
 
     private void closeReachableDB() throws IOException {
