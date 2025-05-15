@@ -21,19 +21,15 @@ import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_SCM_SAFEMODE_THRESHOLD_
 import static org.apache.hadoop.hdds.HddsConfigKeys.HDDS_SCM_SAFEMODE_THRESHOLD_PCT_DEFAULT;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
-import org.apache.hadoop.hdds.protocol.DatanodeDetails;
+import org.apache.hadoop.hdds.protocol.DatanodeID;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.LifeCycleState;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.scm.container.ContainerID;
@@ -54,14 +50,12 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
 
   private static final Logger LOG = LoggerFactory.getLogger(ECContainerSafeModeRule.class);
   private static final String NAME = "ECContainerSafeModeRule";
-  private static final int DEFAULT_MIN_REPLICA = 1;
 
   private final ContainerManager containerManager;
   private final double safeModeCutoff;
-  private final Set<Long> ecContainers;
-  private final Map<Long, Set<UUID>> ecContainerDNsMap;
+  private final Map<ContainerID, Entry> ecContainers;
   private final AtomicLong ecContainerWithMinReplicas;
-  private double ecMaxContainer;
+  private volatile int ecMaxContainer;
 
   public ECContainerSafeModeRule(EventQueue eventQueue,
       ConfigurationSource conf,
@@ -70,8 +64,7 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
     super(manager, NAME, eventQueue);
     this.safeModeCutoff = getSafeModeCutoff(conf);
     this.containerManager = containerManager;
-    this.ecContainers = new HashSet<>();
-    this.ecContainerDNsMap = new ConcurrentHashMap<>();
+    this.ecContainers = new ConcurrentHashMap<>();
     this.ecContainerWithMinReplicas = new AtomicLong(0);
     initializeRule();
   }
@@ -79,8 +72,13 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
   private static double getSafeModeCutoff(ConfigurationSource conf) {
     final double cutoff = conf.getDouble(HDDS_SCM_SAFEMODE_THRESHOLD_PCT,
         HDDS_SCM_SAFEMODE_THRESHOLD_PCT_DEFAULT);
-    Preconditions.checkArgument((cutoff >= 0.0 && cutoff <= 1.0),
-        HDDS_SCM_SAFEMODE_THRESHOLD_PCT + " value should be >= 0.0 and <= 1.0");
+    if (cutoff < 0) {
+      throw new IllegalArgumentException(HDDS_SCM_SAFEMODE_THRESHOLD_PCT
+          + " = " + cutoff + " < 0");
+    } else if (cutoff > 1) {
+      throw new IllegalArgumentException(HDDS_SCM_SAFEMODE_THRESHOLD_PCT
+          + " = " + cutoff + " > 1");
+    }
     return cutoff;
   }
 
@@ -100,17 +98,16 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
 
     return containers.stream()
         .filter(this::isClosed)
-        .map(ContainerInfo::containerID)
         .noneMatch(this::isMissing);
   }
 
   /**
    * Checks if the container has at least the minimum required number of replicas.
    */
-  private boolean isMissing(ContainerID id) {
+  private boolean isMissing(ContainerInfo info) {
+    final int minReplica = getMinReplica(info);
     try {
-      int minReplica = getMinReplica(id.getId());
-      return containerManager.getContainerReplicas(id).size() < minReplica;
+      return containerManager.getContainerReplicas(info.containerID()).size() < minReplica;
     } catch (ContainerNotFoundException ex) {
       /*
        * This should never happen, in case this happens the container
@@ -124,38 +121,26 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
 
   @VisibleForTesting
   public double getCurrentContainerThreshold() {
-    return ecMaxContainer == 0 ? 1 : (ecContainerWithMinReplicas.doubleValue() / ecMaxContainer);
+    final int max = ecMaxContainer;
+    return max == 0 ? 1 : ecContainerWithMinReplicas.doubleValue() / max;
   }
 
-  /**
-   * Get the minimum replica.
-   *
-   * @param pContainerID containerID
-   * @return MinReplica.
-   */
-  private int getMinReplica(long pContainerID) {
-    try {
-      ContainerID containerID = ContainerID.valueOf(pContainerID);
-      ContainerInfo container = containerManager.getContainer(containerID);
-      ReplicationConfig replicationConfig = container.getReplicationConfig();
-      return replicationConfig.getMinimumNodes();
-    } catch (Exception e) {
-      LOG.error("containerId = {} not found.", pContainerID, e);
-    }
-
-    return DEFAULT_MIN_REPLICA;
+  static int getMinReplica(ContainerInfo container) {
+    return container.getReplicationConfig().getMinimumNodes();
   }
 
   @Override
   protected void process(NodeRegistrationContainerReport report) {
-    DatanodeDetails datanodeDetails = report.getDatanodeDetails();
-    UUID datanodeUUID = datanodeDetails.getUuid();
-
+    final DatanodeID datanodeID = report.getDatanodeDetails().getID();
     report.getReport().getReportsList().forEach(c -> {
-      long containerID = c.getContainerID();
-      if (ecContainers.contains(containerID)) {
-        putInContainerDNsMap(containerID, ecContainerDNsMap, datanodeUUID);
-        recordReportedContainer(containerID);
+      final ContainerID containerID = ContainerID.valueOf(c.getContainerID());
+      final Entry entry = ecContainers.get(containerID);
+      if (entry != null) {
+        entry.add(datanodeID);
+        if (entry.hasMinReplica()) {
+          getSafeModeMetrics().incCurrentContainersWithECDataReplicaReportedCount();
+          ecContainerWithMinReplicas.incrementAndGet();
+        }
       }
     });
 
@@ -166,38 +151,12 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
     }
   }
 
-  private void putInContainerDNsMap(long containerID,
-      Map<Long, Set<UUID>> containerDNsMap,
-      UUID datanodeUUID) {
-    containerDNsMap.computeIfAbsent(containerID, key -> Sets.newHashSet()).add(datanodeUUID);
-  }
-
-  /**
-   * Record the reported Container.
-   *
-   * @param containerID containerID
-   */
-  private void recordReportedContainer(long containerID) {
-
-    int uuids = 1;
-    if (ecContainerDNsMap.containsKey(containerID)) {
-      uuids = ecContainerDNsMap.get(containerID).size();
-    }
-
-    int minReplica = getMinReplica(containerID);
-    if (uuids >= minReplica) {
-      getSafeModeMetrics()
-          .incCurrentContainersWithECDataReplicaReportedCount();
-      ecContainerWithMinReplicas.getAndAdd(1);
-    }
-  }
-
   private void initializeRule() {
     ecContainers.clear();
-    ecContainerDNsMap.clear();
     containerManager.getContainers(ReplicationType.EC).stream()
-        .filter(this::isClosed).filter(c -> c.getNumberOfKeys() > 0)
-        .map(ContainerInfo::getContainerID).forEach(ecContainers::add);
+        .filter(this::isClosed)
+        .filter(c -> c.getNumberOfKeys() > 0)
+        .forEach(info -> ecContainers.put(info.containerID(), new Entry(info)));
     ecMaxContainer = ecContainers.size();
     long ecCutOff = (long) Math.ceil(ecMaxContainer * safeModeCutoff);
     getSafeModeMetrics().setNumContainerWithECDataReplicaReportedThreshold(ecCutOff);
@@ -212,26 +171,25 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
 
   @Override
   public String getStatusText() {
+    final double current = getCurrentContainerThreshold();
     String status = String.format(
-        "%1.2f%% of [EC] Containers(%s / %s) with at least N reported replica (=%1.2f) >= " +
-            "safeModeCutoff (=%1.2f);",
-        getCurrentContainerThreshold() * 100,
-        ecContainerWithMinReplicas, (long) ecMaxContainer,
-        getCurrentContainerThreshold(), this.safeModeCutoff);
+        "%1.2f%% of [EC] Containers (%s / %s) with min reported replicas: %s safeModeCutoff (=%1.2f);",
+        current * 100, ecContainerWithMinReplicas, ecMaxContainer,
+        current >= safeModeCutoff ? ">=" : "<", safeModeCutoff);
 
-    Set<Long> sampleEcContainers = ecContainerDNsMap.entrySet().stream().filter(entry -> {
-      Long containerId = entry.getKey();
-      int minReplica = getMinReplica(containerId);
-      Set<UUID> allReplicas = entry.getValue();
-      return allReplicas.size() < minReplica;
-    }).map(Map.Entry::getKey).limit(SAMPLE_CONTAINER_DISPLAY_LIMIT).collect(Collectors.toSet());
+    final List<ContainerID> sampleEcContainers = ecContainers.values().stream()
+        .filter(entry -> !entry.hasMinReplica())
+        .map(Entry::getContainer)
+        .map(ContainerInfo::containerID)
+        .limit(SAMPLE_CONTAINER_DISPLAY_LIMIT)
+        .collect(Collectors.toList());
 
+    String sample = "";
     if (!sampleEcContainers.isEmpty()) {
-      String sampleECContainerText = "Sample EC Containers not satisfying the criteria : " + sampleEcContainers + ";";
-      status = status.concat("\n").concat(sampleECContainerText);
+      sample = "\nSample EC Containers not having enough replicas: " + sampleEcContainers;
     }
 
-    return status;
+    return status + sample;
   }
 
   @Override
@@ -244,6 +202,30 @@ public class ECContainerSafeModeRule extends SafeModeExitRule<NodeRegistrationCo
   @Override
   protected void cleanup() {
     ecContainers.clear();
-    ecContainerDNsMap.clear();
+  }
+
+  static class Entry {
+    private final ContainerInfo container;
+    private final Set<DatanodeID> datanodes = new HashSet<>();
+
+    Entry(ContainerInfo container) {
+      this.container = container;
+    }
+
+    ContainerInfo getContainer() {
+      return container;
+    }
+
+    boolean hasMinReplica() {
+      return getDatanodeCount() >= getMinReplica(getContainer());
+    }
+
+    int getDatanodeCount() {
+      return datanodes.size();
+    }
+
+    void add(DatanodeID datanodeID) {
+      datanodes.add(datanodeID);
+    }
   }
 }
