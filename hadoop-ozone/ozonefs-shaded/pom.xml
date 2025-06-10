@@ -141,6 +141,7 @@
                   <exclude>com.sun.management:*</exclude>
                   <exclude>com.sun.security:*</exclude>
                   <exclude>com.sun.tools:*</exclude>
+                  <exclude>org.bouncycastle:*</exclude>
                   <exclude>org.ietf.jgss:*</exclude>
                   <exclude>org.omg:*</exclude>
                   <exclude>org.w3c.dom:*</exclude>
@@ -203,6 +204,7 @@
                     <!-- These packages are the ones that are not shaded in the hadoop release package.
                       To prevent conflicts, we do not include these packages in the ozone client release package.
                       Ozone will use hadoop / JVM to provide these dependencies. -->
+                    <exclude>org.bouncycastle:*</exclude>
                     <exclude>org.ietf.jgss.*</exclude>
                     <exclude>org.omg.**</exclude>
                     <exclude>org.slf4j.**</exclude>
