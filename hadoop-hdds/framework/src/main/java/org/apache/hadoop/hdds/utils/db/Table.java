@@ -18,7 +18,6 @@
 package org.apache.hadoop.hdds.utils.db;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * @param key metadata key
    * @param value metadata value
    */
-  void put(KEY key, VALUE value) throws IOException;
+  void put(KEY key, VALUE value) throws RocksDatabaseException, CodecException;
 
   /**
    * Puts a key-value pair into the store as part of a bath operation.
@@ -54,14 +53,12 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * @param key metadata key
    * @param value metadata value
    */
-  void putWithBatch(BatchOperation batch, KEY key, VALUE value)
-      throws IOException;
+  void putWithBatch(BatchOperation batch, KEY key, VALUE value) throws RocksDatabaseException, CodecException;
 
   /**
    * @return true if the metadata store is empty.
-   * @throws IOException on Failure
    */
-  boolean isEmpty() throws IOException;
+  boolean isEmpty() throws RocksDatabaseException;
 
   /**
    * Check if a given key exists in Metadata store.
@@ -69,9 +66,8 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * A lock on the key / bucket needs to be acquired before invoking this API.
    * @param key metadata key
    * @return true if the metadata store contains a key.
-   * @throws IOException on Failure
    */
-  boolean isExist(KEY key) throws IOException;
+  boolean isExist(KEY key) throws RocksDatabaseException, CodecException;
 
   /**
    * Returns the value mapped to the given key in byte array or returns null
@@ -79,9 +75,8 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    *
    * @param key metadata key
    * @return value in byte array or null if the key is not found.
-   * @throws IOException on Failure
    */
-  VALUE get(KEY key) throws IOException;
+  VALUE get(KEY key) throws RocksDatabaseException, CodecException;
 
   /**
    * Skip checking cache and get the value mapped to the given key in byte
@@ -89,9 +84,8 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    *
    * @param key metadata key
    * @return value in byte array or null if the key is not found.
-   * @throws IOException on Failure
    */
-  default VALUE getSkipCache(KEY key) throws IOException {
+  default VALUE getSkipCache(KEY key) throws RocksDatabaseException, CodecException {
     throw new NotImplementedException("getSkipCache is not implemented");
   }
 
@@ -104,9 +98,8 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    *
    * @param key metadata key
    * @return value in byte array or null if the key is not found.
-   * @throws IOException on Failure
    */
-  default VALUE getReadCopy(KEY key) throws IOException {
+  default VALUE getReadCopy(KEY key) throws RocksDatabaseException, CodecException {
     throw new NotImplementedException("getReadCopy is not implemented");
   }
 
@@ -123,52 +116,45 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    *
    * @param key metadata key
    * @return value in byte array or null if the key is not found.
-   * @throws IOException on Failure
    */
-  VALUE getIfExist(KEY key) throws IOException;
+  VALUE getIfExist(KEY key) throws RocksDatabaseException, CodecException;
 
   /**
    * Deletes a key from the metadata store.
    *
    * @param key metadata key
-   * @throws IOException on Failure
    */
-  void delete(KEY key) throws IOException;
+  void delete(KEY key) throws RocksDatabaseException, CodecException;
 
   /**
    * Deletes a key from the metadata store as part of a batch operation.
    *
    * @param batch the batch operation
    * @param key metadata key
-   * @throws IOException on Failure
    */
-  void deleteWithBatch(BatchOperation batch, KEY key) throws IOException;
+  void deleteWithBatch(BatchOperation batch, KEY key) throws CodecException;
 
   /**
    * Deletes a range of keys from the metadata store.
    *
    * @param beginKey start metadata key
    * @param endKey end metadata key
-   * @throws IOException on Failure
    */
-  void deleteRange(KEY beginKey, KEY endKey) throws IOException;
+  void deleteRange(KEY beginKey, KEY endKey) throws RocksDatabaseException, CodecException;
 
   /**
    * Returns the iterator for this metadata store.
    *
    * @return MetaStoreIterator
-   * @throws IOException on failure.
    */
-  TableIterator<KEY, ? extends KeyValue<KEY, VALUE>> iterator()
-      throws IOException;
+  TableIterator<KEY, ? extends KeyValue<KEY, VALUE>> iterator() throws RocksDatabaseException, CodecException;
 
   /**
    * Returns a prefixed iterator for this metadata store.
    * @param prefix
    * @return MetaStoreIterator
    */
-  TableIterator<KEY, ? extends KeyValue<KEY, VALUE>> iterator(KEY prefix)
-      throws IOException;
+  TableIterator<KEY, ? extends KeyValue<KEY, VALUE>> iterator(KEY prefix) throws RocksDatabaseException, CodecException;
 
   /**
    * Returns the Name of this Table.
@@ -179,9 +165,8 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
   /**
    * Returns the key count of this Table.  Note the result can be inaccurate.
    * @return Estimated key count of this Table
-   * @throws IOException on failure
    */
-  long getEstimatedKeyCount() throws IOException;
+  long getEstimatedKeyCount() throws RocksDatabaseException;
 
   /**
    * Add entry to the table cache.
@@ -234,7 +219,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
   /**
    * Create the metrics datasource that emits table cache metrics.
    */
-  default TableCacheMetrics createCacheMetrics() throws IOException {
+  default TableCacheMetrics createCacheMetrics() throws RocksDatabaseException {
     throw new NotImplementedException("getCacheValue is not implemented");
   }
 
@@ -267,13 +252,12 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * {@link org.apache.hadoop.hdds.utils.MetadataKeyFilters.MetadataKeyFilter}.
    * @return a list of entries found in the database or an empty list if the
    * startKey is invalid.
-   * @throws IOException if there are I/O errors.
    * @throws IllegalArgumentException if count is less than 0.
    */
   List<? extends KeyValue<KEY, VALUE>> getRangeKVs(KEY startKey,
           int count, KEY prefix,
           MetadataKeyFilters.MetadataKeyFilter... filters)
-          throws IOException, IllegalArgumentException;
+          throws RocksDatabaseException, CodecException;
 
   /**
    * This method is very similar to {@link #getRangeKVs}, the only
@@ -289,13 +273,9 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * @param filters customized one or more
    * {@link org.apache.hadoop.hdds.utils.MetadataKeyFilters.MetadataKeyFilter}.
    * @return a list of entries found in the database.
-   * @throws IOException
-   * @throws IllegalArgumentException
    */
-  List<? extends KeyValue<KEY, VALUE>> getSequentialRangeKVs(KEY startKey,
-          int count, KEY prefix,
-          MetadataKeyFilters.MetadataKeyFilter... filters)
-          throws IOException, IllegalArgumentException;
+  List<? extends KeyValue<KEY, VALUE>> getSequentialRangeKVs(KEY startKey, int count, KEY prefix,
+      MetadataKeyFilters.MetadataKeyFilter... filters) throws RocksDatabaseException, CodecException;
 
   /**
    * Deletes all keys with the specified prefix from the metadata store
@@ -303,35 +283,32 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * @param batch
    * @param prefix
    */
-  void deleteBatchWithPrefix(BatchOperation batch, KEY prefix)
-      throws IOException;
+  void deleteBatchWithPrefix(BatchOperation batch, KEY prefix) throws RocksDatabaseException, CodecException;
 
   /**
    * Dump all key value pairs with a prefix into an external file.
    * @param externalFile
    * @param prefix
-   * @throws IOException
    */
-  void dumpToFileWithPrefix(File externalFile, KEY prefix) throws IOException;
+  void dumpToFileWithPrefix(File externalFile, KEY prefix) throws RocksDatabaseException, CodecException;
 
   /**
    * Load key value pairs from an external file created by
    * dumpToFileWithPrefix.
    * @param externalFile
-   * @throws IOException
    */
-  void loadFromFile(File externalFile) throws IOException;
+  void loadFromFile(File externalFile) throws RocksDatabaseException;
 
   /**
    * Class used to represent the key and value pair of a db entry.
    */
   interface KeyValue<KEY, VALUE> {
 
-    KEY getKey() throws IOException;
+    KEY getKey() throws CodecException;
 
-    VALUE getValue() throws IOException;
+    VALUE getValue() throws CodecException;
 
-    default int getRawSize()  throws IOException {
+    default int getRawSize() {
       return 0;
     }
   }
@@ -361,7 +338,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
         KeyValue<?, ?> kv = (KeyValue<?, ?>) obj;
         try {
           return getKey().equals(kv.getKey()) && getValue().equals(kv.getValue());
-        } catch (IOException e) {
+        } catch (CodecException e) {
           throw new RuntimeException(e);
         }
       }
@@ -386,7 +363,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
       }
 
       @Override
-      public int getRawSize() throws IOException {
+      public int getRawSize() {
         return rawSize;
       }
 
@@ -403,7 +380,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
         KeyValue<?, ?> kv = (KeyValue<?, ?>) obj;
         try {
           return getKey().equals(kv.getKey()) && getValue().equals(kv.getValue());
-        } catch (IOException e) {
+        } catch (CodecException e) {
           throw new RuntimeException(e);
         }
       }

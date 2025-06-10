@@ -49,7 +49,7 @@ class RDBStoreByteArrayIterator extends RDBStoreAbstractIterator<byte[]> {
   }
 
   @Override
-  void delete(byte[] key) throws IOException {
+  void delete(byte[] key) throws RocksDatabaseException {
     getRocksDBTable().delete(key);
   }
 

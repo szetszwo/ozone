@@ -33,6 +33,8 @@ import org.apache.hadoop.hdds.scm.container.ContainerID;
 import org.apache.hadoop.hdds.scm.container.ContainerManager;
 import org.apache.hadoop.hdds.scm.ha.SCMRatisServer;
 import org.apache.hadoop.hdds.scm.metadata.DBTransactionBuffer;
+import org.apache.hadoop.hdds.utils.db.CodecException;
+import org.apache.hadoop.hdds.utils.db.RocksDatabaseException;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.TypedTable;
@@ -122,7 +124,7 @@ public class DeletedBlockLogStateManagerImpl
       }
 
       @Override
-      public void close() throws IOException {
+      public void close() throws RocksDatabaseException {
         iter.close();
       }
 
@@ -138,15 +140,15 @@ public class DeletedBlockLogStateManagerImpl
       }
 
       @Override
-      public TypedTable.KeyValue<Long, DeletedBlocksTransaction> seek(
-          Long key) throws IOException {
+      public TypedTable.KeyValue<Long, DeletedBlocksTransaction> seek(Long key)
+          throws RocksDatabaseException, CodecException {
         iter.seek(key);
         findNext();
         return nextTx;
       }
 
       @Override
-      public void removeFromDB() throws IOException {
+      public void removeFromDB() {
         throw new UnsupportedOperationException("read-only");
       }
     };
