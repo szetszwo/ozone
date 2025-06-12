@@ -840,7 +840,7 @@ public class OMMultiTenantManagerImpl implements OMMultiTenantManager {
     // First load each tenant as a key into the cache.
     final Table<String, OmDBTenantState> tenantStateTable =
         omMetadataManager.getTenantStateTable();
-    try (TableIterator<String, ? extends KeyValue<String, OmDBTenantState>>
+    try (TableIterator<String, KeyValue<String, OmDBTenantState>>
         tenantStateTableIter = tenantStateTable.iterator()) {
       while (tenantStateTableIter.hasNext()) {
         final KeyValue<String, OmDBTenantState> next =
@@ -862,7 +862,7 @@ public class OMMultiTenantManagerImpl implements OMMultiTenantManager {
     int userCount = 0;
     final Table<String, OmDBAccessIdInfo> tenantAccessIdTable =
         omMetadataManager.getTenantAccessIdTable();
-    try (TableIterator<String, ? extends KeyValue<String, OmDBAccessIdInfo>>
+    try (TableIterator<String, KeyValue<String, OmDBAccessIdInfo>>
           accessIdTableIter = tenantAccessIdTable.iterator()) {
       while (accessIdTableIter.hasNext()) {
         final KeyValue<String, OmDBAccessIdInfo> next =

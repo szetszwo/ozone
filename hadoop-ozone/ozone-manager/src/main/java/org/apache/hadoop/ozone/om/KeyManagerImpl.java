@@ -724,7 +724,7 @@ public class KeyManagerImpl implements KeyManager {
     Map<String, RepeatedOmKeyInfo> keysToModify = new HashMap<>();
     // Bucket prefix would be empty if volume is empty i.e. either null or "".
     Optional<String> bucketPrefix = getBucketPrefix(volume, bucket, false);
-    try (TableIterator<String, ? extends KeyValue<String, RepeatedOmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, RepeatedOmKeyInfo>>
              delKeyIter = metadataManager.getDeletedTable().iterator(bucketPrefix.orElse(""))) {
 
       /* Seeking to the start key if it not null. The next key picked up would be ensured to start with the bucket
@@ -772,7 +772,7 @@ public class KeyManagerImpl implements KeyManager {
   }
 
   private <V, R> List<KeyValue<String, R>> getTableEntries(String startKey,
-          TableIterator<String, ? extends KeyValue<String, V>> tableIterator,
+          TableIterator<String, KeyValue<String, V>> tableIterator,
           Function<V, R> valueFunction,
           CheckedFunction<KeyValue<String, V>, Boolean, IOException> filter,
           int size) throws IOException {
@@ -813,7 +813,7 @@ public class KeyManagerImpl implements KeyManager {
       String volume, String bucket, String startKey,
       CheckedFunction<KeyValue<String, String>, Boolean, IOException> filter, int size) throws IOException {
     Optional<String> bucketPrefix = getBucketPrefix(volume, bucket, false);
-    try (TableIterator<String, ? extends KeyValue<String, String>>
+    try (TableIterator<String, KeyValue<String, String>>
              renamedKeyIter = metadataManager.getSnapshotRenamedTable().iterator(bucketPrefix.orElse(""))) {
       return getTableEntries(startKey, renamedKeyIter, Function.identity(), filter, size);
     }
@@ -863,7 +863,7 @@ public class KeyManagerImpl implements KeyManager {
       CheckedFunction<KeyValue<String, RepeatedOmKeyInfo>, Boolean, IOException> filter,
       int size) throws IOException {
     Optional<String> bucketPrefix = getBucketPrefix(volume, bucket, false);
-    try (TableIterator<String, ? extends KeyValue<String, RepeatedOmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, RepeatedOmKeyInfo>>
              delKeyIter = metadataManager.getDeletedTable().iterator(bucketPrefix.orElse(""))) {
       return getTableEntries(startKey, delKeyIter, RepeatedOmKeyInfo::cloneOmKeyInfoList, filter, size);
     }
@@ -1508,7 +1508,7 @@ public class KeyManagerImpl implements KeyManager {
       }
     }
 
-    try (TableIterator<String, ? extends KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
         keyTblItr = keyTable.iterator(targetKey)) {
       while (keyTblItr.hasNext()) {
         KeyValue<String, OmKeyInfo> keyValue = keyTblItr.next();
@@ -1822,7 +1822,7 @@ public class KeyManagerImpl implements KeyManager {
     String keyArgs = OzoneFSUtils.addTrailingSlashIfNeeded(
         metadataManager.getOzoneKey(volumeName, bucketName, keyName));
 
-    TableIterator<String, ? extends KeyValue<String, OmKeyInfo>> iterator;
+    TableIterator<String, KeyValue<String, OmKeyInfo>> iterator;
     Table<String, OmKeyInfo> keyTable;
     metadataManager.getLock().acquireReadLock(BUCKET_LOCK, volumeName,
         bucketName);
@@ -1879,12 +1879,12 @@ public class KeyManagerImpl implements KeyManager {
     return fileStatusList;
   }
 
-  private TableIterator<String, ? extends KeyValue<String, OmKeyInfo>>
+  private TableIterator<String, KeyValue<String, OmKeyInfo>>
       getIteratorForKeyInTableCache(
       boolean recursive, String startKey, String volumeName, String bucketName,
       TreeMap<String, OzoneFileStatus> cacheKeyMap, String keyArgs,
       Table<String, OmKeyInfo> keyTable) throws IOException {
-    TableIterator<String, ? extends KeyValue<String, OmKeyInfo>> iterator;
+    TableIterator<String, KeyValue<String, OmKeyInfo>> iterator;
     Iterator<Map.Entry<CacheKey<String>, CacheValue<OmKeyInfo>>>
         cacheIter = keyTable.cacheIterator();
     String startCacheKey = metadataManager.getOzoneKey(volumeName, bucketName, startKey);
@@ -1902,7 +1902,7 @@ public class KeyManagerImpl implements KeyManager {
       TreeMap<String, OzoneFileStatus> cacheKeyMap, String keyArgs,
       Table<String, OmKeyInfo> keyTable,
       TableIterator<String,
-          ? extends KeyValue<String, OmKeyInfo>> iterator)
+          KeyValue<String, OmKeyInfo>> iterator)
       throws IOException {
     // Then, find key in DB
     String seekKeyInDb =
@@ -2158,7 +2158,7 @@ public class KeyManagerImpl implements KeyManager {
   }
 
   @Override
-  public TableIterator<String, ? extends KeyValue<String, OmKeyInfo>> getDeletedDirEntries(
+  public TableIterator<String, KeyValue<String, OmKeyInfo>> getDeletedDirEntries(
       String volume, String bucket) throws IOException {
     Optional<String> bucketPrefix = getBucketPrefix(volume, bucket, true);
     return metadataManager.getDeletedDirTable().iterator(bucketPrefix.orElse(""));
@@ -2185,7 +2185,7 @@ public class KeyManagerImpl implements KeyManager {
         parentInfo.getObjectID(), "");
     long consumedSize = 0;
     boolean processedSubPaths = false;
-    try (TableIterator<String, ? extends KeyValue<String, T>> iterator = table.iterator(seekFileInDB)) {
+    try (TableIterator<String, KeyValue<String, T>> iterator = table.iterator(seekFileInDB)) {
       while (iterator.hasNext() && remainingBufLimit > 0) {
         KeyValue<String, T> entry = iterator.next();
         T withParentObjectId = entry.getValue();

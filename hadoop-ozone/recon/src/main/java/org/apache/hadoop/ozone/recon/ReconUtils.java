@@ -66,6 +66,7 @@ import org.apache.hadoop.hdds.scm.server.SCMDatanodeHeartbeatDispatcher;
 import org.apache.hadoop.hdds.utils.Archiver;
 import org.apache.hadoop.hdds.utils.HddsServerUtil;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdfs.web.URLConnectionFactory;
 import org.apache.hadoop.ozone.OmUtils;
@@ -731,7 +732,7 @@ public class ReconUtils {
     // If limit = -1, set it to Integer.MAX_VALUE to return all records
     int actualLimit = (limit == -1) ? Integer.MAX_VALUE : limit;
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, T>> keyIter = table.iterator()) {
+    try (TableIterator<String, KeyValue<String, T>> keyIter = table.iterator()) {
 
       // Scenario 1 & 4: prevKey is provided (whether startPrefix is empty or not)
       if (!prevKey.isEmpty()) {

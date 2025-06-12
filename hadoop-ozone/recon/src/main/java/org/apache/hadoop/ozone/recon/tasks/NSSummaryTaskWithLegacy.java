@@ -29,6 +29,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.OmConfig;
@@ -261,7 +262,7 @@ public class NSSummaryTaskWithLegacy extends NSSummaryTaskDbEventHandler {
       Table<String, OmKeyInfo> keyTable =
           omMetadataManager.getKeyTable(LEGACY_BUCKET_LAYOUT);
 
-      try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+      try (TableIterator<String, KeyValue<String, OmKeyInfo>>
           keyTableIter = keyTable.iterator()) {
 
         while (keyTableIter.hasNext()) {

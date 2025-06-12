@@ -182,16 +182,15 @@ public class PrefixParser implements Callable<Void> {
     return BucketLayout.FILE_SYSTEM_OPTIMIZED;
   }
 
-  private void dumpTableInfo(Types type,
+  private <V extends WithParentObjectId> void dumpTableInfo(Types type,
       org.apache.hadoop.fs.Path effectivePath,
-      Table<String, ? extends WithParentObjectId> table,
+      Table<String, V> table,
       long volumeId, long bucketId, long lastObjectId)
       throws IOException {
     MetadataKeyFilters.KeyPrefixFilter filter = getPrefixFilter(
             volumeId, bucketId, lastObjectId);
 
-    List<? extends KeyValue
-        <String, ? extends WithParentObjectId>> infoList =
+    List<KeyValue<String, V>> infoList =
         table.getRangeKVs(null, 1000, null, filter);
 
     for (KeyValue<String, ? extends WithParentObjectId> info :infoList) {

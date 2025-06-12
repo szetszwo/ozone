@@ -232,8 +232,7 @@ public class OMBucketDeleteRequest extends OMClientRequest {
   private boolean bucketContainsSnapshotInTable(
       OMMetadataManager omMetadataManager, String snapshotBucketKey)
       throws IOException {
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, SnapshotInfo>>
+    try (TableIterator<String, Table.KeyValue<String, SnapshotInfo>>
             snapshotIterator = omMetadataManager
             .getSnapshotInfoTable().iterator()) {
       snapshotIterator.seek(snapshotBucketKey);

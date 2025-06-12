@@ -897,7 +897,7 @@ public class TestStorageContainerManager {
     KeyValueContainerData cData = getContainerMetadata(cluster, containerID);
     try (DBHandle db = BlockUtils.getDB(cData, cluster.getConf())) {
 
-      List<? extends Table.KeyValue<String, BlockData>> kvs =
+      List<Table.KeyValue<String, BlockData>> kvs =
           db.getStore().getBlockDataTable()
               .getRangeKVs(cData.startKeyEmpty(), Integer.MAX_VALUE,
                   cData.containerPrefix(), cData.getUnprefixedKeyFilter());
@@ -919,7 +919,7 @@ public class TestStorageContainerManager {
         DatanodeStore ds = db.getStore();
         DatanodeStoreSchemaThreeImpl dnStoreImpl =
             (DatanodeStoreSchemaThreeImpl) ds;
-        List<? extends Table.KeyValue<String, DeletedBlocksTransaction>>
+        List<Table.KeyValue<String, DeletedBlocksTransaction>>
             txnsInTxnTable = dnStoreImpl.getDeleteTransactionTable()
             .getRangeKVs(cData.startKeyEmpty(), Integer.MAX_VALUE,
                 cData.containerPrefix());

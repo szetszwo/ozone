@@ -366,7 +366,7 @@ public class ReconContainerMetadataManagerImpl
 
     Map<ContainerKeyPrefix, Integer> prefixes = new LinkedHashMap<>();
     try (TableIterator<ContainerKeyPrefix,
-        ? extends KeyValue<ContainerKeyPrefix, Integer>>
+        KeyValue<ContainerKeyPrefix, Integer>>
              containerIterator = containerKeyTable.iterator()) {
       ContainerKeyPrefix seekKey;
       boolean skipPrevKey = false;
@@ -453,7 +453,7 @@ public class ReconContainerMetadataManagerImpl
   }
 
   private class ContainerMetadataIterator implements SeekableIterator<Long, ContainerMetadata> {
-    private TableIterator<ContainerKeyPrefix, ? extends KeyValue<ContainerKeyPrefix, Integer>> containerIterator;
+    private TableIterator<ContainerKeyPrefix, KeyValue<ContainerKeyPrefix, Integer>> containerIterator;
     private KeyValue<ContainerKeyPrefix, Integer> currentKey;
 
     ContainerMetadataIterator()
@@ -629,7 +629,7 @@ public class ReconContainerMetadataManagerImpl
 
     Map<KeyPrefixContainer, Integer> containers = new LinkedHashMap<>();
     try (TableIterator<KeyPrefixContainer,
-        ? extends KeyValue<KeyPrefixContainer, Integer>> keyIterator =
+        KeyValue<KeyPrefixContainer, Integer>> keyIterator =
              keyContainerTable.iterator()) {
       KeyPrefixContainer seekKey;
       if (keyVersion != -1) {
@@ -677,9 +677,8 @@ public class ReconContainerMetadataManagerImpl
 
   private void initializeKeyContainerTable() throws IOException {
     Instant start = Instant.now();
-    try (TableIterator<ContainerKeyPrefix, ?
-        extends KeyValue<ContainerKeyPrefix,
-        Integer>> iterator = containerKeyTable.iterator()) {
+    try (TableIterator<ContainerKeyPrefix, KeyValue<ContainerKeyPrefix, Integer>> iterator
+        = containerKeyTable.iterator()) {
       KeyValue<ContainerKeyPrefix, Integer> keyValue;
       long count = 0;
       while (iterator.hasNext()) {

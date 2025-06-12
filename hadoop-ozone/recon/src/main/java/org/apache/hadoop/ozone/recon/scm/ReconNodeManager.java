@@ -52,6 +52,7 @@ import org.apache.hadoop.hdds.server.events.EventQueue;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutVersionManager;
 import org.apache.hadoop.hdds.utils.HddsServerUtil;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.protocol.VersionResponse;
 import org.apache.hadoop.ozone.protocol.commands.CommandForDatanode;
@@ -107,7 +108,7 @@ public class ReconNodeManager extends SCMNodeManager {
   }
 
   private void loadExistingNodes() {
-    try (TableIterator<DatanodeID, ? extends Table.KeyValue<DatanodeID, DatanodeDetails>>
+    try (TableIterator<DatanodeID, KeyValue<DatanodeID, DatanodeDetails>>
              iterator = nodeDB.iterator()) {
       int nodeCount = 0;
       while (iterator.hasNext()) {
@@ -266,7 +267,7 @@ public class ReconNodeManager extends SCMNodeManager {
   @VisibleForTesting
   public long getNodeDBKeyCount() throws IOException {
     long nodeCount = 0;
-    try (TableIterator<DatanodeID, ? extends Table.KeyValue<DatanodeID, DatanodeDetails>>
+    try (TableIterator<DatanodeID, KeyValue<DatanodeID, DatanodeDetails>>
         iterator = nodeDB.iterator()) {
       while (iterator.hasNext()) {
         iterator.next();

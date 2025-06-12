@@ -376,7 +376,7 @@ public class OMDBCheckpointServlet extends DBCheckpointServlet {
     OmMetadataManagerImpl checkpointMetadataManager =
         OmMetadataManagerImpl.createCheckpointMetadataManager(
             conf, checkpoint);
-    try (TableIterator<String, ? extends Table.KeyValue<String, SnapshotInfo>>
+    try (TableIterator<String, Table.KeyValue<String, SnapshotInfo>>
         iterator = checkpointMetadataManager
         .getSnapshotInfoTable().iterator()) {
 

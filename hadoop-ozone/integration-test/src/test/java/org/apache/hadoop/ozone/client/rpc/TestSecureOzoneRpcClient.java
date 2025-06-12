@@ -182,9 +182,7 @@ class TestSecureOzoneRpcClient extends OzoneRpcClientTests {
       Table table = omMetadataManager.getKeyTable(bucketLayout);
 
       // Check table entry.
-      try (
-          TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
-              keyIterator = table.iterator()) {
+      try (TableIterator<String, Table.KeyValue<String, OmKeyInfo>> keyIterator = table.iterator()) {
         Table.KeyValue<String, OmKeyInfo> kv =
             keyIterator.seek(keyPrefix + "/" + keyName);
 
@@ -315,8 +313,7 @@ class TestSecureOzoneRpcClient extends OzoneRpcClientTests {
         // check unused pre-allocated blocks are reclaimed
         Table<String, RepeatedOmKeyInfo> deletedTable =
             getCluster().getOzoneManager().getMetadataManager().getDeletedTable();
-        try (TableIterator<String, ? extends Table.KeyValue<String, RepeatedOmKeyInfo>>
-                 keyIter = deletedTable.iterator()) {
+        try (TableIterator<String, Table.KeyValue<String, RepeatedOmKeyInfo>> keyIter = deletedTable.iterator()) {
           while (keyIter.hasNext()) {
             Table.KeyValue<String, RepeatedOmKeyInfo> kv = keyIter.next();
             OmKeyInfo key = kv.getValue().getOmKeyInfoList().get(0);

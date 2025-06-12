@@ -25,7 +25,7 @@ import static org.apache.hadoop.ozone.om.codec.OMDBDefinition.SNAPSHOT_RENAMED_T
 import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
-import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.OmSnapshotManager;
@@ -81,7 +81,7 @@ public class OMSnapshotCreateResponse extends OMClientResponse {
 
     // TODO: [SNAPSHOT] Move to createOmSnapshotCheckpoint and add table lock
     // Remove all entries from snapshotRenamedTable
-    try (TableIterator<String, ? extends Table.KeyValue<String, String>>
+    try (TableIterator<String, KeyValue<String, String>>
         iterator = omMetadataManager.getSnapshotRenamedTable().iterator()) {
 
       String dbSnapshotBucketKey = omMetadataManager.getBucketKey(

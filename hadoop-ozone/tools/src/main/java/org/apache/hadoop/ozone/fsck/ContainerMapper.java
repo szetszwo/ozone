@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.ClientVersion;
 import org.apache.hadoop.ozone.om.OmMetadataManagerImpl;
@@ -81,7 +82,7 @@ public class ContainerMapper {
       Map<Long, List<Map<Long, BlockIdDetails>>> dataMap = new HashMap<>();
 
       if (keyTable != null) {
-        try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+        try (TableIterator<String, KeyValue<String, OmKeyInfo>>
                  keyValueTableIterator = keyTable.iterator()) {
           while (keyValueTableIterator.hasNext()) {
             Table.KeyValue<String, OmKeyInfo> keyValue =

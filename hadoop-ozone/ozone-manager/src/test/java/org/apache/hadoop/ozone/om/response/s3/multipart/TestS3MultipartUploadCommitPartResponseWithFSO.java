@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.om.helpers.OmMultipartKeyInfo;
@@ -231,7 +231,7 @@ public class TestS3MultipartUploadCommitPartResponseWithFSO
     String deletedKey = omMetadataManager
         .getMultipartKey(volumeName, bucketName, keyNameInvalid,
             multipartUploadID);
-    List<? extends Table.KeyValue<String, RepeatedOmKeyInfo>> rangeKVs
+    List<KeyValue<String, RepeatedOmKeyInfo>> rangeKVs
         = omMetadataManager.getDeletedTable().getRangeKVs(
         null, 100, deletedKey);
     assertThat(rangeKVs.size()).isGreaterThan(0);

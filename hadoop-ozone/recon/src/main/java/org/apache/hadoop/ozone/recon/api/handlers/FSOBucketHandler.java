@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
@@ -118,7 +119,7 @@ public class FSOBucketHandler extends BucketHandler {
     Table<String, OmKeyInfo> keyTable = getOmMetadataManager().getFileTable();
 
     long totalDU = 0L;
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
             iterator = keyTable.iterator()) {
 
       String seekPrefix = OM_KEY_PREFIX +
@@ -179,7 +180,7 @@ public class FSOBucketHandler extends BucketHandler {
     Table<String, OmKeyInfo> keyTable = getOmMetadataManager().getFileTable();
     long keyDataSizeWithReplica = 0L;
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
             iterator = keyTable.iterator()) {
 
       String seekPrefix = OM_KEY_PREFIX +

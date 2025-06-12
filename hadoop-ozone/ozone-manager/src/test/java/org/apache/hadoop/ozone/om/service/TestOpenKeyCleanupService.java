@@ -48,6 +48,7 @@ import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
 import org.apache.hadoop.hdds.server.ServerUtils;
 import org.apache.hadoop.hdds.utils.db.DBConfigFromFile;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.OzoneConfigKeys;
 import org.apache.hadoop.ozone.OzoneConsts;
@@ -444,7 +445,7 @@ class TestOpenKeyCleanupService {
     } else {
       fileTable = om.getMetadataManager().getKeyTable(bucketLayout);
     }
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
              iterator = fileTable.iterator()) {
       while (iterator.hasNext()) {
         omKeyInfo.add(iterator.next().getValue());

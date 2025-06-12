@@ -142,8 +142,7 @@ public abstract class TestObjectStoreWithLegacyFS implements NonHATests.TestCase
       String dbKey, int expectedCnt, String keyName) {
     int countKeys = 0;
     int matchingKeys = 0;
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
-          itr = keyTable.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, OmKeyInfo>> itr = keyTable.iterator()) {
       itr.seek(dbKey);
       while (itr.hasNext()) {
 

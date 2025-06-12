@@ -20,7 +20,7 @@ package org.apache.hadoop.ozone.recon.tasks;
 import java.io.IOException;
 import java.util.Map;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 
 /**
@@ -93,7 +93,7 @@ public interface OmTableHandler {
    * @throws IOException If an I/O error occurs during the iterator traversal.
    */
   Triple<Long, Long, Long> getTableSizeAndCount(
-      TableIterator<String, ? extends Table.KeyValue<String, ?>> iterator)
+      TableIterator<String, KeyValue<String, ?>> iterator)
       throws IOException;
 
   /**

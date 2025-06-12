@@ -35,6 +35,7 @@ import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
 import org.apache.hadoop.hdds.utils.db.StringCodec;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.TypedTable;
 import org.apache.hadoop.ozone.OmUtils;
@@ -166,7 +167,7 @@ public class FSORepairTool extends RepairTool {
         }
 
         // Iterate all volumes or a specific volume if specified
-        try (TableIterator<String, ? extends Table.KeyValue<String, OmVolumeArgs>>
+        try (TableIterator<String, KeyValue<String, OmVolumeArgs>>
                  volumeIterator = volumeTable.iterator()) {
           try {
             openReachableDB();
@@ -201,7 +202,7 @@ public class FSORepairTool extends RepairTool {
             } else {
 
               // Iterate all buckets in the volume.
-              try (TableIterator<String, ? extends Table.KeyValue<String, OmBucketInfo>>
+              try (TableIterator<String, KeyValue<String, OmBucketInfo>>
                        bucketIterator = bucketTable.iterator()) {
                 bucketIterator.seek(volumeKey);
                 while (bucketIterator.hasNext()) {
@@ -242,7 +243,7 @@ public class FSORepairTool extends RepairTool {
         return false;
       }
 
-      try (TableIterator<String, ? extends Table.KeyValue<String, SnapshotInfo>> iterator =
+      try (TableIterator<String, KeyValue<String, SnapshotInfo>> iterator =
                snapshotInfoTable.iterator()) {
         while (iterator.hasNext()) {
           SnapshotInfo snapshotInfo = iterator.next().getValue();
@@ -321,7 +322,7 @@ public class FSORepairTool extends RepairTool {
           OM_KEY_PREFIX +
           bucket.getObjectID();
 
-      try (TableIterator<String, ? extends Table.KeyValue<String, OmDirectoryInfo>> dirIterator =
+      try (TableIterator<String, KeyValue<String, OmDirectoryInfo>> dirIterator =
                directoryTable.iterator()) {
         dirIterator.seek(bucketPrefix);
         while (dirIterator.hasNext()) {
@@ -350,7 +351,7 @@ public class FSORepairTool extends RepairTool {
       }
 
       // Check for unreachable and unreferenced files
-      try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+      try (TableIterator<String, KeyValue<String, OmKeyInfo>>
                fileIterator = fileTable.iterator()) {
         fileIterator.seek(bucketPrefix);
         while (fileIterator.hasNext()) {
@@ -423,7 +424,7 @@ public class FSORepairTool extends RepairTool {
 
       Collection<String> childDirs = new ArrayList<>();
 
-      try (TableIterator<String, ? extends Table.KeyValue<String, OmDirectoryInfo>>
+      try (TableIterator<String, KeyValue<String, OmDirectoryInfo>>
                dirIterator = directoryTable.iterator()) {
         String dirPrefix = buildReachableKey(volume, bucket, currentDir);
         // Start searching the directory table at the current directory's

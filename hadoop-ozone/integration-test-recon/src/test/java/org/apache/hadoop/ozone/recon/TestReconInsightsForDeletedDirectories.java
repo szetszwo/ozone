@@ -192,9 +192,7 @@ public class TestReconInsightsForDeletedDirectories {
 
     // Retrieve the object ID of dir1 from directory table.
     Long directoryObjectId = null;
-    try (
-        TableIterator<?, ? extends Table.KeyValue<?, OmDirectoryInfo>> iterator
-            = reconDirTable.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, OmDirectoryInfo>> iterator = reconDirTable.iterator()) {
       if (iterator.hasNext()) {
         directoryObjectId = iterator.next().getValue().getObjectID();
       }
@@ -421,23 +419,23 @@ public class TestReconInsightsForDeletedDirectories {
 
     Table<String, OmKeyInfo> deletedDirTable =
         metadataManager.getDeletedDirTable();
-    try (TableIterator<String, ? extends Table.KeyValue<String, ?>> it = deletedDirTable.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, OmKeyInfo>> it = deletedDirTable.iterator()) {
       removeAllFromDB(it, deletedDirTable);
     }
     Table<String, OmKeyInfo> fileTable = metadataManager.getFileTable();
-    try (TableIterator<String, ? extends Table.KeyValue<String, ?>> it = fileTable.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, OmKeyInfo>> it = fileTable.iterator()) {
       removeAllFromDB(it, fileTable);
     }
     Table<String, OmDirectoryInfo> directoryTable =
         metadataManager.getDirectoryTable();
-    try (TableIterator<String, ? extends Table.KeyValue<String, ?>> it = directoryTable.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, OmDirectoryInfo>> it = directoryTable.iterator()) {
       removeAllFromDB(it, directoryTable);
     }
   }
 
-  private static void removeAllFromDB(
-      TableIterator<String, ? extends Table.KeyValue<String, ?>> iterator,
-      Table<String, ?> table) throws IOException {
+  private static <V> void removeAllFromDB(
+      TableIterator<String, Table.KeyValue<String, V>> iterator,
+      Table<String, V> table) throws IOException {
     List<String> keysToDelete = new ArrayList<>();
     while (iterator.hasNext()) {
       keysToDelete.add(iterator.next().getKey());

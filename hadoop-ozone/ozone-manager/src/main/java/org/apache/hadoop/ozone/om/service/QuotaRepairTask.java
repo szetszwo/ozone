@@ -47,6 +47,7 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.server.JsonUtils;
 import org.apache.hadoop.hdds.utils.db.DBCheckpoint;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.OmMetadataManagerImpl;
@@ -238,7 +239,7 @@ public class QuotaRepairTask {
       }
       return;
     }
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmBucketInfo>>
+    try (TableIterator<String, KeyValue<String, OmBucketInfo>>
              iterator = metadataManager.getBucketTable().iterator()) {
       while (iterator.hasNext()) {
         Table.KeyValue<String, OmBucketInfo> entry = iterator.next();
@@ -350,7 +351,7 @@ public class QuotaRepairTask {
     }
     int count = 0;
     long startTime = Time.monotonicNow();
-    try (TableIterator<String, ? extends Table.KeyValue<String, VALUE>>
+    try (TableIterator<String, KeyValue<String, VALUE>>
              keyIter = table.iterator()) {
       while (keyIter.hasNext()) {
         count++;

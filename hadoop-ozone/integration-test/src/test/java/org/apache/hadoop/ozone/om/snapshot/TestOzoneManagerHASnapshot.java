@@ -207,8 +207,7 @@ public class TestOzoneManagerHASnapshot {
         String snapshotPrefix = OM_KEY_PREFIX + volumeName +
             OM_KEY_PREFIX + bucketName;
         SnapshotInfo snapshotInfo = null;
-        try (TableIterator<String, ?
-            extends Table.KeyValue<String, SnapshotInfo>>
+        try (TableIterator<String, Table.KeyValue<String, SnapshotInfo>>
                  iterator = ozoneManager.getMetadataManager()
             .getSnapshotInfoTable().iterator(snapshotPrefix)) {
           while (iterator.hasNext()) {

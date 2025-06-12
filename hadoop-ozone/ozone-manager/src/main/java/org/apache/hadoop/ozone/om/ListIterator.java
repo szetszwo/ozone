@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.hdds.utils.db.CopyObject;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
@@ -116,7 +117,7 @@ public class ListIterator {
       ClosableIterator {
     private final int entryIteratorId;
     private final TableIterator<String,
-        ? extends Table.KeyValue<String, Value>> tableIterator;
+        KeyValue<String, Value>> tableIterator;
 
     private final Table<String, Value> table;
     private HeapEntry currentEntry;

@@ -520,7 +520,7 @@ public final class OmSnapshotManager implements AutoCloseable {
     // Range delete start key (inclusive)
     final String keyPrefix = omMetadataManager.getBucketKeyPrefixFSO(volumeName, bucketName);
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, Table.KeyValue<String, OmKeyInfo>>
          iter = omMetadataManager.getDeletedDirTable().iterator(keyPrefix)) {
       performOperationOnKeys(iter,
           entry -> {
@@ -548,9 +548,9 @@ public final class OmSnapshotManager implements AutoCloseable {
    * @param keyIter TableIterator
    * @param operationFunction operation to be performed for each key.
    */
-  private static void performOperationOnKeys(
-      TableIterator<String, ? extends Table.KeyValue<String, ?>> keyIter,
-      CheckedFunction<Table.KeyValue<String, ?>,
+  private static <V> void performOperationOnKeys(
+      TableIterator<String, Table.KeyValue<String, V>> keyIter,
+      CheckedFunction<Table.KeyValue<String, V>,
       Void, IOException> operationFunction) throws IOException {
     // Continue only when there are entries of snapshot (bucket) scope
     // in deletedTable in the first place
@@ -558,7 +558,7 @@ public final class OmSnapshotManager implements AutoCloseable {
     // Start performance tracking timer
     long startTime = System.nanoTime();
     while (keyIter.hasNext()) {
-      Table.KeyValue<String, ?> entry = keyIter.next();
+      Table.KeyValue<String, V> entry = keyIter.next();
       operationFunction.apply(entry);
     }
     // Time took for the iterator to finish (in ns)
@@ -586,8 +586,7 @@ public final class OmSnapshotManager implements AutoCloseable {
     final String keyPrefix =
         omMetadataManager.getBucketKeyPrefix(volumeName, bucketName);
 
-    try (TableIterator<String,
-        ? extends Table.KeyValue<String, RepeatedOmKeyInfo>>
+    try (TableIterator<String, Table.KeyValue<String, RepeatedOmKeyInfo>>
              iter = omMetadataManager.getDeletedTable().iterator(keyPrefix)) {
       performOperationOnKeys(iter, entry -> {
         if (LOG.isDebugEnabled()) {

@@ -22,6 +22,7 @@ import java.util.Map;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.RepeatedOmKeyInfo;
 import org.slf4j.Logger;
@@ -113,7 +114,7 @@ public class DeletedKeysInsightHandler implements OmTableHandler {
    */
   @Override
   public Triple<Long, Long, Long> getTableSizeAndCount(
-      TableIterator<String, ? extends Table.KeyValue<String, ?>> iterator)
+      TableIterator<String, KeyValue<String, ?>> iterator)
       throws IOException {
     long count = 0;
     long unReplicatedSize = 0;

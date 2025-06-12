@@ -40,6 +40,7 @@ import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolPro
 import org.apache.hadoop.hdds.scm.container.ContainerID;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.recon.api.types.ContainerBlocksInfoWrapper;
 import org.apache.hadoop.ozone.recon.scm.ReconContainerManager;
@@ -105,7 +106,7 @@ public class BlocksEndPoint {
         Table<Long,
             StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction>
             deletedBlocksTXTable = DELETED_BLOCKS.getTable(this.scmDBStore);
-        TableIterator<Long, ? extends Table.KeyValue<Long,
+        TableIterator<Long, KeyValue<Long,
             StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction>>
             deletedBlocksTableIterator = deletedBlocksTXTable.iterator()) {
       boolean skipPrevKey = false;

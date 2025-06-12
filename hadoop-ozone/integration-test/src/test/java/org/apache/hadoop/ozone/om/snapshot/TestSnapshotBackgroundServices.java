@@ -308,8 +308,7 @@ public class TestSnapshotBackgroundServices {
   }
 
   private static <V> boolean isKeyInTable(String key, Table<String, V> table) {
-    try (TableIterator<String, ? extends Table.KeyValue<String, V>> iterator
-             = table.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, V>> iterator = table.iterator()) {
       while (iterator.hasNext()) {
         Table.KeyValue<String, V> next = iterator.next();
         if (next.getKey().contains(key)) {
@@ -429,8 +428,7 @@ public class TestSnapshotBackgroundServices {
   private List<CompactionLogEntry> getCompactionLogEntries(OzoneManager om)
       throws IOException {
     List<CompactionLogEntry> compactionLogEntries = new ArrayList<>();
-    try (TableIterator<String,
-        ? extends Table.KeyValue<String, CompactionLogEntry>>
+    try (TableIterator<String, Table.KeyValue<String, CompactionLogEntry>>
              iterator = om.getMetadataManager().getCompactionLogTable()
         .iterator()) {
       iterator.seekToFirst();

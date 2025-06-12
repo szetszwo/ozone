@@ -4632,7 +4632,7 @@ abstract class OzoneRpcClientTests extends OzoneTestBase {
     cluster.getOzoneManager().awaitDoubleBufferFlush();
 
     if (expectedCount == 1) {
-      List<? extends Table.KeyValue<String, RepeatedOmKeyInfo>> rangeKVs
+      List<Table.KeyValue<String, RepeatedOmKeyInfo>> rangeKVs
           = cluster.getOzoneManager().getMetadataManager().getDeletedTable()
           .getRangeKVs(null, 100,
               cluster.getOzoneManager().getMetadataManager()

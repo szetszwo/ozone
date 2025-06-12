@@ -355,7 +355,7 @@ public class TestFSORepairTool {
 
   private <K, V> int countTableEntries(Table<K, V> table) throws Exception {
     int count = 0;
-    try (TableIterator<K, ? extends Table.KeyValue<K, V>> iterator = table.iterator()) {
+    try (TableIterator<K, Table.KeyValue<K, V>> iterator = table.iterator()) {
       while (iterator.hasNext()) {
         iterator.next();
         count++;
@@ -497,7 +497,7 @@ public class TestFSORepairTool {
 
   private static void disconnectDirectory(String dirName) throws Exception {
     Table<String, OmDirectoryInfo> dirTable = cluster.getOzoneManager().getMetadataManager().getDirectoryTable();
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmDirectoryInfo>> iterator = dirTable.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, OmDirectoryInfo>> iterator = dirTable.iterator()) {
       while (iterator.hasNext()) {
         Table.KeyValue<String, OmDirectoryInfo> entry = iterator.next();
         String key = entry.getKey();

@@ -91,6 +91,7 @@ import org.apache.hadoop.hdds.scm.XceiverClientManager;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.ClientConfigForTesting;
 import org.apache.hadoop.ozone.HddsDatanodeService;
@@ -366,8 +367,7 @@ public class TestHSync {
 
     OMMetadataManager metadataManager = ozoneManager.getMetadataManager();
     // deletedTable should not have an entry for file at all in this case
-    try (TableIterator<String,
-        ? extends Table.KeyValue<String, RepeatedOmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, RepeatedOmKeyInfo>>
         tableIter = metadataManager.getDeletedTable().iterator()) {
       while (tableIter.hasNext()) {
         Table.KeyValue<String, RepeatedOmKeyInfo> kv = tableIter.next();
@@ -609,7 +609,7 @@ public class TestHSync {
 
     Table<String, OmKeyInfo> openFileTable =
         cluster.getOzoneManager().getMetadataManager().getOpenKeyTable(bucketLayout);
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
              iterator = openFileTable.iterator()) {
       while (iterator.hasNext()) {
         omKeyInfo.add(iterator.next().getValue());
@@ -624,7 +624,7 @@ public class TestHSync {
 
     Table<String, OmKeyInfo> openFileTable =
         cluster.getOzoneManager().getMetadataManager().getKeyTable(bucketLayout);
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
              iterator = openFileTable.iterator()) {
       while (iterator.hasNext()) {
         omKeyInfo.add(iterator.next().getValue());
@@ -1134,7 +1134,7 @@ public class TestHSync {
    * @return OmKeyInfo
    */
   private OmKeyInfo getFirstKeyInTable(String keyName, Table<String, OmKeyInfo> openKeyTable) throws IOException {
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>> it = openKeyTable.iterator()) {
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>> it = openKeyTable.iterator()) {
       assertTrue(it.hasNext());
       Table.KeyValue<String, OmKeyInfo> kv = it.next();
       String dbOpenKey = kv.getKey();
@@ -1543,7 +1543,7 @@ public class TestHSync {
 
   private Map<String, OmKeyInfo> getAllOpenKeys(Table<String, OmKeyInfo> table) throws IOException {
     Map<String, OmKeyInfo> keys = new HashMap<String, OmKeyInfo>();
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>> tableIter = table.iterator()) {
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>> tableIter = table.iterator()) {
       while (tableIter.hasNext()) {
         Table.KeyValue<String, OmKeyInfo> kv = tableIter.next();
         String key = kv.getKey();
@@ -1555,7 +1555,7 @@ public class TestHSync {
 
   private Map<String, RepeatedOmKeyInfo> getAllDeletedKeys(Table<String, RepeatedOmKeyInfo> table) throws IOException {
     Map<String, RepeatedOmKeyInfo> keys = new HashMap<String, RepeatedOmKeyInfo>();
-    try (TableIterator<String, ? extends Table.KeyValue<String, RepeatedOmKeyInfo>> tableIter = table.iterator()) {
+    try (TableIterator<String, KeyValue<String, RepeatedOmKeyInfo>> tableIter = table.iterator()) {
       while (tableIter.hasNext()) {
         Table.KeyValue<String, RepeatedOmKeyInfo> kv = tableIter.next();
         String key = kv.getKey();

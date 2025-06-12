@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
@@ -78,7 +79,7 @@ public class LegacyBucketHandler extends BucketHandler {
 
     Table<String, OmKeyInfo> keyTable = getKeyTable();
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
         iterator = keyTable.iterator()) {
 
       iterator.seek(key);
@@ -131,7 +132,7 @@ public class LegacyBucketHandler extends BucketHandler {
     }
 
     String[] seekKeys = seekPrefix.split(OM_KEY_PREFIX);
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
              iterator = keyTable.iterator()) {
       iterator.seek(seekPrefix);
       // handle direct keys
@@ -208,7 +209,7 @@ public class LegacyBucketHandler extends BucketHandler {
       seekPrefix += dirName;
     }
     String[] seekKeys = seekPrefix.split(OM_KEY_PREFIX);
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (TableIterator<String, KeyValue<String, OmKeyInfo>>
              iterator = keyTable.iterator()) {
 
       iterator.seek(seekPrefix);

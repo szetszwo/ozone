@@ -189,7 +189,7 @@ public class TestSnapshotDeletingServiceIntegrationTest {
     OmSnapshot bucket1snap3 = getOmSnapshot(VOLUME_NAME, BUCKET_NAME_ONE, "bucket1snap3").get();
 
     // Check bucket1key1 added to next non deleted snapshot db.
-    List<? extends Table.KeyValue<String, RepeatedOmKeyInfo>> omKeyInfos =
+    List<Table.KeyValue<String, RepeatedOmKeyInfo>> omKeyInfos =
         bucket1snap3.getMetadataManager()
             .getDeletedTable().getRangeKVs(null, 100,
                 "/vol1/bucket1/bucket1key1");
@@ -499,8 +499,7 @@ public class TestSnapshotDeletingServiceIntegrationTest {
     OmSnapshot snap1 = rcSnap1.get();
     Table<String, OmKeyInfo> snap1KeyTable =
         snap1.getMetadataManager().getFileTable();
-    try (TableIterator<String, ? extends Table.KeyValue<String,
-        RepeatedOmKeyInfo>> iterator = deletedTable.iterator()) {
+    try (TableIterator<String, Table.KeyValue<String, RepeatedOmKeyInfo>> iterator = deletedTable.iterator()) {
       while (iterator.hasNext()) {
         Table.KeyValue<String, RepeatedOmKeyInfo> next = iterator.next();
         String activeDBDeletedKey = next.getKey();

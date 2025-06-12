@@ -126,7 +126,7 @@ public class TestOMSnapshotCreateResponse {
 
     // Check contents of entry
     SnapshotInfo storedInfo;
-    try (TableIterator<String, ? extends Table.KeyValue<String, SnapshotInfo>>
+    try (TableIterator<String, Table.KeyValue<String, SnapshotInfo>>
              it = omMetadataManager.getSnapshotInfoTable().iterator()) {
       Table.KeyValue<String, SnapshotInfo> keyValue = it.next();
       storedInfo = keyValue.getValue();
@@ -257,10 +257,10 @@ public class TestOMSnapshotCreateResponse {
         expectedKeys);
   }
 
-  private void verifyEntriesLeftInTable(
-      Table<String, ?> table, Set<String> expectedKeys) throws IOException {
+  private <V> void verifyEntriesLeftInTable(
+      Table<String, V> table, Set<String> expectedKeys) throws IOException {
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, ?>>
+    try (TableIterator<String, Table.KeyValue<String, V>>
              keyIter = table.iterator()) {
       keyIter.seekToFirst();
       while (keyIter.hasNext()) {

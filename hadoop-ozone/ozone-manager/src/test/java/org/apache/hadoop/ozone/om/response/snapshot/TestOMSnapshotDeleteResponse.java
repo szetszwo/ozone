@@ -116,7 +116,7 @@ public class TestOMSnapshotDeleteResponse {
     assertEquals(1, omMetadataManager
         .countRowsInTable(omMetadataManager.getSnapshotInfoTable()));
 
-    try (TableIterator<String, ? extends KeyValue<String, SnapshotInfo>> iter =
+    try (TableIterator<String, KeyValue<String, SnapshotInfo>> iter =
              omMetadataManager.getSnapshotInfoTable().iterator()) {
       // Check snapshotInfo entry content
       Table.KeyValue<String, SnapshotInfo> keyValue = iter.next();
@@ -146,7 +146,7 @@ public class TestOMSnapshotDeleteResponse {
     assertEquals(1, omMetadataManager
         .countRowsInTable(omMetadataManager.getSnapshotInfoTable()));
 
-    try (TableIterator<String, ? extends KeyValue<String, SnapshotInfo>> iter =
+    try (TableIterator<String, KeyValue<String, SnapshotInfo>> iter =
              omMetadataManager.getSnapshotInfoTable().iterator()) {
       // 2. snapshot status should now be DELETED
       Table.KeyValue<String, SnapshotInfo> keyValue = iter.next();

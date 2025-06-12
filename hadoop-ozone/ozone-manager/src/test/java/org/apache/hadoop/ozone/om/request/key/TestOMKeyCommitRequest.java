@@ -699,7 +699,7 @@ public class TestOMKeyCommitRequest extends TestOMKeyRequest {
 
     // verify deleted key is unique generated
     String deletedKey = omMetadataManager.getOzoneKey(volumeName, omKeyInfo.getBucketName(), keyName);
-    List<? extends Table.KeyValue<String, RepeatedOmKeyInfo>> rangeKVs
+    List<Table.KeyValue<String, RepeatedOmKeyInfo>> rangeKVs
         = omMetadataManager.getDeletedTable().getRangeKVs(null, 100, deletedKey);
     assertThat(rangeKVs.size()).isGreaterThan(0);
     Table.KeyValue<String, RepeatedOmKeyInfo> keyValue = rangeKVs.get(0);

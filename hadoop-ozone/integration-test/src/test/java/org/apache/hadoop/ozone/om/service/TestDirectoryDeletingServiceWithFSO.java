@@ -197,7 +197,7 @@ public class TestDirectoryDeletingServiceWithFSO {
     assertEquals(1, metrics.getNumDirsPurged());
     assertEquals(1, metrics.getNumDirsSentForPurge());
 
-    try (TableIterator<?, ? extends Table.KeyValue<?, OmDirectoryInfo>>
+    try (TableIterator<String, Table.KeyValue<String, OmDirectoryInfo>>
         iterator = dirTable.iterator()) {
       assertTrue(iterator.hasNext());
       assertEquals(root.getName(), iterator.next().getValue().getName());

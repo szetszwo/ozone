@@ -510,7 +510,7 @@ public class OMRangerBGSyncService extends BackgroundService {
 
     // Iterate all DB tenant states. For each tenant,
     // queue or dequeue bucketNamespacePolicyName and bucketPolicyName
-    try (TableIterator<String, ? extends KeyValue<String, OmDBTenantState>>
+    try (TableIterator<String, KeyValue<String, OmDBTenantState>>
         tenantStateTableIt = metadataManager.getTenantStateTable().iterator()) {
 
       while (tenantStateTableIt.hasNext()) {
@@ -630,7 +630,7 @@ public class OMRangerBGSyncService extends BackgroundService {
 
     // Iterate all DB ExtendedUserAccessIdInfo. For each accessId,
     // add to userRole. And add to adminRole if isAdmin is set.
-    try (TableIterator<String, ? extends KeyValue<String, OmDBAccessIdInfo>>
+    try (TableIterator<String, KeyValue<String, OmDBAccessIdInfo>>
         tenantAccessIdTableIter =
         metadataManager.getTenantAccessIdTable().iterator()) {
 
