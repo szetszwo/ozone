@@ -227,7 +227,7 @@ public class TestTypedRDBTableStore {
       }
       int localCount = 0;
 
-      try (TableIterator<String, ? extends KeyValue<String, String>> iter =
+      try (TableIterator<String, KeyValue<String, String>> iter =
           testTable.iterator()) {
         while (iter.hasNext()) {
           Table.KeyValue keyValue = iter.next();

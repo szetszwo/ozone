@@ -71,8 +71,7 @@ public class DeletedBlockLogStateManagerImpl
     return new TableIterator<Long, TypedTable.KeyValue<Long,
         DeletedBlocksTransaction>>() {
 
-      private TableIterator<Long,
-          ? extends Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
+      private TableIterator<Long, Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
           deletedTable.iterator();
       private TypedTable.KeyValue<Long, DeletedBlocksTransaction> nextTx;
 

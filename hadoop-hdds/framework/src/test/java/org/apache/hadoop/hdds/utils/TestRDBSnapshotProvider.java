@@ -190,7 +190,7 @@ public class TestRDBSnapshotProvider {
         final String name = families.get(i);
         final Table<byte[], byte[]> table1 = rdbStore1.getTable(name);
         final Table<byte[], byte[]> table2 = rdbStore2.getTable(name);
-        try (TableIterator<byte[], ? extends KeyValue<byte[], byte[]>> iterator
+        try (TableIterator<byte[], KeyValue<byte[], byte[]>> iterator
                  = table1.iterator()) {
           while (iterator.hasNext()) {
             KeyValue<byte[], byte[]> keyValue = iterator.next();

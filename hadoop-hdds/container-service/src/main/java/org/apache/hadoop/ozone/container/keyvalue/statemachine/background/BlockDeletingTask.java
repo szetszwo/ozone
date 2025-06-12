@@ -181,8 +181,7 @@ public class BlockDeletingTask implements BackgroundTask {
 
       // # of blocks to delete is throttled
       KeyPrefixFilter filter = containerData.getDeletingBlockKeyFilter();
-      List<? extends Table.KeyValue<String, BlockData>> toDeleteBlocks =
-          blockDataTable
+      List<Table.KeyValue<String, BlockData>> toDeleteBlocks = blockDataTable
               .getSequentialRangeKVs(containerData.startKeyEmpty(),
                   (int) blocksToDelete, containerData.containerPrefix(),
                   filter);
@@ -278,9 +277,7 @@ public class BlockDeletingTask implements BackgroundTask {
     Table<Long, DeletedBlocksTransaction> deleteTxns =
         ((DeleteTransactionStore<Long>) meta.getStore())
             .getDeleteTransactionTable();
-    try (TableIterator<Long,
-        ? extends Table.KeyValue<Long, DeletedBlocksTransaction>>
-             iterator = deleteTxns.iterator()) {
+    try (TableIterator<Long, Table.KeyValue<Long, DeletedBlocksTransaction>> iterator = deleteTxns.iterator()) {
       return deleteViaTransactionStore(
           iterator, meta,
           container, dataDir, startTime, schema2Deleter);
@@ -299,8 +296,7 @@ public class BlockDeletingTask implements BackgroundTask {
     Table<String, DeletedBlocksTransaction> deleteTxns =
         ((DeleteTransactionStore<String>) meta.getStore())
             .getDeleteTransactionTable();
-    try (TableIterator<String,
-        ? extends Table.KeyValue<String, DeletedBlocksTransaction>>
+    try (TableIterator<String, Table.KeyValue<String, DeletedBlocksTransaction>>
              iterator = deleteTxns.iterator(containerData.containerPrefix())) {
       return deleteViaTransactionStore(
           iterator, meta,
@@ -308,8 +304,8 @@ public class BlockDeletingTask implements BackgroundTask {
     }
   }
 
-  private ContainerBackgroundTaskResult deleteViaTransactionStore(
-      TableIterator<?, ? extends Table.KeyValue<?, DeletedBlocksTransaction>>
+  private <K> ContainerBackgroundTaskResult deleteViaTransactionStore(
+      TableIterator<K, Table.KeyValue<K, DeletedBlocksTransaction>>
           iter, DBHandle meta, Container container, File dataDir,
       long startTime, Deleter deleter) throws IOException {
     ContainerBackgroundTaskResult crr = new ContainerBackgroundTaskResult();

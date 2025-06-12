@@ -372,7 +372,7 @@ public class TestBlockDeletingService {
       DatanodeStoreSchemaTwoImpl dnStoreTwoImpl =
           (DatanodeStoreSchemaTwoImpl) ds;
       try (
-          TableIterator<Long, ? extends Table.KeyValue<Long,
+          TableIterator<Long, Table.KeyValue<Long,
               StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction>>
               iter = dnStoreTwoImpl.getDeleteTransactionTable().iterator()) {
         while (iter.hasNext()) {
@@ -388,7 +388,7 @@ public class TestBlockDeletingService {
       DatanodeStoreSchemaThreeImpl dnStoreThreeImpl =
           (DatanodeStoreSchemaThreeImpl) ds;
       try (
-          TableIterator<String, ? extends Table.KeyValue<String,
+          TableIterator<String, Table.KeyValue<String,
               StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction>>
               iter = dnStoreThreeImpl.getDeleteTransactionTable()
               .iterator(data.containerPrefix())) {

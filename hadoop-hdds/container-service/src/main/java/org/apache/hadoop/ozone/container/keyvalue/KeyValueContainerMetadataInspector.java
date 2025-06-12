@@ -500,8 +500,7 @@ public class KeyValueContainerMetadataInspector implements ContainerInspector {
     Table<Long, DeletedBlocksTransaction> delTxTable =
         schemaTwoStore.getDeleteTransactionTable();
 
-    try (TableIterator<Long, ? extends Table.KeyValue<Long,
-        DeletedBlocksTransaction>> iterator = delTxTable.iterator()) {
+    try (TableIterator<Long, Table.KeyValue<Long, DeletedBlocksTransaction>> iterator = delTxTable.iterator()) {
       while (iterator.hasNext()) {
         DeletedBlocksTransaction txn = iterator.next().getValue();
         final List<Long> localIDs = txn.getLocalIDList();
@@ -544,9 +543,7 @@ public class KeyValueContainerMetadataInspector implements ContainerInspector {
       KeyValueContainerData containerData) throws IOException {
     long pendingDeleteBlockCountTotal = 0;
     long pendingDeleteBytes = 0;
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String,
-            DeletedBlocksTransaction>>
+    try (TableIterator<String, Table.KeyValue<String, DeletedBlocksTransaction>>
             iter = store.getDeleteTransactionTable()
             .iterator(containerData.containerPrefix())) {
       while (iter.hasNext()) {

@@ -344,7 +344,7 @@ public class OzoneContainer {
       for (Thread volumeThread : volumeThreads) {
         volumeThread.join();
       }
-      try (TableIterator<ContainerID, ? extends Table.KeyValue<ContainerID, String>> itr =
+      try (TableIterator<ContainerID, Table.KeyValue<ContainerID, String>> itr =
                containerSet.getContainerIdsTable().iterator()) {
         final Map<ContainerID, Long> containerIds = new HashMap<>();
         while (itr.hasNext()) {

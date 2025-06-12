@@ -75,9 +75,7 @@ public class PipelineStateManagerImpl implements PipelineStateManager {
       LOG.info("No pipeline exists in current db");
       return;
     }
-    try (TableIterator<PipelineID,
-        ? extends Table.KeyValue<PipelineID, Pipeline>> iterator =
-             pipelineStore.iterator()) {
+    try (TableIterator<PipelineID, Table.KeyValue<PipelineID, Pipeline>> iterator = pipelineStore.iterator()) {
       while (iterator.hasNext()) {
         Pipeline pipeline = iterator.next().getValue();
         pipelineStateMap.addPipeline(pipeline);

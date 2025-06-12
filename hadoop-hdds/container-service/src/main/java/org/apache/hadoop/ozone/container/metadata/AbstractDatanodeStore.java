@@ -208,9 +208,7 @@ public class AbstractDatanodeStore extends AbstractRDBStore<AbstractDatanodeDBDe
     private static final Logger LOG = LoggerFactory.getLogger(
             KeyValueBlockIterator.class);
 
-    private final TableIterator<String, ? extends Table.KeyValue<String,
-            BlockData>>
-            blockIterator;
+    private final TableIterator<String, Table.KeyValue<String, BlockData>> blockIterator;
     private static final KeyPrefixFilter DEFAULT_BLOCK_FILTER =
             MetadataKeyFilters.getUnprefixedKeyFilter();
     private final KeyPrefixFilter blockFilter;
@@ -222,8 +220,7 @@ public class AbstractDatanodeStore extends AbstractRDBStore<AbstractDatanodeDBDe
      * @param iterator - The underlying iterator to apply the block filter to.
      */
     KeyValueBlockIterator(long containerID,
-            TableIterator<String, ? extends Table.KeyValue<String, BlockData>>
-                    iterator) {
+            TableIterator<String, Table.KeyValue<String, BlockData>> iterator) {
       this.containerID = containerID;
       this.blockIterator = iterator;
       this.blockFilter = DEFAULT_BLOCK_FILTER;
@@ -235,7 +232,7 @@ public class AbstractDatanodeStore extends AbstractRDBStore<AbstractDatanodeDBDe
      * @param filter - Block filter, filter to be applied for blocks
      */
     KeyValueBlockIterator(long containerID,
-            TableIterator<String, ? extends Table.KeyValue<String, BlockData>>
+            TableIterator<String, Table.KeyValue<String, BlockData>>
                     iterator, KeyPrefixFilter filter) {
       this.containerID = containerID;
       this.blockIterator = iterator;
@@ -313,7 +310,7 @@ public class AbstractDatanodeStore extends AbstractRDBStore<AbstractDatanodeDBDe
     private static final Logger LOG = LoggerFactory.getLogger(
         KeyValueBlockLocalIdIterator.class);
 
-    private final TableIterator<String, ? extends Table.KeyValue<String,
+    private final TableIterator<String, Table.KeyValue<String,
         Long>> blockLocalIdIterator;
     private final KeyPrefixFilter localIdFilter;
     private Long nextLocalId;
@@ -325,7 +322,7 @@ public class AbstractDatanodeStore extends AbstractRDBStore<AbstractDatanodeDBDe
      * @param filter - BlockLocalId filter to be applied for block localIds.
      */
     KeyValueBlockLocalIdIterator(long containerID,
-        TableIterator<String, ? extends Table.KeyValue<String, Long>>
+        TableIterator<String, Table.KeyValue<String, Long>>
         iterator, KeyPrefixFilter filter) {
       this.containerID = containerID;
       this.blockLocalIdIterator = iterator;

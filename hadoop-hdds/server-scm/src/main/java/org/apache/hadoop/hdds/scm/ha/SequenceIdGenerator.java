@@ -276,7 +276,7 @@ public class SequenceIdGenerator {
     }
 
     private void initialize() throws IOException {
-      try (TableIterator<String, ? extends Table.KeyValue<String, Long>>
+      try (TableIterator<String, Table.KeyValue<String, Long>>
           iterator = sequenceIdTable.iterator()) {
 
         while (iterator.hasNext()) {
@@ -369,7 +369,7 @@ public class SequenceIdGenerator {
     if (sequenceIdTable.get(CONTAINER_ID) == null) {
       long largestContainerId = 0;
       try (TableIterator<ContainerID,
-          ? extends KeyValue<ContainerID, ContainerInfo>> iterator =
+          KeyValue<ContainerID, ContainerInfo>> iterator =
                scmMetadataStore.getContainerTable().iterator()) {
         while (iterator.hasNext()) {
           ContainerInfo containerInfo = iterator.next().getValue();
@@ -396,7 +396,7 @@ public class SequenceIdGenerator {
       // ID 1 - root certificate, ID 2 - first SCM certificate.
       long largestCertId = BigInteger.ONE.add(BigInteger.ONE).longValueExact();
       try (TableIterator<BigInteger,
-          ? extends KeyValue<BigInteger, X509Certificate>> iterator =
+          KeyValue<BigInteger, X509Certificate>> iterator =
                scmMetadataStore.getValidSCMCertsTable().iterator()) {
         while (iterator.hasNext()) {
           X509Certificate cert = iterator.next().getValue();
@@ -406,7 +406,7 @@ public class SequenceIdGenerator {
       }
 
       try (TableIterator<BigInteger,
-          ? extends KeyValue<BigInteger, X509Certificate>> iterator =
+          KeyValue<BigInteger, X509Certificate>> iterator =
                scmMetadataStore.getValidCertsTable().iterator()) {
         while (iterator.hasNext()) {
           X509Certificate cert = iterator.next().getValue();

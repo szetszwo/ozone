@@ -37,6 +37,7 @@ import org.apache.hadoop.hdds.security.exception.SCMSecurityException;
 import org.apache.hadoop.hdds.security.x509.certificate.authority.CertificateStore;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.hadoop.hdds.utils.db.Table;
+import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,7 +136,7 @@ public final class SCMCertStore implements CertificateStore {
       BatchOperation batchOperation, Table<BigInteger,
       X509Certificate> certTable) throws IOException {
     List<X509Certificate> removedCerts = new ArrayList<>();
-    try (TableIterator<BigInteger, ? extends Table.KeyValue<BigInteger,
+    try (TableIterator<BigInteger, KeyValue<BigInteger,
         X509Certificate>> certsIterator = certTable.iterator()) {
       Date now = new Date();
       while (certsIterator.hasNext()) {
@@ -172,7 +173,7 @@ public final class SCMCertStore implements CertificateStore {
         .collect(Collectors.toList());
   }
 
-  private List<? extends Table.KeyValue<BigInteger, X509Certificate>>
+  private List<KeyValue<BigInteger, X509Certificate>>
       getValidCertTableList(NodeType role, BigInteger startSerialID, int count)
       throws IOException {
     // Implemented for role SCM and CertType VALID_CERTS.

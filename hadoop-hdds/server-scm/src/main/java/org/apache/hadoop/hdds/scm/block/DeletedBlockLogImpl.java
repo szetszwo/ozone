@@ -137,8 +137,7 @@ public class DeletedBlockLogImpl
     lock.lock();
     try {
       final List<DeletedBlocksTransaction> failedTXs = Lists.newArrayList();
-      try (TableIterator<Long,
-          ? extends Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
+      try (TableIterator<Long, Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
                deletedBlockLogStateManager.getReadOnlyIterator()) {
         if (count == LIST_ALL_FAILED_TRANSACTIONS) {
           while (iter.hasNext()) {
@@ -245,8 +244,7 @@ public class DeletedBlockLogImpl
     lock.lock();
     try {
       final AtomicInteger num = new AtomicInteger(0);
-      try (TableIterator<Long,
-          ? extends Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
+      try (TableIterator<Long, Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
                deletedBlockLogStateManager.getReadOnlyIterator()) {
         while (iter.hasNext()) {
           DeletedBlocksTransaction delTX = iter.next().getValue();
@@ -394,8 +392,7 @@ public class DeletedBlockLogImpl
           scmCommandTimeoutMs);
       DatanodeDeletedBlockTransactions transactions =
           new DatanodeDeletedBlockTransactions();
-      try (TableIterator<Long,
-          ? extends Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
+      try (TableIterator<Long, Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
                deletedBlockLogStateManager.getReadOnlyIterator()) {
         if (lastProcessedTransactionId != -1) {
           iter.seek(lastProcessedTransactionId);

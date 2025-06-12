@@ -75,14 +75,14 @@ public class DatanodeTable<KEY, VALUE> implements Table<KEY, VALUE> {
   }
 
   @Override
-  public final TableIterator<KEY, ? extends KeyValue<KEY, VALUE>> iterator() {
+  public final TableIterator<KEY, KeyValue<KEY, VALUE>> iterator() {
     throw new UnsupportedOperationException("Iterating tables directly is not" +
             " supported for datanode containers due to differing schema " +
             "version.");
   }
 
   @Override
-  public final TableIterator<KEY, ? extends KeyValue<KEY, VALUE>> iterator(
+  public final TableIterator<KEY, KeyValue<KEY, VALUE>> iterator(
       KEY prefix) {
     throw new UnsupportedOperationException("Iterating tables directly is not" +
         " supported for datanode containers due to differing schema " +
@@ -120,7 +120,7 @@ public class DatanodeTable<KEY, VALUE> implements Table<KEY, VALUE> {
   }
 
   @Override
-  public List<? extends KeyValue<KEY, VALUE>> getRangeKVs(
+  public List<KeyValue<KEY, VALUE>> getRangeKVs(
           KEY startKey, int count, KEY prefix,
           MetadataKeyFilters.MetadataKeyFilter... filters)
           throws IOException, IllegalArgumentException {
@@ -128,7 +128,7 @@ public class DatanodeTable<KEY, VALUE> implements Table<KEY, VALUE> {
   }
 
   @Override
-  public List<? extends KeyValue<KEY, VALUE>> getSequentialRangeKVs(
+  public List<KeyValue<KEY, VALUE>> getSequentialRangeKVs(
           KEY startKey, int count, KEY prefix,
           MetadataKeyFilters.MetadataKeyFilter... filters)
           throws IOException, IllegalArgumentException {

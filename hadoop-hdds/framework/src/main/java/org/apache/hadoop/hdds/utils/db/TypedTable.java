@@ -92,7 +92,7 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
     if (cacheType == CacheType.FULL_CACHE) {
       cache = new FullTableCache<>(threadNamePrefix);
       //fill cache
-      try (TableIterator<KEY, ? extends KeyValue<KEY, VALUE>> tableIterator = iterator()) {
+      try (TableIterator<KEY, KeyValue<KEY, VALUE>> tableIterator = iterator()) {
 
         while (tableIterator.hasNext()) {
           KeyValue< KEY, VALUE > kv = tableIterator.next();
@@ -475,7 +475,7 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
     final byte[] startKeyBytes = encodeKey(startKey);
     final byte[] prefixBytes = encodeKey(prefix);
 
-    List<? extends KeyValue<byte[], byte[]>> rangeKVBytes =
+    List<KeyValue<byte[], byte[]>> rangeKVBytes =
         rawTable.getRangeKVs(startKeyBytes, count, prefixBytes, filters);
     return convert(rangeKVBytes);
   }
@@ -491,7 +491,7 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
     final byte[] startKeyBytes = encodeKey(startKey);
     final byte[] prefixBytes = encodeKey(prefix);
 
-    List<? extends KeyValue<byte[], byte[]>> rangeKVBytes =
+    List<KeyValue<byte[], byte[]>> rangeKVBytes =
         rawTable.getSequentialRangeKVs(startKeyBytes, count,
             prefixBytes, filters);
     return convert(rangeKVBytes);

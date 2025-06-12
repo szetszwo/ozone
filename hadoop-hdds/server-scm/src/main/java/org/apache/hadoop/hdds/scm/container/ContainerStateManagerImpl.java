@@ -235,7 +235,7 @@ public final class ContainerStateManagerImpl
    */
   private void initialize() throws IOException {
     try (TableIterator<ContainerID,
-        ? extends KeyValue<ContainerID, ContainerInfo>> iterator =
+        KeyValue<ContainerID, ContainerInfo>> iterator =
              containerStore.iterator()) {
 
       while (iterator.hasNext()) {
