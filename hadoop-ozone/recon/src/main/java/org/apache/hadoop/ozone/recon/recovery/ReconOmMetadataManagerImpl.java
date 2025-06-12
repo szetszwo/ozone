@@ -36,7 +36,6 @@ import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
 import org.apache.hadoop.hdds.utils.db.RDBStore;
 import org.apache.hadoop.hdds.utils.db.StringCodec;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.TableCache;
 import org.apache.hadoop.ozone.om.OmMetadataManagerImpl;
 import org.apache.hadoop.ozone.om.codec.OMDBDefinition;
@@ -179,7 +178,7 @@ public class ReconOmMetadataManagerImpl extends OmMetadataManagerImpl
       return result;
     }
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmVolumeArgs>>
+    try (Table.KeyValueIterator<String, OmVolumeArgs>
                  iterator = volumeTable.iterator()) {
 
       while (iterator.hasNext() && result.size() < maxKeys) {
@@ -255,7 +254,7 @@ public class ReconOmMetadataManagerImpl extends OmMetadataManagerImpl
     // Unlike in {@link OmMetadataManagerImpl}, the buckets are queried directly
     // from the volume table (not through cache) since Recon does not use
     // Table cache.
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmBucketInfo>>
+    try (Table.KeyValueIterator<String, OmBucketInfo>
         iterator = getBucketTable().iterator(seekPrefix)) {
 
       while (currentCount < maxNumOfBuckets && iterator.hasNext()) {
@@ -313,7 +312,7 @@ public class ReconOmMetadataManagerImpl extends OmMetadataManagerImpl
       return result;
     }
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmBucketInfo>>
+    try (Table.KeyValueIterator<String, OmBucketInfo>
              iterator = bucketTable.iterator()) {
       while (currentCount < maxNumberOfBuckets && iterator.hasNext()) {
         Table.KeyValue<String, OmBucketInfo> kv = iterator.next();

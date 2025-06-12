@@ -43,7 +43,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ipc.ProtobufRpcEngine;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.helpers.OmDBAccessIdInfo;
@@ -840,7 +839,7 @@ public class OMMultiTenantManagerImpl implements OMMultiTenantManager {
     // First load each tenant as a key into the cache.
     final Table<String, OmDBTenantState> tenantStateTable =
         omMetadataManager.getTenantStateTable();
-    try (TableIterator<String, ? extends KeyValue<String, OmDBTenantState>>
+    try (Table.KeyValueIterator<String, OmDBTenantState>
         tenantStateTableIter = tenantStateTable.iterator()) {
       while (tenantStateTableIter.hasNext()) {
         final KeyValue<String, OmDBTenantState> next =
@@ -862,7 +861,7 @@ public class OMMultiTenantManagerImpl implements OMMultiTenantManager {
     int userCount = 0;
     final Table<String, OmDBAccessIdInfo> tenantAccessIdTable =
         omMetadataManager.getTenantAccessIdTable();
-    try (TableIterator<String, ? extends KeyValue<String, OmDBAccessIdInfo>>
+    try (Table.KeyValueIterator<String, OmDBAccessIdInfo>
           accessIdTableIter = tenantAccessIdTable.iterator()) {
       while (accessIdTableIter.hasNext()) {
         final KeyValue<String, OmDBAccessIdInfo> next =

@@ -59,7 +59,6 @@ import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hdds.scm.server.OzoneStorageContainerManager;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
 import org.apache.hadoop.ozone.om.helpers.OmDirectoryInfo;
@@ -567,8 +566,7 @@ public class OMDBInsightEndpoint {
 
     Table<String, OmKeyInfo> deletedDirTable =
         omMetadataManager.getDeletedDirTable();
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
             keyIter = deletedDirTable.iterator()) {
       boolean skipPrevKey = false;
       String seekKey = prevKey;
@@ -1185,8 +1183,7 @@ public class OMDBInsightEndpoint {
       throws IOException {
     boolean skipPrevKey = false;
     String seekKey = paramInfo.getPrevKey();
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, KeyEntityInfoProtoWrapper>> keyIter = table.iterator()) {
+    try (Table.KeyValueIterator<String, KeyEntityInfoProtoWrapper> keyIter = table.iterator()) {
 
       if (!paramInfo.isSkipPrevKeyDone() && isNotBlank(seekKey)) {
         skipPrevKey = true;

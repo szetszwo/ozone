@@ -46,7 +46,6 @@ import org.apache.hadoop.hdds.upgrade.HDDSLayoutFeature;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.FixedLengthStringCodec;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.io.nativeio.NativeIO;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.common.Storage;
@@ -424,7 +423,7 @@ public class UpgradeContainerSchema extends RepairTool {
         Table<byte[], byte[]> sourceTable, ContainerData containerData)
         throws IOException {
       long count = 0;
-      try (TableIterator<byte[], ? extends Table.KeyValue<byte[], byte[]>>
+      try (Table.KeyValueIterator<byte[], byte[]>
                iter = sourceTable.iterator()) {
         while (iter.hasNext()) {
           count++;

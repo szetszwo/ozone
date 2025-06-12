@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
+import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,8 +101,7 @@ public class OzoneSecretStore implements Closeable {
 
   public int loadTokens(OzoneManagerSecretState state) throws IOException {
     int loadedToken = 0;
-    try (TableIterator<OzoneTokenIdentifier, ? extends
-        KeyValue<OzoneTokenIdentifier, Long>> iterator =
+    try (Table.KeyValueIterator<OzoneTokenIdentifier, Long> iterator =
              omMetadataManager.getDelegationTokenTable().iterator()) {
       iterator.seekToFirst();
       while (iterator.hasNext()) {

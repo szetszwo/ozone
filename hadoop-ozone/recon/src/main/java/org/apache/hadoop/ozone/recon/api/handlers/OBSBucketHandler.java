@@ -22,7 +22,6 @@ import static org.apache.hadoop.ozone.OzoneConsts.OM_KEY_PREFIX;
 import java.io.IOException;
 import java.util.List;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
 import org.apache.hadoop.ozone.om.helpers.OmDirectoryInfo;
@@ -67,8 +66,7 @@ public class OBSBucketHandler extends BucketHandler {
 
     Table<String, OmKeyInfo> keyTable = getKeyTable();
 
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
             iterator = keyTable.iterator()) {
       iterator.seek(key);
       if (iterator.hasNext()) {
@@ -111,8 +109,7 @@ public class OBSBucketHandler extends BucketHandler {
     Table<String, OmKeyInfo> keyTable = getKeyTable();
     long keyDataSizeWithReplica = 0L;
 
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
             iterator = keyTable.iterator()) {
 
       String seekPrefix = OM_KEY_PREFIX +
@@ -175,8 +172,7 @@ public class OBSBucketHandler extends BucketHandler {
     // Access the key table for the bucket.
     Table<String, OmKeyInfo> keyTable = getKeyTable();
 
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
             iterator = keyTable.iterator()) {
       // Construct the seek prefix to filter keys under this bucket.
       String seekPrefix =

@@ -42,7 +42,6 @@ import org.apache.hadoop.hdds.utils.BackgroundTaskResult;
 import org.apache.hadoop.hdds.utils.BackgroundTaskResult.EmptyTaskResult;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.OMMultiTenantManager;
@@ -510,7 +509,7 @@ public class OMRangerBGSyncService extends BackgroundService {
 
     // Iterate all DB tenant states. For each tenant,
     // queue or dequeue bucketNamespacePolicyName and bucketPolicyName
-    try (TableIterator<String, ? extends KeyValue<String, OmDBTenantState>>
+    try (Table.KeyValueIterator<String, OmDBTenantState>
         tenantStateTableIt = metadataManager.getTenantStateTable().iterator()) {
 
       while (tenantStateTableIt.hasNext()) {
@@ -630,7 +629,7 @@ public class OMRangerBGSyncService extends BackgroundService {
 
     // Iterate all DB ExtendedUserAccessIdInfo. For each accessId,
     // add to userRole. And add to adminRole if isAdmin is set.
-    try (TableIterator<String, ? extends KeyValue<String, OmDBAccessIdInfo>>
+    try (Table.KeyValueIterator<String, OmDBAccessIdInfo>
         tenantAccessIdTableIter =
         metadataManager.getTenantAccessIdTable().iterator()) {
 

@@ -45,7 +45,6 @@ import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.RDBBatchOperation;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
 import org.apache.hadoop.ozone.recon.ReconConstants;
@@ -365,8 +364,7 @@ public class ReconContainerMetadataManagerImpl
       long containerId, String prevKeyPrefix, int limit) throws IOException {
 
     Map<ContainerKeyPrefix, Integer> prefixes = new LinkedHashMap<>();
-    try (TableIterator<ContainerKeyPrefix,
-        ? extends KeyValue<ContainerKeyPrefix, Integer>>
+    try (Table.KeyValueIterator<ContainerKeyPrefix, Integer>
              containerIterator = containerKeyTable.iterator()) {
       ContainerKeyPrefix seekKey;
       boolean skipPrevKey = false;
@@ -453,7 +451,7 @@ public class ReconContainerMetadataManagerImpl
   }
 
   private class ContainerMetadataIterator implements SeekableIterator<Long, ContainerMetadata> {
-    private TableIterator<ContainerKeyPrefix, ? extends KeyValue<ContainerKeyPrefix, Integer>> containerIterator;
+    private Table.KeyValueIterator<ContainerKeyPrefix, Integer> containerIterator;
     private KeyValue<ContainerKeyPrefix, Integer> currentKey;
 
     ContainerMetadataIterator()
@@ -568,12 +566,12 @@ public class ReconContainerMetadataManagerImpl
   }
 
   @Override
-  public TableIterator getContainerTableIterator() throws IOException {
+  public Table.KeyValueIterator<ContainerKeyPrefix, Integer> getContainerTableIterator() throws IOException {
     return containerKeyTable.iterator();
   }
 
   @Override
-  public TableIterator getKeyContainerTableIterator() throws IOException {
+  public Table.KeyValueIterator<KeyPrefixContainer, Integer> getKeyContainerTableIterator() throws IOException {
     return keyContainerTable.iterator();
   }
 
@@ -628,8 +626,7 @@ public class ReconContainerMetadataManagerImpl
       String keyPrefix, long keyVersion) throws IOException {
 
     Map<KeyPrefixContainer, Integer> containers = new LinkedHashMap<>();
-    try (TableIterator<KeyPrefixContainer,
-        ? extends KeyValue<KeyPrefixContainer, Integer>> keyIterator =
+    try (Table.KeyValueIterator<KeyPrefixContainer, Integer> keyIterator =
              keyContainerTable.iterator()) {
       KeyPrefixContainer seekKey;
       if (keyVersion != -1) {
@@ -677,9 +674,7 @@ public class ReconContainerMetadataManagerImpl
 
   private void initializeKeyContainerTable() throws IOException {
     Instant start = Instant.now();
-    try (TableIterator<ContainerKeyPrefix, ?
-        extends KeyValue<ContainerKeyPrefix,
-        Integer>> iterator = containerKeyTable.iterator()) {
+    try (Table.KeyValueIterator<ContainerKeyPrefix, Integer> iterator = containerKeyTable.iterator()) {
       KeyValue<ContainerKeyPrefix, Integer> keyValue;
       long count = 0;
       while (iterator.hasNext()) {

@@ -34,7 +34,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.hdds.utils.db.CopyObject;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
@@ -115,8 +114,7 @@ public class ListIterator {
   public static class DbTableIter<Value> implements
       ClosableIterator {
     private final int entryIteratorId;
-    private final TableIterator<String,
-        ? extends Table.KeyValue<String, Value>> tableIterator;
+    private final Table.KeyValueIterator<String, Value> tableIterator;
 
     private final Table<String, Value> table;
     private HeapEntry currentEntry;

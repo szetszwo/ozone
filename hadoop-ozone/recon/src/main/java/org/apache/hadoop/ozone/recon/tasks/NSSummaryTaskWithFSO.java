@@ -29,7 +29,6 @@ import java.util.Map;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.helpers.OmDirectoryInfo;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
@@ -185,8 +184,7 @@ public class NSSummaryTaskWithFSO extends NSSummaryTaskDbEventHandler {
     try {
       Table<String, OmDirectoryInfo> dirTable =
           omMetadataManager.getDirectoryTable();
-      try (TableIterator<String,
-              ? extends Table.KeyValue<String, OmDirectoryInfo>>
+      try (Table.KeyValueIterator<String, OmDirectoryInfo>
                 dirTableIter = dirTable.iterator()) {
         while (dirTableIter.hasNext()) {
           Table.KeyValue<String, OmDirectoryInfo> kv = dirTableIter.next();
@@ -204,7 +202,7 @@ public class NSSummaryTaskWithFSO extends NSSummaryTaskDbEventHandler {
       Table<String, OmKeyInfo> keyTable =
           omMetadataManager.getFileTable();
 
-      try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+      try (Table.KeyValueIterator<String, OmKeyInfo>
               keyTableIter = keyTable.iterator()) {
         while (keyTableIter.hasNext()) {
           Table.KeyValue<String, OmKeyInfo> kv = keyTableIter.next();

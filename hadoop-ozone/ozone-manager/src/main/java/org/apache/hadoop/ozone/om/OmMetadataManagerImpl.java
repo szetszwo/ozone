@@ -73,7 +73,6 @@ import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
 import org.apache.hadoop.hdds.utils.db.RDBCheckpointUtils;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.TypedTable;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
@@ -776,8 +775,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
   private <T> boolean isKeyPresentInTable(String keyPrefix,
                                           Table<String, T> table)
           throws IOException {
-    try (TableIterator<String, ? extends KeyValue<String, T>>
-                 keyIter = table.iterator(keyPrefix)) {
+    try (Table.KeyValueIterator<String, T> keyIter = table.iterator(keyPrefix)) {
       KeyValue<String, T> kv = null;
       if (keyIter.hasNext()) {
         kv = keyIter.next();
@@ -916,8 +914,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
   }
 
   @Override
-  public TableIterator<String, ? extends KeyValue<String, OmKeyInfo>>
-      getKeyIterator() throws IOException {
+  public Table.KeyValueIterator<String, OmKeyInfo> getKeyIterator() throws IOException {
     return keyTable.iterator();
   }
 
@@ -942,8 +939,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
     okTable = getOpenKeyTable(bucketLayout);
 
     // No lock required since table iterator creates a "snapshot"
-    try (TableIterator<String, ? extends KeyValue<String, OmKeyInfo>>
-             openKeyIter = okTable.iterator()) {
+    try (Table.KeyValueIterator<String, OmKeyInfo> openKeyIter = okTable.iterator()) {
       KeyValue<String, OmKeyInfo> kv;
       kv = openKeyIter.seek(dbContTokenPrefix);
       if (hasContToken && kv.getKey().equals(dbContTokenPrefix)) {
@@ -1059,7 +1055,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
     }
     long readFromRDbStartNs, readFromRDbStopNs = 0;
     // Get maxKeys from DB if it has.
-    try (TableIterator<String, ? extends KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
              keyIter = getKeyTable(getBucketLayout()).iterator()) {
       readFromRDbStartNs = Time.monotonicNowNanos();
       KeyValue< String, OmKeyInfo > kv;
@@ -1362,7 +1358,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
     // Only check for expired keys in the open key table, not its cache.
     // If a key expires while it is in the cache, it will be cleaned
     // up after the cache is flushed.
-    try (TableIterator<String, ? extends KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
         keyValueTableIterator = getOpenKeyTable(bucketLayout).iterator()) {
 
       final long expiredCreationTimestamp =
@@ -1440,7 +1436,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
     Map<String, ExpiredMultipartUploadsBucket.Builder> expiredMPUs =
         new HashMap<>();
 
-    try (TableIterator<String, ? extends KeyValue<String, OmMultipartKeyInfo>>
+    try (Table.KeyValueIterator<String, OmMultipartKeyInfo>
              mpuInfoTableIterator = getMultipartInfoTable().iterator()) {
 
       final long expiredCreationTimestamp =
@@ -1486,7 +1482,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
       throws IOException {
     long count = 0;
     if (table != null) {
-      try (TableIterator<KEY, ? extends KeyValue<KEY, VALUE>>
+      try (Table.KeyValueIterator<KEY, VALUE>
           keyValueTableIterator = table.iterator()) {
         while (keyValueTableIterator.hasNext()) {
           keyValueTableIterator.next();
@@ -1548,7 +1544,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
     int dbKeysCount = 0;
     // the prefix iterator will only iterate keys that match the given prefix
     // so we don't need to check if the key is started with prefixKey again
-    try (TableIterator<String, ? extends KeyValue<String, OmMultipartKeyInfo>>
+    try (Table.KeyValueIterator<String, OmMultipartKeyInfo>
         iterator = getMultipartInfoTable().iterator(prefixKey)) {
       iterator.seek(seekKey);
 

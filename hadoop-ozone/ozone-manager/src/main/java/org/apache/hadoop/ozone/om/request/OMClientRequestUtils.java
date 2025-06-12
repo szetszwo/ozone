@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
@@ -73,7 +72,7 @@ public final class OMClientRequestUtils {
 
   private static boolean checkInSnapshotDB(OMMetadataManager omMetadataManager,
       String dbSnapshotBucketKey) throws IOException {
-    try (TableIterator<String, ? extends Table.KeyValue<String, SnapshotInfo>>
+    try (Table.KeyValueIterator<String, SnapshotInfo>
         iterator = omMetadataManager.getSnapshotInfoTable().iterator()) {
       iterator.seek(dbSnapshotBucketKey);
       return iterator.hasNext() && iterator.next().getKey()

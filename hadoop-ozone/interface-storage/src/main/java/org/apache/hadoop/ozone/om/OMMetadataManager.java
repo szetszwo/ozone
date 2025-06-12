@@ -31,7 +31,6 @@ import org.apache.hadoop.hdds.utils.DBStoreHAManager;
 import org.apache.hadoop.hdds.utils.TransactionInfo;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.ozone.common.BlockGroup;
@@ -533,8 +532,7 @@ public interface OMMetadataManager extends DBStoreHAManager {
   Iterator<Map.Entry<CacheKey<String>, CacheValue<OmBucketInfo>>>
       getBucketIterator();
 
-  TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
-      getKeyIterator() throws IOException;
+  Table.KeyValueIterator<String, OmKeyInfo> getKeyIterator() throws IOException;
 
   /**
    * Given parent object id and path component name, return the corresponding

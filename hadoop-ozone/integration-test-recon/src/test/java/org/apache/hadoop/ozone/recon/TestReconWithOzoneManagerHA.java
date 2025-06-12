@@ -31,7 +31,6 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.hdds.utils.db.RocksDBConfiguration;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.MiniOzoneHAClusterImpl;
 import org.apache.hadoop.ozone.client.BucketArgs;
@@ -134,7 +133,7 @@ public class TestReconWithOzoneManagerHA {
 
     ReconContainerMetadataManager reconContainerMetadataManager =
         recon.getReconServer().getReconContainerMetadataManager();
-    try (TableIterator iterator =
+    try (Table.KeyValueIterator<ContainerKeyPrefix, Integer> iterator =
         reconContainerMetadataManager.getContainerTableIterator()) {
       String reconKeyPrefix = null;
       while (iterator.hasNext()) {

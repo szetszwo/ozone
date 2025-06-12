@@ -26,7 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
@@ -123,7 +122,7 @@ public abstract class FileSizeCountTaskHelper {
                                               String taskName) {
     Table<String, OmKeyInfo> omKeyInfoTable = omMetadataManager.getKeyTable(bucketLayout);
     int totalKeysProcessed = 0;
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>> keyIter =
+    try (Table.KeyValueIterator<String, OmKeyInfo> keyIter =
              omKeyInfoTable.iterator()) {
       while (keyIter.hasNext()) {
         Table.KeyValue<String, OmKeyInfo> kv = keyIter.next();

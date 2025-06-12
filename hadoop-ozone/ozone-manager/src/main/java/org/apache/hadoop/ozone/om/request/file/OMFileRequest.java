@@ -42,7 +42,6 @@ import org.apache.hadoop.hdds.client.ReplicationConfig;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.ozone.OzoneAcl;
@@ -893,7 +892,7 @@ public final class OMFileRequest {
   private static boolean checkSubDirectoryExists(OmKeyInfo omKeyInfo,
       OMMetadataManager metaMgr) throws IOException {
     // Check all dirTable cache for any sub paths.
-    Table dirTable = metaMgr.getDirectoryTable();
+    final Table<String, OmDirectoryInfo> dirTable = metaMgr.getDirectoryTable();
     Iterator<Map.Entry<CacheKey<String>, CacheValue<OmDirectoryInfo>>>
             cacheIter = dirTable.cacheIterator();
 
@@ -916,8 +915,7 @@ public final class OMFileRequest {
     // Check dirTable entries for any sub paths.
     String seekDirInDB = metaMgr.getOzonePathKey(volumeId, bucketId,
             omKeyInfo.getObjectID(), "");
-    try (TableIterator<String, ? extends
-        Table.KeyValue<String, OmDirectoryInfo>>
+    try (Table.KeyValueIterator<String, OmDirectoryInfo>
             iterator = dirTable.iterator(seekDirInDB)) {
 
       if (iterator.hasNext()) {
@@ -938,7 +936,7 @@ public final class OMFileRequest {
         getBucketLayout(metaMgr, omKeyInfo.getVolumeName(),
             omKeyInfo.getBucketName());
     // Check all fileTable cache for any sub paths.
-    Table fileTable = metaMgr.getKeyTable(bucketLayout);
+    Table<String, OmKeyInfo> fileTable = metaMgr.getKeyTable(bucketLayout);
     Iterator<Map.Entry<CacheKey<String>, CacheValue<OmKeyInfo>>>
             cacheIter = fileTable.cacheIterator();
 
@@ -961,8 +959,7 @@ public final class OMFileRequest {
     // Check fileTable entries for any sub paths.
     String seekFileInDB = metaMgr.getOzonePathKey(volumeId, bucketId,
             omKeyInfo.getObjectID(), "");
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
-            iterator = fileTable.iterator(seekFileInDB)) {
+    try (Table.KeyValueIterator<String, OmKeyInfo> iterator = fileTable.iterator(seekFileInDB)) {
 
       if (iterator.hasNext()) {
         Table.KeyValue<String, OmKeyInfo> entry = iterator.next();

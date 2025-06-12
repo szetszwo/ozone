@@ -21,12 +21,12 @@ import static org.apache.hadoop.ozone.OzoneConsts.OM_KEY_PREFIX;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmBucketInfo;
 import org.apache.hadoop.ozone.om.helpers.OmDirectoryInfo;
@@ -69,7 +69,7 @@ public class FSOBucketHandler extends BucketHandler {
   public EntityType determineKeyPath(String keyName)
                                      throws IOException {
     java.nio.file.Path keyPath = Paths.get(keyName);
-    Iterator<java.nio.file.Path> elements = keyPath.iterator();
+    Iterator<Path> elements = keyPath.iterator();
 
     long lastKnownParentId = bucketId;
     OmDirectoryInfo omDirInfo = null;
@@ -118,7 +118,7 @@ public class FSOBucketHandler extends BucketHandler {
     Table<String, OmKeyInfo> keyTable = getOmMetadataManager().getFileTable();
 
     long totalDU = 0L;
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
             iterator = keyTable.iterator()) {
 
       String seekPrefix = OM_KEY_PREFIX +
@@ -179,7 +179,7 @@ public class FSOBucketHandler extends BucketHandler {
     Table<String, OmKeyInfo> keyTable = getOmMetadataManager().getFileTable();
     long keyDataSizeWithReplica = 0L;
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
             iterator = keyTable.iterator()) {
 
       String seekPrefix = OM_KEY_PREFIX +

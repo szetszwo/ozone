@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
@@ -150,7 +149,7 @@ public class OMQuotaRepairRequest extends OMClientRequest {
       OMMetadataManager metadataManager, long transactionLogIndex) throws IOException {
     LOG.info("Starting volume quota support update");
     Map<String, OmVolumeArgs> volUpdateMap = new HashMap<>();
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmVolumeArgs>>
+    try (Table.KeyValueIterator<String, OmVolumeArgs>
              iterator = metadataManager.getVolumeTable().iterator()) {
       while (iterator.hasNext()) {
         Table.KeyValue<String, OmVolumeArgs> entry = iterator.next();

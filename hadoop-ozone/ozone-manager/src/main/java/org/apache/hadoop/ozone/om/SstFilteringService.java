@@ -41,7 +41,6 @@ import org.apache.hadoop.hdds.utils.BackgroundTaskResult;
 import org.apache.hadoop.hdds.utils.db.RDBStore;
 import org.apache.hadoop.hdds.utils.db.RocksDatabase;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.lock.BootstrapStateHandler;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
@@ -163,9 +162,7 @@ public class SstFilteringService extends BackgroundService
           ozoneManager.getMetadataManager().getSnapshotInfoTable();
 
 
-      try (TableIterator<String, ? extends Table.KeyValue
-              <String, SnapshotInfo>> iterator = snapshotInfoTable
-              .iterator()) {
+      try (Table.KeyValueIterator<String, SnapshotInfo> iterator = snapshotInfoTable.iterator()) {
         iterator.seekToFirst();
 
         long snapshotLimit = snapshotLimitPerTask;

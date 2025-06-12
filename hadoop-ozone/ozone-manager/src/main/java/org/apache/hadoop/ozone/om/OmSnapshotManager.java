@@ -82,7 +82,6 @@ import org.apache.hadoop.hdds.utils.db.RDBStore;
 import org.apache.hadoop.hdds.utils.db.RocksDBCheckpoint;
 import org.apache.hadoop.hdds.utils.db.RocksDatabase;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedColumnFamilyOptions;
@@ -520,7 +519,7 @@ public final class OmSnapshotManager implements AutoCloseable {
     // Range delete start key (inclusive)
     final String keyPrefix = omMetadataManager.getBucketKeyPrefixFSO(volumeName, bucketName);
 
-    try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>>
+    try (Table.KeyValueIterator<String, OmKeyInfo>
          iter = omMetadataManager.getDeletedDirTable().iterator(keyPrefix)) {
       performOperationOnKeys(iter,
           entry -> {
@@ -549,7 +548,7 @@ public final class OmSnapshotManager implements AutoCloseable {
    * @param operationFunction operation to be performed for each key.
    */
   private static void performOperationOnKeys(
-      TableIterator<String, ? extends Table.KeyValue<String, ?>> keyIter,
+      Table.KeyValueIterator<String, ?> keyIter,
       CheckedFunction<Table.KeyValue<String, ?>,
       Void, IOException> operationFunction) throws IOException {
     // Continue only when there are entries of snapshot (bucket) scope
@@ -586,8 +585,7 @@ public final class OmSnapshotManager implements AutoCloseable {
     final String keyPrefix =
         omMetadataManager.getBucketKeyPrefix(volumeName, bucketName);
 
-    try (TableIterator<String,
-        ? extends Table.KeyValue<String, RepeatedOmKeyInfo>>
+    try (Table.KeyValueIterator<String, RepeatedOmKeyInfo>
              iter = omMetadataManager.getDeletedTable().iterator(keyPrefix)) {
       performOperationOnKeys(iter, entry -> {
         if (LOG.isDebugEnabled()) {

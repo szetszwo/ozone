@@ -30,7 +30,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.SnapshotInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -286,7 +285,7 @@ public class SnapshotChainManager {
   private boolean loadFromSnapshotInfoTable(OMMetadataManager metadataManager) {
     // read from snapshotInfo table to populate
     // snapshot chains - both global and local path
-    try (TableIterator<String, ? extends Table.KeyValue<String, SnapshotInfo>>
+    try (Table.KeyValueIterator<String, SnapshotInfo>
              keyIter = metadataManager.getSnapshotInfoTable().iterator()) {
       Map<UUID, SnapshotInfo> snaps = new HashMap<>();
       // Forward Linked list for snapshot chain.

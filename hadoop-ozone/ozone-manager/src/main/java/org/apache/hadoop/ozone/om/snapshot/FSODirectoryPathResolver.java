@@ -32,7 +32,6 @@ import java.util.Queue;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.helpers.OmDirectoryInfo;
 
 /**
@@ -85,8 +84,7 @@ public class FSODirectoryPathResolver implements ObjectPathResolver {
 
     while (!objectIdPathVals.isEmpty() && !objIds.isEmpty()) {
       Pair<Long, Path> parent = objectIdPathVals.poll();
-      try (TableIterator<String,
-              ? extends Table.KeyValue<String, OmDirectoryInfo>>
+      try (Table.KeyValueIterator<String, OmDirectoryInfo>
               subDirIter = dirInfoTable.iterator(
                   prefix + parent.getKey() + OM_KEY_PREFIX)) {
         while (!objIds.isEmpty() && subDirIter.hasNext()) {

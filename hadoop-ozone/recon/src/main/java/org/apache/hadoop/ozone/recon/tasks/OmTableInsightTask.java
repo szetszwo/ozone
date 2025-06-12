@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.recon.recovery.ReconOMMetadataManager;
 import org.apache.hadoop.util.Time;
@@ -112,7 +111,7 @@ public class OmTableInsightTask implements ReconOmTask {
     for (String tableName : tables) {
       Table table = omMetadataManager.getTable(tableName);
 
-      try (TableIterator<String, ? extends Table.KeyValue<String, ?>> iterator
+      try (Table.KeyValueIterator<String, ?> iterator
                = table.iterator()) {
         if (tableHandlers.containsKey(tableName)) {
           Triple<Long, Long, Long> details =

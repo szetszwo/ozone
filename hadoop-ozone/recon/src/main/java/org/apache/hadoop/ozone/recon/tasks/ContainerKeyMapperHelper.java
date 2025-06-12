@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.hadoop.hdds.utils.db.RDBBatchOperation;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.OMMetadataManager;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
 import org.apache.hadoop.ozone.om.helpers.OmKeyInfo;
@@ -100,7 +99,7 @@ public abstract class ContainerKeyMapperHelper {
       Table<String, OmKeyInfo> omKeyInfoTable = omMetadataManager.getKeyTable(bucketLayout);
 
       // Iterate through the table and process keys
-      try (TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>> keyIter = omKeyInfoTable.iterator()) {
+      try (Table.KeyValueIterator<String, OmKeyInfo> keyIter = omKeyInfoTable.iterator()) {
         while (keyIter.hasNext()) {
           Table.KeyValue<String, OmKeyInfo> kv = keyIter.next();
           handleKeyReprocess(kv.getKey(), kv.getValue(), containerKeyMap, containerKeyCountMap,
@@ -295,7 +294,7 @@ public abstract class ContainerKeyMapperHelper {
       throws IOException {
 
     Set<ContainerKeyPrefix> keysToBeDeleted = new HashSet<>();
-    try (TableIterator<KeyPrefixContainer, ? extends Table.KeyValue<KeyPrefixContainer, Integer>>
+    try (Table.KeyValueIterator<KeyPrefixContainer, Integer>
              keyContainerIterator = reconContainerMetadataManager.getKeyContainerTableIterator()) {
 
       // Check if we have keys in this container in the DB

@@ -27,7 +27,6 @@ import java.nio.file.InvalidPathException;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.ozone.OzoneConsts;
@@ -232,8 +231,7 @@ public class OMBucketDeleteRequest extends OMClientRequest {
   private boolean bucketContainsSnapshotInTable(
       OMMetadataManager omMetadataManager, String snapshotBucketKey)
       throws IOException {
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, SnapshotInfo>>
+    try (Table.KeyValueIterator<String, SnapshotInfo>
             snapshotIterator = omMetadataManager
             .getSnapshotInfoTable().iterator()) {
       snapshotIterator.seek(snapshotBucketKey);

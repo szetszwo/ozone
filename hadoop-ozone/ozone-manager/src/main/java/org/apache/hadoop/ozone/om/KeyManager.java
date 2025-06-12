@@ -25,7 +25,6 @@ import java.util.Map;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.BackgroundService;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
 import org.apache.hadoop.ozone.om.fs.OzoneManagerFS;
 import org.apache.hadoop.ozone.om.helpers.BucketLayout;
@@ -275,7 +274,7 @@ public interface KeyManager extends OzoneManagerFS, IOzoneAcl {
   /**
    * Returns an iterator for pending deleted directories all buckets.
    */
-  default TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>> getDeletedDirEntries() throws IOException {
+  default Table.KeyValueIterator<String, OmKeyInfo> getDeletedDirEntries() throws IOException {
     return getDeletedDirEntries(null, null);
   }
 
@@ -283,14 +282,13 @@ public interface KeyManager extends OzoneManagerFS, IOzoneAcl {
    * Returns an iterator for pending deleted directories for volume and bucket.
    * @throws IOException
    */
-  TableIterator<String, ? extends Table.KeyValue<String, OmKeyInfo>> getDeletedDirEntries(
+  Table.KeyValueIterator<String, OmKeyInfo> getDeletedDirEntries(
       String volume, String bucket) throws IOException;
 
   default List<Table.KeyValue<String, OmKeyInfo>> getDeletedDirEntries(String volume, String bucket, int size)
       throws IOException {
     List<Table.KeyValue<String, OmKeyInfo>> deletedDirEntries = new ArrayList<>(size);
-    try (TableIterator<String, ? extends  Table.KeyValue<String, OmKeyInfo>> iterator =
-             getDeletedDirEntries(volume, bucket)) {
+    try (Table.KeyValueIterator<String, OmKeyInfo> iterator = getDeletedDirEntries(volume, bucket)) {
       while (deletedDirEntries.size() < size && iterator.hasNext()) {
         Table.KeyValue<String, OmKeyInfo> kv = iterator.next();
         deletedDirEntries.add(Table.newKeyValue(kv.getKey(), kv.getValue()));

@@ -35,8 +35,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.OmUtils;
 import org.apache.hadoop.ozone.OzoneAcl;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
@@ -77,8 +77,7 @@ public class PrefixManagerImpl implements PrefixManager {
 
   private void loadPrefixTree() {
     prefixTree = new RadixTree<>();
-    try (TableIterator<String, ? extends
-        KeyValue<String, OmPrefixInfo>> iterator =
+    try (Table.KeyValueIterator<String, OmPrefixInfo> iterator =
              getMetadataManager().getPrefixTable().iterator()) {
       iterator.seekToFirst();
       while (iterator.hasNext()) {

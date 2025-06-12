@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.Map;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 
 /**
  * Interface for handling PUT, DELETE and UPDATE events for size-related
@@ -93,7 +92,7 @@ public interface OmTableHandler {
    * @throws IOException If an I/O error occurs during the iterator traversal.
    */
   Triple<Long, Long, Long> getTableSizeAndCount(
-      TableIterator<String, ? extends Table.KeyValue<String, ?>> iterator)
+      Table.KeyValueIterator<String, ?> iterator)
       throws IOException;
 
   /**

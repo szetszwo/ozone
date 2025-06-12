@@ -56,7 +56,6 @@ import org.apache.hadoop.hdds.utils.BackgroundTaskResult;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.ClientVersion;
 import org.apache.hadoop.ozone.lock.BootstrapStateHandler;
 import org.apache.hadoop.ozone.om.DeleteKeysResult;
@@ -295,10 +294,9 @@ public class DirectoryDeletingService extends AbstractKeyDeletingService {
   }
 
   private static final class DeletedDirSupplier implements Closeable {
-    private TableIterator<String, ? extends KeyValue<String, OmKeyInfo>>
-        deleteTableIterator;
+    private Table.KeyValueIterator<String, OmKeyInfo> deleteTableIterator;
 
-    private DeletedDirSupplier(TableIterator<String, ? extends KeyValue<String, OmKeyInfo>> deleteTableIterator) {
+    private DeletedDirSupplier(Table.KeyValueIterator<String, OmKeyInfo> deleteTableIterator) {
       this.deleteTableIterator = deleteTableIterator;
     }
 

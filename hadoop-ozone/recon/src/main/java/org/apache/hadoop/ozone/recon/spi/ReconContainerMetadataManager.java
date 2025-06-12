@@ -24,7 +24,6 @@ import org.apache.hadoop.hdds.annotation.InterfaceStability;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
 import org.apache.hadoop.hdds.utils.db.RDBBatchOperation;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.recon.api.types.ContainerKeyPrefix;
 import org.apache.hadoop.ozone.recon.api.types.ContainerMetadata;
 import org.apache.hadoop.ozone.recon.api.types.KeyPrefixContainer;
@@ -214,7 +213,7 @@ public interface ReconContainerMetadataManager {
    * Get iterator to the entire container DB.
    * @return TableIterator
    */
-  TableIterator getContainerTableIterator() throws IOException;
+  Table.KeyValueIterator<ContainerKeyPrefix, Integer> getContainerTableIterator() throws IOException;
 
   /**
    * Get the total count of containers present in the system.
@@ -243,7 +242,7 @@ public interface ReconContainerMetadataManager {
    * Get iterator to the entire Key_Container DB.
    * @return TableIterator
    */
-  TableIterator getKeyContainerTableIterator() throws IOException;
+  Table.KeyValueIterator<KeyPrefixContainer, Integer> getKeyContainerTableIterator() throws IOException;
 
   /**
    * Get the entire keyContainerTable.

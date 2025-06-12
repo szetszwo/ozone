@@ -109,7 +109,6 @@ import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.recon.ReconContext;
 import org.apache.hadoop.ozone.recon.ReconServerConfigKeys;
 import org.apache.hadoop.ozone.recon.ReconUtils;
@@ -621,7 +620,7 @@ public class ReconStorageContainerManagerFacade
           .build();
       final Table<DatanodeID, DatanodeDetails> nodeTable = ReconSCMDBDefinition.NODES.getTable(dbStore);
       final Table<DatanodeID, DatanodeDetails> newNodeTable = ReconSCMDBDefinition.NODES.getTable(newStore);
-      try (TableIterator<DatanodeID, ? extends KeyValue<DatanodeID, DatanodeDetails>> iterator = nodeTable.iterator()) {
+      try (Table.KeyValueIterator<DatanodeID, DatanodeDetails> iterator = nodeTable.iterator()) {
         while (iterator.hasNext()) {
           final KeyValue<DatanodeID, DatanodeDetails> keyValue = iterator.next();
           newNodeTable.put(keyValue.getKey(), keyValue.getValue());

@@ -75,7 +75,6 @@ import org.apache.hadoop.hdds.utils.db.RDBStore;
 import org.apache.hadoop.hdds.utils.db.RocksDBCheckpoint;
 import org.apache.hadoop.hdds.utils.db.RocksDatabase;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedWriteBatch;
 import org.apache.hadoop.hdds.utils.db.managed.ManagedWriteOptions;
 import org.apache.hadoop.hdfs.web.URLConnectionFactory;
@@ -769,7 +768,7 @@ public class OzoneManagerServiceProviderImpl
       return;
     }
     if (LOG.isDebugEnabled()) {
-      try (TableIterator<String, ? extends Table.KeyValue<String, ?>> iterator = table.iterator()) {
+      try (Table.KeyValueIterator<String, ?> iterator = table.iterator()) {
         long count = Iterators.size(iterator);
         LOG.debug("{} Table count: {}", tableName, count);
       } catch (IOException ioException) {
