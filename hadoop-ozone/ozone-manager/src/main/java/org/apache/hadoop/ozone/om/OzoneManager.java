@@ -206,8 +206,6 @@ import org.apache.hadoop.hdds.utils.db.DBCheckpoint;
 import org.apache.hadoop.hdds.utils.db.DBUpdatesWrapper;
 import org.apache.hadoop.hdds.utils.db.SequenceNumberNotFoundException;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.hdds.utils.db.cache.CacheKey;
 import org.apache.hadoop.hdds.utils.db.cache.CacheValue;
 import org.apache.hadoop.io.Text;
@@ -811,8 +809,7 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
 
   public void warmUpEdekCache(final ExecutorService executor, final int delay, final int interval, int maxRetries) {
     Set<String> keys = new HashSet<>();
-    try (
-        TableIterator<String, ? extends Table.KeyValue<String, OmBucketInfo>> iterator =
+    try (Table.Iterator<String, OmBucketInfo> iterator =
             metadataManager.getBucketTable().iterator()) {
       while (iterator.hasNext()) {
         Table.KeyValue<String, OmBucketInfo> entry = iterator.next();
@@ -1955,8 +1952,7 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
     long activeGauge = 0;
     long deletedGauge = 0;
 
-    try (TableIterator<String, ? extends
-        KeyValue<String, SnapshotInfo>> keyIter =
+    try (Table.Iterator<String, SnapshotInfo> keyIter =
              metadataManager.getSnapshotInfoTable().iterator()) {
 
       while (keyIter.hasNext()) {
@@ -3559,7 +3555,7 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
     // are flushed to the table. This should be acceptable for a list tenant
     // request.
 
-    try (TableIterator<String, ? extends KeyValue<String, OmDBTenantState>>
+    try (Table.Iterator<String, OmDBTenantState>
         iterator = tenantStateTable.iterator()) {
 
       final List<TenantState> tenantStateList = new ArrayList<>();

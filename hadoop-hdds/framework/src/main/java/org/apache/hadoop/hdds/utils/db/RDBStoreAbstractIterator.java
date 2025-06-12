@@ -25,12 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An abstract {@link Table.KeyValueIterator} to iterate raw {@link Table.KeyValue}s.
+ * An abstract {@link Table.Iterator} to iterate raw {@link Table.KeyValue}s.
  *
  * @param <RAW> the raw type.
  */
 abstract class RDBStoreAbstractIterator<RAW>
-    implements Table.KeyValueIterator<RAW, RAW> {
+    implements Table.Iterator<RAW, RAW> {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(RDBStoreAbstractIterator.class);

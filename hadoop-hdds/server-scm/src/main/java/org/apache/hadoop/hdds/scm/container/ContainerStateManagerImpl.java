@@ -64,8 +64,6 @@ import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineManager;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineNotFoundException;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.common.statemachine.InvalidStateTransitionException;
 import org.apache.hadoop.ozone.common.statemachine.StateMachine;
 import org.apache.ratis.util.AutoCloseableLock;
@@ -234,9 +232,7 @@ public final class ContainerStateManagerImpl
    * @throws IOException in case of error while loading the containers
    */
   private void initialize() throws IOException {
-    try (TableIterator<ContainerID,
-        ? extends KeyValue<ContainerID, ContainerInfo>> iterator =
-             containerStore.iterator()) {
+    try (Table.Iterator<ContainerID, ContainerInfo> iterator = containerStore.iterator()) {
 
       while (iterator.hasNext()) {
         final ContainerInfo container = iterator.next().getValue();

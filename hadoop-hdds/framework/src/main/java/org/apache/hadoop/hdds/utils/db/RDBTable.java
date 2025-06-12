@@ -94,7 +94,7 @@ class RDBTable implements Table<byte[], byte[]> {
 
   @Override
   public boolean isEmpty() throws IOException {
-    try (KeyValueIterator<byte[], byte[]> keyIter = iterator((byte[]) null, KeyValueIterator.Type.NEITHER)) {
+    try (Iterator<byte[], byte[]> keyIter = iterator((byte[]) null, Iterator.Type.NEITHER)) {
       keyIter.seekToFirst();
       return !keyIter.hasNext();
     }
@@ -210,14 +210,14 @@ class RDBTable implements Table<byte[], byte[]> {
   }
 
   @Override
-  public KeyValueIterator<byte[], byte[]> iterator(byte[] prefix, KeyValueIterator.Type type)
+  public Iterator<byte[], byte[]> iterator(byte[] prefix, Iterator.Type type)
       throws RocksDatabaseException {
     return new RDBStoreByteArrayIterator(db.newIterator(family, false), this,
         prefix, type);
   }
 
-  KeyValueIterator<CodecBuffer, CodecBuffer> iterator(
-      CodecBuffer prefix, KeyValueIterator.Type type) throws IOException {
+  Iterator<CodecBuffer, CodecBuffer> iterator(
+      CodecBuffer prefix, Iterator.Type type) throws IOException {
     return new RDBStoreCodecBufferIterator(db.newIterator(family, false),
         this, prefix, type);
   }
@@ -256,7 +256,7 @@ class RDBTable implements Table<byte[], byte[]> {
   @Override
   public void deleteBatchWithPrefix(BatchOperation batch, byte[] prefix)
       throws IOException {
-    try (KeyValueIterator<byte[], byte[]> iter = iterator(prefix)) {
+    try (Iterator<byte[], byte[]> iter = iterator(prefix)) {
       while (iter.hasNext()) {
         deleteWithBatch(batch, iter.next().getKey());
       }
@@ -266,7 +266,7 @@ class RDBTable implements Table<byte[], byte[]> {
   @Override
   public void dumpToFileWithPrefix(File externalFile, byte[] prefix)
       throws IOException {
-    try (KeyValueIterator<byte[], byte[]> iter = iterator(prefix);
+    try (Iterator<byte[], byte[]> iter = iterator(prefix);
          RDBSstFileWriter fileWriter = new RDBSstFileWriter(externalFile)) {
       while (iter.hasNext()) {
         final KeyValue<byte[], byte[]> entry = iter.next();
@@ -291,7 +291,7 @@ class RDBTable implements Table<byte[], byte[]> {
             "Invalid count given " + count + ", count must be greater than 0");
     }
     final List<KeyValue<byte[], byte[]>> result = new ArrayList<>();
-    try (KeyValueIterator<byte[], byte[]> it = iterator(prefix)) {
+    try (Iterator<byte[], byte[]> it = iterator(prefix)) {
       if (startKey == null) {
         it.seekToFirst();
       } else {

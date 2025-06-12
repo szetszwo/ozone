@@ -52,7 +52,6 @@ import org.apache.hadoop.fs.contract.ContractTestUtils;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.TestDataUtil;
@@ -197,7 +196,7 @@ public class TestDirectoryDeletingServiceWithFSO {
     assertEquals(1, metrics.getNumDirsPurged());
     assertEquals(1, metrics.getNumDirsSentForPurge());
 
-    try (TableIterator<?, ? extends Table.KeyValue<?, OmDirectoryInfo>>
+    try (Table.Iterator<?, OmDirectoryInfo>
         iterator = dirTable.iterator()) {
       assertTrue(iterator.hasNext());
       assertEquals(root.getName(), iterator.next().getValue().getName());
@@ -779,20 +778,20 @@ public class TestDirectoryDeletingServiceWithFSO {
     OMMetadataManager metadataManager =
         cluster.getOzoneManager().getMetadataManager();
 
-    try (TableIterator<?, ?> it = metadataManager.getDeletedDirTable()
+    try (Table.Iterator<String, OmKeyInfo> it = metadataManager.getDeletedDirTable()
         .iterator()) {
       removeAllFromDB(it);
     }
-    try (TableIterator<?, ?> it = metadataManager.getFileTable().iterator()) {
+    try (Table.Iterator<String, OmKeyInfo> it = metadataManager.getFileTable().iterator()) {
       removeAllFromDB(it);
     }
-    try (TableIterator<?, ?> it = metadataManager.getDirectoryTable()
+    try (Table.Iterator<String, OmDirectoryInfo> it = metadataManager.getDirectoryTable()
         .iterator()) {
       removeAllFromDB(it);
     }
   }
 
-  private static void removeAllFromDB(TableIterator<?, ?> iterator)
+  private static void removeAllFromDB(Table.Iterator<?, ?> iterator)
       throws IOException {
     while (iterator.hasNext()) {
       iterator.next();

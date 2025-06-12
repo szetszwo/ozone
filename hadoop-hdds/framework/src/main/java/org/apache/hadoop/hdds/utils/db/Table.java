@@ -19,7 +19,6 @@ package org.apache.hadoop.hdds.utils.db;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -154,16 +153,16 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
   void deleteRange(KEY beginKey, KEY endKey) throws IOException;
 
   /** The same as iterator(null, true). */
-  default KeyValueIterator<KEY, VALUE> iterator() throws IOException {
+  default Iterator<KEY, VALUE> iterator() throws IOException {
     return iterator(null);
   }
 
   /** The same as iterator(prefix, true). */
-  default KeyValueIterator<KEY, VALUE> iterator(KEY prefix) throws IOException {
-    return iterator(prefix, KeyValueIterator.Type.KEY_AND_VALUE);
+  default Iterator<KEY, VALUE> iterator(KEY prefix) throws IOException {
+    return iterator(prefix, Iterator.Type.KEY_AND_VALUE);
   }
 
-  KeyValueIterator<KEY, VALUE> iterator(KEY prefix, KeyValueIterator.Type type)
+  Iterator<KEY, VALUE> iterator(KEY prefix, Iterator.Type type)
       throws IOException;
 
   /**
@@ -222,7 +221,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
   /**
    * Return cache iterator maintained for this table.
    */
-  default Iterator<Map.Entry<CacheKey<KEY>, CacheValue<VALUE>>>
+  default java.util.Iterator<Map.Entry<CacheKey<KEY>, CacheValue<VALUE>>>
       cacheIterator() {
     throw new NotImplementedException("cacheIterator is not implemented");
   }
@@ -376,7 +375,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
   }
 
   /** A {@link TableIterator} to iterate {@link KeyValue}s. */
-  interface KeyValueIterator<KEY, VALUE>
+  interface Iterator<KEY, VALUE>
       extends TableIterator<KEY, KeyValue<KEY, VALUE>> {
 
     /** The iterator type. */
