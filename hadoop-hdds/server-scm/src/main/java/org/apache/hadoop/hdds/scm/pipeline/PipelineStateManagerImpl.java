@@ -33,9 +33,10 @@ import org.apache.hadoop.hdds.scm.ha.SCMRatisServer;
 import org.apache.hadoop.hdds.scm.metadata.DBTransactionBuffer;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.utils.db.Table;
-import org.apache.hadoop.hdds.utils.db.TableIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.hadoop.hdds.utils.db.Table.KeyValueIterator.Type.VALUE_ONLY;
 
 /**
  * Implementation of pipeline state manager.
@@ -75,9 +76,7 @@ public class PipelineStateManagerImpl implements PipelineStateManager {
       LOG.info("No pipeline exists in current db");
       return;
     }
-    try (TableIterator<PipelineID,
-        ? extends Table.KeyValue<PipelineID, Pipeline>> iterator =
-             pipelineStore.iterator()) {
+    try (Table.KeyValueIterator<PipelineID, Pipeline> iterator = pipelineStore.iterator(VALUE_ONLY)) {
       while (iterator.hasNext()) {
         Pipeline pipeline = iterator.next().getValue();
         pipelineStateMap.addPipeline(pipeline);
