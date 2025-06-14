@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -395,7 +394,7 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
   }
 
   @Override
-  public Table.KeyValueIterator<KEY, VALUE> iterator(KEY prefix, KeyValueIterator.Type type) throws IOException {
+  public KeyValueIterator<KEY, VALUE> iterator(KEY prefix, KeyValueIterator.Type type) throws IOException {
     if (supportCodecBuffer) {
       final CodecBuffer prefixBuffer = encodeKeyCodecBuffer(prefix);
       try {
@@ -449,7 +448,7 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
   }
 
   @Override
-  public Iterator<Map.Entry<CacheKey<KEY>, CacheValue<VALUE>>> cacheIterator() {
+  public java.util.Iterator<Map.Entry<CacheKey<KEY>, CacheValue<VALUE>>> cacheIterator() {
     return cache.iterator();
   }
 
@@ -469,7 +468,7 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
     final byte[] startKeyBytes = encodeKey(startKey);
     final byte[] prefixBytes = encodeKey(prefix);
 
-    List<? extends KeyValue<byte[], byte[]>> rangeKVBytes =
+    List<KeyValue<byte[], byte[]>> rangeKVBytes =
         rawTable.getRangeKVs(startKeyBytes, count, prefixBytes, filters);
     return convert(rangeKVBytes);
   }
@@ -485,14 +484,13 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
     final byte[] startKeyBytes = encodeKey(startKey);
     final byte[] prefixBytes = encodeKey(prefix);
 
-    List<? extends KeyValue<byte[], byte[]>> rangeKVBytes =
+    List<KeyValue<byte[], byte[]>> rangeKVBytes =
         rawTable.getSequentialRangeKVs(startKeyBytes, count,
             prefixBytes, filters);
     return convert(rangeKVBytes);
   }
 
-  private List<KeyValue<KEY, VALUE>> convert(List<? extends KeyValue<byte[], byte[]>> rangeKVBytes)
-      throws CodecException {
+  private List<KeyValue<KEY, VALUE>> convert(List<KeyValue<byte[], byte[]>> rangeKVBytes) throws CodecException {
     final List<KeyValue<KEY, VALUE>> rangeKVs = new ArrayList<>();
     for (KeyValue<byte[], byte[]> kv : rangeKVBytes) {
       rangeKVs.add(Table.newKeyValue(decodeKey(kv.getKey()), decodeValue(kv.getValue())));
@@ -582,12 +580,12 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
   }
 
   /**
-   * A {@link Table.KeyValueIterator} backed by a raw iterator.
+   * A {@link KeyValueIterator} backed by a raw iterator.
    *
    * @param <RAW> The raw type.
    */
   abstract class RawIterator<RAW>
-      implements Table.KeyValueIterator<KEY, VALUE> {
+      implements KeyValueIterator<KEY, VALUE> {
     private final KeyValueIterator<RAW, RAW> rawIterator;
 
     RawIterator(KeyValueIterator<RAW, RAW> rawIterator) {

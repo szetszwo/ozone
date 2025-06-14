@@ -19,7 +19,6 @@ package org.apache.hadoop.hdds.utils.db;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -229,7 +228,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
   /**
    * Return cache iterator maintained for this table.
    */
-  default Iterator<Map.Entry<CacheKey<KEY>, CacheValue<VALUE>>>
+  default java.util.Iterator<Map.Entry<CacheKey<KEY>, CacheValue<VALUE>>>
       cacheIterator() {
     throw new NotImplementedException("cacheIterator is not implemented");
   }
@@ -273,7 +272,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * @throws IOException if there are I/O errors.
    * @throws IllegalArgumentException if count is less than 0.
    */
-  List<? extends KeyValue<KEY, VALUE>> getRangeKVs(KEY startKey,
+  List<KeyValue<KEY, VALUE>> getRangeKVs(KEY startKey,
           int count, KEY prefix,
           MetadataKeyFilters.MetadataKeyFilter... filters)
           throws IOException, IllegalArgumentException;
@@ -295,7 +294,7 @@ public interface Table<KEY, VALUE> extends AutoCloseable {
    * @throws IOException
    * @throws IllegalArgumentException
    */
-  List<? extends KeyValue<KEY, VALUE>> getSequentialRangeKVs(KEY startKey,
+  List<KeyValue<KEY, VALUE>> getSequentialRangeKVs(KEY startKey,
           int count, KEY prefix,
           MetadataKeyFilters.MetadataKeyFilter... filters)
           throws IOException, IllegalArgumentException;
