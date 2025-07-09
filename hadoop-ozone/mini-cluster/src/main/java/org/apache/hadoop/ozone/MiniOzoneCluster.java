@@ -34,8 +34,11 @@ import org.apache.hadoop.hdds.security.x509.certificate.client.CertificateClient
 import org.apache.hadoop.ozone.client.OzoneClient;
 import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
+import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ratis.util.ExitUtils;
 import org.apache.ratis.util.function.CheckedFunction;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 /**
  * Interface used for MiniOzoneClusters.
@@ -202,6 +205,7 @@ public interface MiniOzoneCluster extends AutoCloseable {
 
   @Override
   default void close() {
+    GenericTestUtils.setLogLevel(LoggerFactory.getLogger("org"), Level.ERROR);
     shutdown();
   }
 

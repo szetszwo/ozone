@@ -58,6 +58,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -66,11 +68,13 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.TableCacheMetrics;
 import org.apache.hadoop.hdds.utils.TransactionInfo;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
+import org.apache.hadoop.hdds.utils.db.CodecException;
 import org.apache.hadoop.hdds.utils.db.DBCheckpoint;
 import org.apache.hadoop.hdds.utils.db.DBColumnFamilyDefinition;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
 import org.apache.hadoop.hdds.utils.db.RDBCheckpointUtils;
+import org.apache.hadoop.hdds.utils.db.RocksDatabaseException;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
@@ -1866,6 +1870,28 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
         }
       }
       return table;
+    }
+  }
+
+  public void dumpFsoTables(Consumer<Object> out) throws RocksDatabaseException, CodecException {
+    dumpTable(fileTable, OmKeyInfo::toString, out);
+    dumpTable(dirTable, OmDirectoryInfo::toString, out);
+    dumpTable(deletedDirTable, OmKeyInfo::toString, out);
+    dumpTable(deletedTable, RepeatedOmKeyInfo::toString, out);
+  }
+
+  public static <V> void dumpTable(TypedTable<String, V> table, Function<V, String> toString, Consumer<Object> out)
+      throws RocksDatabaseException, CodecException {
+    out.accept(table);
+    try(Table.KeyValueIterator<String, V> i = table.iterator()) {
+      if (!i.hasNext()) {
+        out.accept("  <empty>");
+        return;
+      }
+      for(int j = 0; i.hasNext(); j++) {
+        final KeyValue<String, V> kv = i.next();
+        out.accept("  " + j + ":" + kv.getKey() + " -> " + toString.apply(kv.getValue()));
+      }
     }
   }
 }

@@ -98,7 +98,7 @@ public final class OmUtils {
   public static final long EPOCH_ID_SHIFT = 62; // 64 - 2
   public static final long REVERSE_EPOCH_ID_SHIFT = 2; // 64 - EPOCH_ID_SHIFT
   public static final long MAX_TRXN_ID = (1L << 54) - 2;
-  public static final int EPOCH_WHEN_RATIS_ENABLED = 2;
+  public static final int EPOCH_WHEN_RATIS_ENABLED = 0;
 
   private OmUtils() {
   }
