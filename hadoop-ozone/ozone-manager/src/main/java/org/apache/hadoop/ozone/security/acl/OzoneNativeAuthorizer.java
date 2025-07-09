@@ -30,6 +30,7 @@ import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.om.BucketManager;
 import org.apache.hadoop.ozone.om.KeyManager;
 import org.apache.hadoop.ozone.om.OzoneAclUtils;
+import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.ozone.om.PrefixManager;
 import org.apache.hadoop.ozone.om.VolumeManager;
 import org.apache.hadoop.ozone.om.exceptions.OMException;
@@ -42,7 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 @InterfaceAudience.LimitedPrivate({"HDFS", "Yarn", "Ranger", "Hive", "HBase"})
 @InterfaceStability.Evolving
-public class OzoneNativeAuthorizer implements IAccessAuthorizer {
+public class OzoneNativeAuthorizer implements IOzoneManagerAuthorizer {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(OzoneNativeAuthorizer.class);
@@ -189,18 +190,21 @@ public class OzoneNativeAuthorizer implements IAccessAuthorizer {
     }
   }
 
-  public void setVolumeManager(VolumeManager volumeManager) {
-    this.volumeManager = volumeManager;
+  @Override
+  public void setOzoneManager(OzoneManager om) {
+    volumeManager = om.getVolumeManager();
+    bucketManager = om.getBucketManager();
+    setAdminCheck(om::isAdmin);
+    setReadOnlyAdminCheck(om::isReadOnlyAdmin);
+    setAllowListAllVolumes(om::getAllowListAllVolumes);
   }
 
-  public void setBucketManager(BucketManager bucketManager) {
-    this.bucketManager = bucketManager;
-  }
-
+  @Override
   public void setKeyManager(KeyManager keyManager) {
     this.keyManager = keyManager;
   }
 
+  @Override
   public void setPrefixManager(PrefixManager prefixManager) {
     this.prefixManager = prefixManager;
   }

@@ -28,11 +28,14 @@ import org.apache.hadoop.ozone.om.KeyManager;
 import org.apache.hadoop.ozone.om.OmSnapshot;
 import org.apache.hadoop.ozone.om.OzoneManager;
 import org.apache.hadoop.ozone.om.PrefixManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates {@link IAccessAuthorizer} instances based on configuration.
  */
 public final class OzoneAuthorizerFactory {
+  static Logger LOG = LoggerFactory.getLogger(OzoneAuthorizerFactory.class);
 
   private OzoneAuthorizerFactory() {
     // no instances
@@ -81,9 +84,10 @@ public final class OzoneAuthorizerFactory {
     }
 
     final IAccessAuthorizer authorizer = newInstance(clazz, conf);
+    LOG.info("IAccessAuthorizer: {}", authorizer.getClass());
 
-    if (authorizer instanceof OzoneNativeAuthorizer) {
-      return configure((OzoneNativeAuthorizer) authorizer, om, km, pm);
+    if (authorizer instanceof IOzoneManagerAuthorizer) {
+      return configure((IOzoneManagerAuthorizer) authorizer, om, km, pm);
     }
 
     // If authorizer isn't native and shareable tmp dir is enabled,
@@ -102,17 +106,13 @@ public final class OzoneAuthorizerFactory {
    * Configure {@link OzoneNativeAuthorizer}.
    * @return same instance for convenience
    */
-  private static OzoneNativeAuthorizer configure(
-      OzoneNativeAuthorizer authorizer,
+  private static <T extends IOzoneManagerAuthorizer> T configure(
+      T authorizer,
       OzoneManager om, KeyManager km, PrefixManager pm
   ) {
-    authorizer.setVolumeManager(om.getVolumeManager());
-    authorizer.setBucketManager(om.getBucketManager());
+    authorizer.setOzoneManager(om);
     authorizer.setKeyManager(km);
     authorizer.setPrefixManager(pm);
-    authorizer.setAdminCheck(om::isAdmin);
-    authorizer.setReadOnlyAdminCheck(om::isReadOnlyAdmin);
-    authorizer.setAllowListAllVolumes(om::getAllowListAllVolumes);
     return authorizer;
   }
 

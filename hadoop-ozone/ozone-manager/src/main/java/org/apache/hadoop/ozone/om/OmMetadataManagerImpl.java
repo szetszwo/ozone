@@ -1892,7 +1892,7 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
       }
       for(int j = 0; i.hasNext(); j++) {
         final KeyValue<String, V> kv = i.next();
-        out.accept("  " + j + ":" + kv.getKey() + " -> " + toString.apply(kv.getValue()));
+        out.accept(String.format("  %3d: %-30s -> %s", j, kv.getKey(), toString.apply(kv.getValue())));
       }
     }
   }
