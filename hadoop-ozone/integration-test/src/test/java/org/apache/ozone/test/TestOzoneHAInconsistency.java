@@ -53,12 +53,16 @@ public class TestOzoneHAInconsistency {
   {
     GenericTestUtils.setLogLevel(LoggerFactory.getLogger("org.apache.ratis"), Level.ERROR);
     GenericTestUtils.setLogLevel(LoggerFactory.getLogger("org.apache.hadoop.ipc"), Level.ERROR);
+    GenericTestUtils.setLogLevel(LoggerFactory.getLogger("org.apache.hadoop.metrics2"), Level.ERROR);
     GenericTestUtils.setLogLevel(LoggerFactory.getLogger("org.apache.hadoop.hdds"), Level.ERROR);
     GenericTestUtils.setLogLevel(LoggerFactory.getLogger("SCMHATransactionMonitor"), Level.ERROR);
     GenericTestUtils.setLogLevel(LoggerFactory.getLogger("BackgroundPipelineScrubber"), Level.ERROR);
     GenericTestUtils.setLogLevel(LoggerFactory.getLogger("ExpiredContainerReplicaOpScrubber"), Level.ERROR);
     GenericTestUtils.setLogLevel(LoggerFactory.getLogger("org.apache.hadoop.ozone.container.common"), Level.ERROR);
   }
+
+  static final Consumer<Object> DUMP = s -> System.out.format("DUMP %s%n", s);
+  static final Consumer<Object> PRINT = s -> System.out.format("%s%n", s);
 
   static final String OM_SERVICE_ID = "om-service-1";
 
@@ -99,12 +103,14 @@ public class TestOzoneHAInconsistency {
     final OzoneConfiguration conf = newConf();
     try (MiniOzoneHAClusterImpl cluster = newCluster(conf)) {
       t0(cluster);
-      cluster.close();
+
+      TimeUnit.SECONDS.sleep(3);
     }
   }
 
   /**
-   * Create file.txt and part2 dir
+   * create: /table/_tmp/task_id/attempt_id/file.txt
+   * mkdirs: /table/_tmp/task_id/part1/part2
    */
   void t0(MiniOzoneHAClusterImpl cluster) throws Exception {
     final String attempt_id = "/table/_tmp/task_id/attempt_id";
@@ -126,7 +132,7 @@ public class TestOzoneHAInconsistency {
 //    final String rootPath = String.format("%s://%s/", OZONE_OFS_URI_SCHEME, conf.get(OZONE_OM_ADDRESS_KEY));
     conf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY, rootPath);
     try(FileSystem fs = FileSystem.get(conf)) {
-      LOG.info("XXX fs: {}", fs.getUri());
+      PRINT.accept("fs: " + fs.getUri());
       final Path part2path = new Path(part2);
       fs.mkdirs(part2path);
 
@@ -136,14 +142,18 @@ public class TestOzoneHAInconsistency {
       final Path file_path = new Path(attempt_id_dir, filename);
       fs.create(file_path).close();
 
-      LOG.info("XXX file : {}", fs.getFileStatus(file_path));
-      LOG.info("XXX part2: {}", fs.getFileStatus(part2path));
+      PRINT.accept("file : " + fs.getFileStatus(file_path));
+      PRINT.accept("part2: " + fs.getFileStatus(part2path));
     }
 
-    final Consumer<Object> out = s -> LOG.info("XXX {}", s);
+    dumpTables(cluster);
+  }
+
+  static void dumpTables(MiniOzoneHAClusterImpl cluster) throws Exception {
     for(OzoneManager om : cluster.getOzoneManagersList()) {
-      LOG.info("om: {}", om.getOMNodeId());
-      ((OmMetadataManagerImpl)om.getMetadataManager()).dumpFsoTables(out);
+      DUMP.accept("");
+      DUMP.accept(om.getOMNodeId());
+      ((OmMetadataManagerImpl)om.getMetadataManager()).dumpFsoTables(DUMP);
     }
   }
 }

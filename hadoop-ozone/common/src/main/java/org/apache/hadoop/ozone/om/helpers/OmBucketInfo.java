@@ -730,4 +730,8 @@ public final class OmBucketInfo extends WithObjectID implements Auditable, CopyO
         ", defaultReplicationConfig=" + defaultReplicationConfig +
         '}';
   }
+
+  public String toShortString() {
+    return "bucket:" + volumeName + "/" + bucketName + "(" + getObjectID() + ")";
+  }
 }

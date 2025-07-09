@@ -1874,6 +1874,8 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
   }
 
   public void dumpFsoTables(Consumer<Object> out) throws RocksDatabaseException, CodecException {
+    dumpTable(volumeTable, OmVolumeArgs::toShortString, out);
+    dumpTable(bucketTable, OmBucketInfo::toShortString, out);
     dumpTable(fileTable, OmKeyInfo::toString, out);
     dumpTable(dirTable, OmDirectoryInfo::toString, out);
     dumpTable(deletedDirTable, OmKeyInfo::toString, out);
