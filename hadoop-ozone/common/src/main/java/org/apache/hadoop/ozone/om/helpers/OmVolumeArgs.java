@@ -450,4 +450,8 @@ public final class OmVolumeArgs extends WithObjectID
         .setRefCount(refCount)
         .build();
   }
+
+  public String toShortString() {
+    return "volume:'" + volume + "(" + getObjectID() + ")";
+  }
 }

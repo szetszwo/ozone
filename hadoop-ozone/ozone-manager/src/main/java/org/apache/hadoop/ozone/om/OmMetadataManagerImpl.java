@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -66,11 +67,13 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.utils.TableCacheMetrics;
 import org.apache.hadoop.hdds.utils.TransactionInfo;
 import org.apache.hadoop.hdds.utils.db.BatchOperation;
+import org.apache.hadoop.hdds.utils.db.CodecException;
 import org.apache.hadoop.hdds.utils.db.DBCheckpoint;
 import org.apache.hadoop.hdds.utils.db.DBColumnFamilyDefinition;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
 import org.apache.hadoop.hdds.utils.db.RDBCheckpointUtils;
+import org.apache.hadoop.hdds.utils.db.RocksDatabaseException;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.hdds.utils.db.Table.KeyValue;
 import org.apache.hadoop.hdds.utils.db.TableIterator;
@@ -1867,5 +1870,14 @@ public class OmMetadataManagerImpl implements OMMetadataManager,
       }
       return table;
     }
+  }
+
+  public void dumpFsoTables(Consumer<Object> out) throws RocksDatabaseException, CodecException {
+    volumeTable.dump(out, OmVolumeArgs::toShortString);
+    bucketTable.dump(out, OmBucketInfo::toShortString);
+    fileTable.dump(out, OmKeyInfo::toString);
+    dirTable.dump(out, OmDirectoryInfo::toString);
+    deletedDirTable.dump(out, OmKeyInfo::toString);
+    deletedTable.dump(out, RepeatedOmKeyInfo::toString);
   }
 }

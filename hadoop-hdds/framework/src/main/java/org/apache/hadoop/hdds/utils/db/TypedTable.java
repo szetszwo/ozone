@@ -29,6 +29,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import org.apache.hadoop.hdds.utils.IOUtils;
 import org.apache.hadoop.hdds.utils.MetadataKeyFilters.KeyPrefixFilter;
 import org.apache.hadoop.hdds.utils.TableCacheMetrics;
@@ -404,6 +407,27 @@ public class TypedTable<KEY, VALUE> implements Table<KEY, VALUE> {
   @Override
   public String toString() {
     return info;
+  }
+
+  public void dump(Consumer<Object> out, Function<VALUE, String> valueToString)
+      throws RocksDatabaseException, CodecException {
+    dump(out, Objects::toString, valueToString);
+  }
+
+  public void dump(Consumer<Object> out, Function<KEY, String> keyToString, Function<VALUE, String> valueToString)
+      throws RocksDatabaseException, CodecException {
+    out.accept(this);
+    try(Table.KeyValueIterator<KEY, VALUE> i = iterator()) {
+      if (!i.hasNext()) {
+        out.accept("  <empty>");
+        return;
+      }
+      for(int j = 0; i.hasNext(); j++) {
+        final KeyValue<KEY, VALUE> kv = i.next();
+        out.accept(String.format("  %3d: %-30s -> %s",
+            j, keyToString.apply(kv.getKey()), valueToString.apply(kv.getValue())));
+      }
+    }
   }
 
   @Override

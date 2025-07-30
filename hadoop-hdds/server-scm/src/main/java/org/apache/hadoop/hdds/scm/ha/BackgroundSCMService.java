@@ -49,7 +49,7 @@ public final class BackgroundSCMService implements SCMService {
     clock = b.clock;
     periodicalTask = b.periodicalTask;
     serviceName = b.serviceName;
-    log = LoggerFactory.getLogger(serviceName);
+    log = LoggerFactory.getLogger(getClass().getName() + "." + serviceName);
     intervalInMillis = b.intervalInMillis;
     waitTimeInMillis = b.waitTimeInMillis;
     start();
