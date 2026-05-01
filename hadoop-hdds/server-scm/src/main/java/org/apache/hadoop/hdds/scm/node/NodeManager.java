@@ -105,7 +105,7 @@ public interface NodeManager extends StorageContainerNodeProtocol,
    * @param nodeStatus - Status of the node to return
    * @return List of Datanodes that are Heartbeating SCM.
    */
-  List<DatanodeDetails> getNodes(NodeStatus nodeStatus);
+  List<DatanodeInfo> getNodes(NodeStatus nodeStatus);
 
   /**
    * Gets all Live Datanodes that is currently communicating with SCM.
@@ -370,7 +370,7 @@ public interface NodeManager extends StorageContainerNodeProtocol,
   List<SCMCommand<?>> getCommandQueue(DatanodeID dnID);
 
   /** @return the datanode of the given id if it exists; otherwise, return null. */
-  @Nullable DatanodeDetails getNode(@Nullable DatanodeID id);
+  @Nullable DatanodeInfo getNode(@Nullable DatanodeID id);
 
   /**
    * Given datanode address(Ipaddress or hostname), returns a list of

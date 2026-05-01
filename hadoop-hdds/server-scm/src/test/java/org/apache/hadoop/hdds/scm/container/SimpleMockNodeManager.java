@@ -187,7 +187,7 @@ public class SimpleMockNodeManager implements NodeManager {
    */
 
   @Override
-  public List<DatanodeDetails> getNodes(NodeStatus nodeStatus) {
+  public List<DatanodeInfo> getNodes(NodeStatus nodeStatus) {
     return null;
   }
 
@@ -353,7 +353,7 @@ public class SimpleMockNodeManager implements NodeManager {
   }
 
   @Override
-  public DatanodeDetails getNode(DatanodeID id) {
+  public DatanodeInfo getNode(DatanodeID id) {
     return null;
   }
 

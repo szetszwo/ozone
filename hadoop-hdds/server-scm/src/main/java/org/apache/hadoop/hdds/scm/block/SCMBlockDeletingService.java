@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 import org.apache.hadoop.hdds.HddsConfigKeys;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.ReconfigurationHandler;
-import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.DatanodeID;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto.Type;
@@ -45,6 +44,7 @@ import org.apache.hadoop.hdds.scm.events.SCMEvents;
 import org.apache.hadoop.hdds.scm.ha.SCMContext;
 import org.apache.hadoop.hdds.scm.ha.SCMService;
 import org.apache.hadoop.hdds.scm.ha.SCMServiceManager;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.scm.node.states.NodeNotFoundException;
@@ -159,15 +159,14 @@ public class SCMBlockDeletingService extends BackgroundService
       if (LOG.isDebugEnabled()) {
         LOG.debug("Running DeletedBlockTransactionScanner");
       }
-      List<DatanodeDetails> datanodes =
+      List<DatanodeInfo> datanodes =
           nodeManager.getNodes(NodeStatus.inServiceHealthy());
       if (datanodes != null) {
         try {
           // When DN node is healthy and in-service, and their number of
           // 'deleteBlocks' type commands is below the limit.
           // These nodes will be considered for this iteration.
-          final Set<DatanodeDetails> included =
-              getDatanodesWithinCommandLimit(datanodes);
+          final Set<DatanodeInfo> included = getDatanodesWithinCommandLimit(datanodes);
           int blockDeletionLimit = getBlockDeleteTXNum();
           int txnToDNsCommitMapSize = deletedBlockLog.getTransactionToDNsCommitMapSize();
           if (txnToDNsCommitMapSize >= transactionToDNsCommitMapLimit) {
@@ -315,10 +314,10 @@ public class SCMBlockDeletingService extends BackgroundService
    * @return a set of filtered DatanodeDetails
    */
   @VisibleForTesting
-  protected Set<DatanodeDetails> getDatanodesWithinCommandLimit(
-      List<DatanodeDetails> datanodes) throws NodeNotFoundException {
-    final Set<DatanodeDetails> included = new HashSet<>();
-    for (DatanodeDetails dn : datanodes) {
+  protected Set<DatanodeInfo> getDatanodesWithinCommandLimit(
+      List<DatanodeInfo> datanodes) throws NodeNotFoundException {
+    final Set<DatanodeInfo> included = new HashSet<>();
+    for (DatanodeInfo dn : datanodes) {
       if (nodeManager.getTotalDatanodeCommandCount(dn, Type.deleteBlocksCommand) < deleteBlocksPendingCommandLimit
           && nodeManager.getCommandQueueCount(dn.getID(), Type.deleteBlocksCommand) < 2) {
         included.add(dn);

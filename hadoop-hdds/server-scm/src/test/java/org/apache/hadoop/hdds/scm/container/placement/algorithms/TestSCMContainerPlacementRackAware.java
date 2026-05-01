@@ -74,8 +74,8 @@ public class TestSCMContainerPlacementRackAware {
   private NetworkTopology cluster;
   private OzoneConfiguration conf;
   private NodeManager nodeManager;
-  private final List<DatanodeDetails> datanodes = new ArrayList<>();
   private final List<DatanodeInfo> dnInfos = new ArrayList<>();
+  private final List<DatanodeInfo> datanodes = dnInfos;
   // policy with fallback capability
   private SCMContainerPlacementRackAware policy;
   // policy prohibit fallback
@@ -108,7 +108,6 @@ public class TestSCMContainerPlacementRackAware {
       DatanodeDetails datanodeDetails =
           MockDatanodeDetails.createDatanodeDetails(
           hostname + i, rack + (i / NODE_PER_RACK));
-      datanodes.add(datanodeDetails);
       cluster.add(datanodeDetails);
       DatanodeInfo datanodeInfo = new DatanodeInfo(
           datanodeDetails, NodeStatus.inServiceHealthy(),

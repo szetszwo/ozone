@@ -81,8 +81,8 @@ public class TestSCMContainerPlacementRackScatter {
   private NetworkTopology cluster;
   private OzoneConfiguration conf;
   private NodeManager nodeManager;
-  private final List<DatanodeDetails> datanodes = new ArrayList<>();
   private final List<DatanodeInfo> dnInfos = new ArrayList<>();
+  private final List<DatanodeInfo> datanodes = dnInfos;
   // policy with fallback capability
   private SCMContainerPlacementRackScatter policy;
   // node storage capacity
@@ -176,7 +176,6 @@ public class TestSCMContainerPlacementRackScatter {
    * @param datanodeDetails the datanode to setup
    */
   private void setupDatanode(DatanodeDetails datanodeDetails) {
-    datanodes.add(datanodeDetails);
     cluster.add(datanodeDetails);
     DatanodeInfo datanodeInfo = new DatanodeInfo(
         datanodeDetails, NodeStatus.inServiceHealthy(),

@@ -495,8 +495,8 @@ public class NodeStateManager implements Runnable, Closeable {
   }
 
   /** @return a list of datanodes for the matching nodes matching the given status. */
-  public List<DatanodeDetails> getNodes(NodeStatus status) {
-    return nodeStateMap.getDatanodeDetails(status);
+  public List<DatanodeInfo> getNodes(NodeStatus status) {
+    return nodeStateMap.getDatanodeInfos(status);
   }
 
   /**

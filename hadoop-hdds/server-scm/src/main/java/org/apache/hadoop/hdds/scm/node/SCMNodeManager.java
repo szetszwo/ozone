@@ -243,7 +243,7 @@ public class SCMNodeManager implements NodeManager {
    * @return List of Datanodes that are known to SCM in the requested state.
    */
   @Override
-  public List<DatanodeDetails> getNodes(NodeStatus nodeStatus) {
+  public List<DatanodeInfo> getNodes(NodeStatus nodeStatus) {
     return nodeStateManager.getNodes(nodeStatus);
   }
 

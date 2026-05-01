@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.hdds.scm.block;
 
+import static org.apache.hadoop.hdds.scm.HddsTestUtils.randomDatanodeInfo;
 import static org.apache.hadoop.hdds.scm.block.SCMDeletedBlockTransactionStatusManager.EMPTY_SUMMARY;
 import static org.apache.hadoop.ozone.common.BlockGroup.SIZE_NOT_AVAILABLE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +77,7 @@ import org.apache.hadoop.hdds.scm.container.replication.ReplicationManager;
 import org.apache.hadoop.hdds.scm.ha.SCMHADBTransactionBuffer;
 import org.apache.hadoop.hdds.scm.ha.SCMHADBTransactionBufferStub;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManagerStub;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
 import org.apache.hadoop.hdds.scm.server.SCMConfigurator;
@@ -107,7 +109,7 @@ public class TestDeletedBlockLog {
   private ContainerManager containerManager;
   private Table<ContainerID, ContainerInfo> containerTable;
   private StorageContainerManager scm;
-  private List<DatanodeDetails> dnList;
+  private List<DatanodeInfo> dnList;
   private SCMHADBTransactionBuffer scmHADBTransactionBuffer;
   private final Map<ContainerID, ContainerInfo> containers = new HashMap<>();
   private final Map<ContainerID, Set<ContainerReplica>> replicas = new HashMap<>();
@@ -143,15 +145,9 @@ public class TestDeletedBlockLog {
   }
 
   private void setupContainerManager() throws IOException {
-    dnList.add(
-        DatanodeDetails.newBuilder().setUuid(UUID.randomUUID())
-            .build());
-    dnList.add(
-        DatanodeDetails.newBuilder().setUuid(UUID.randomUUID())
-            .build());
-    dnList.add(
-        DatanodeDetails.newBuilder().setUuid(UUID.randomUUID())
-            .build());
+    dnList.add(randomDatanodeInfo());
+    dnList.add(randomDatanodeInfo());
+    dnList.add(randomDatanodeInfo());
 
     when(containerManager.getContainerReplicas(any()))
         .thenAnswer(invocationOnMock -> {
@@ -963,7 +959,7 @@ public class TestDeletedBlockLog {
 
   private void mockInadequateReplicaUnhealthyContainerInfo(long containerID,
       int count) throws IOException {
-    List<DatanodeDetails> dns = dnList.subList(0, 2);
+    List<DatanodeInfo> dns = dnList.subList(0, 2);
     Pipeline pipeline = Pipeline.newBuilder()
         .setReplicationConfig(
             RatisReplicationConfig.getInstance(ReplicationFactor.THREE))

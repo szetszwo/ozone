@@ -62,6 +62,7 @@ import org.apache.hadoop.hdds.scm.events.SCMEvents;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManager;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManagerStub;
 import org.apache.hadoop.hdds.scm.metadata.SCMDBDefinition;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.scm.node.states.NodeNotFoundException;
 import org.apache.hadoop.hdds.scm.pipeline.MockPipelineManager;
@@ -246,7 +247,7 @@ public class TestContainerReportHandler {
   @Test
   public void testECReplicaIndexValidation() throws NodeNotFoundException,
           IOException, TimeoutException {
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
             NodeStatus.inServiceHealthy()).iterator();
     final DatanodeDetails datanodeOne = nodeIterator.next();
     final DatanodeDetails datanodeTwo = nodeIterator.next();
@@ -285,7 +286,7 @@ public class TestContainerReportHandler {
       throws NodeNotFoundException, IOException, TimeoutException {
     final ContainerReportHandler reportHandler = new ContainerReportHandler(
         nodeManager, containerManager);
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
     final DatanodeDetails datanodeOne = nodeIterator.next();
     final DatanodeDetails datanodeTwo = nodeIterator.next();
@@ -339,7 +340,7 @@ public class TestContainerReportHandler {
     final ContainerReportHandler reportHandler = new ContainerReportHandler(
         nodeManager, containerManager);
 
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
     final DatanodeDetails datanodeOne = nodeIterator.next();
     final DatanodeDetails datanodeTwo = nodeIterator.next();
@@ -403,7 +404,7 @@ public class TestContainerReportHandler {
     final ContainerReportHandler reportHandler = new ContainerReportHandler(
         nodeManager, containerManager);
 
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
     final DatanodeDetails datanodeOne = nodeIterator.next();
     final DatanodeDetails datanodeTwo = nodeIterator.next();
@@ -693,7 +694,7 @@ public class TestContainerReportHandler {
     final ContainerReportHandler reportHandler = new ContainerReportHandler(
         nodeManager, containerManager);
 
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
     final DatanodeDetails datanodeOne = nodeIterator.next();
     final DatanodeDetails datanodeTwo = nodeIterator.next();
@@ -754,7 +755,7 @@ public class TestContainerReportHandler {
 
     final ContainerReportHandler reportHandler = new ContainerReportHandler(
         nodeManager, containerManager);
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
 
     final DatanodeDetails datanodeOne = nodeIterator.next();
@@ -815,7 +816,7 @@ public class TestContainerReportHandler {
      */
     final ContainerReportHandler reportHandler =
         new ContainerReportHandler(nodeManager, containerManager);
-    final Iterator<DatanodeDetails> nodeIterator =
+    final Iterator<DatanodeInfo> nodeIterator =
         nodeManager.getNodes(NodeStatus.inServiceHealthy()).iterator();
 
     final DatanodeDetails dn1 = nodeIterator.next();
@@ -855,7 +856,7 @@ public class TestContainerReportHandler {
       throws IOException, TimeoutException {
     final ContainerReportHandler reportHandler = new ContainerReportHandler(
         nodeManager, containerManager);
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
 
     Pipeline pipeline = pipelineManager.createPipeline(
@@ -937,7 +938,7 @@ public class TestContainerReportHandler {
       throws IOException, TimeoutException {
     final ContainerReportHandler reportHandler = new ContainerReportHandler(
         nodeManager, containerManager);
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
 
     final DatanodeDetails datanodeOne = nodeIterator.next();
@@ -1017,7 +1018,7 @@ public class TestContainerReportHandler {
 
     Pipeline pipeline = pipelineManager.createPipeline(repConfig);
     Map<Integer, DatanodeDetails> dns = new HashMap<>();
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
     for (int i = 1; i <= repConfig.getRequiredNodes(); i++) {
       dns.put(i, nodeIterator.next());
@@ -1093,7 +1094,7 @@ public class TestContainerReportHandler {
 
     Pipeline pipeline = pipelineManager.createPipeline(repConfig);
     Map<Integer, DatanodeDetails> dns = new HashMap<>();
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
     for (int i = 1; i <= repConfig.getRequiredNodes(); i++) {
       dns.put(i, nodeIterator.next());
@@ -1164,7 +1165,7 @@ public class TestContainerReportHandler {
   public void testStaleReplicaOfDeletedContainer() throws NodeNotFoundException, IOException {
     final ContainerReportHandler reportHandler = new ContainerReportHandler(nodeManager, containerManager);
 
-    final Iterator<DatanodeDetails> nodeIterator = nodeManager.getNodes(
+    final Iterator<DatanodeInfo> nodeIterator = nodeManager.getNodes(
         NodeStatus.inServiceHealthy()).iterator();
     final DatanodeDetails datanodeOne = nodeIterator.next();
     final ContainerInfo containerOne = getContainer(LifeCycleState.DELETED);

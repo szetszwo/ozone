@@ -226,14 +226,11 @@ public abstract class SCMCommonPlacementPolicy implements
       List<DatanodeDetails> favoredNodes,
       int nodesRequired, long metadataSizeRequired, long dataSizeRequired)
       throws SCMException {
-    List<DatanodeDetails> healthyNodes =
-        nodeManager.getNodes(NodeStatus.inServiceHealthy());
-    if (excludedNodes != null) {
-      healthyNodes.removeAll(excludedNodes);
-    }
-    if (usedNodes != null) {
-      healthyNodes.removeAll(usedNodes);
-    }
+
+    final List<DatanodeDetails> healthyNodes = nodeManager.getNodes(NodeStatus.inServiceHealthy()).stream()
+        .filter(dn -> usedNodes == null || !usedNodes.contains(dn))
+        .filter(dn -> excludedNodes == null || !excludedNodes.contains(dn))
+        .collect(Collectors.toList());
     String msg;
     if (healthyNodes.isEmpty()) {
       msg = "No healthy node found to allocate container.";
@@ -269,7 +266,7 @@ public abstract class SCMCommonPlacementPolicy implements
     return list != UNSET_USED_NODES;
   }
 
-  public List<DatanodeDetails> filterNodesWithSpace(List<DatanodeDetails> nodes,
+  public List<DatanodeDetails> filterNodesWithSpace(List<? extends DatanodeDetails> nodes,
       int nodesRequired, long metadataSizeRequired, long dataSizeRequired)
       throws SCMException {
     List<DatanodeDetails> nodesWithSpace = nodes.stream().filter(d ->

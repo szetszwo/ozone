@@ -46,7 +46,9 @@ import org.apache.hadoop.hdds.scm.container.common.helpers.ContainerWithPipeline
 import org.apache.hadoop.hdds.scm.ha.SCMContext;
 import org.apache.hadoop.hdds.scm.net.NetworkTopology;
 import org.apache.hadoop.hdds.scm.net.NetworkTopologyImpl;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
+import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.scm.node.SCMNodeManager;
 import org.apache.hadoop.hdds.scm.node.states.NodeNotFoundException;
 import org.apache.hadoop.hdds.scm.server.SCMDatanodeHeartbeatDispatcher.IncrementalContainerReportFromDatanode;
@@ -54,6 +56,7 @@ import org.apache.hadoop.hdds.scm.server.SCMStorageConfig;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
 import org.apache.hadoop.hdds.server.events.EventQueue;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutVersionManager;
+import org.apache.hadoop.ozone.container.upgrade.UpgradeUtils;
 import org.apache.hadoop.ozone.recon.TestReconUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -116,6 +119,11 @@ public class TestReconIncrementalContainerReportHandler
     assertEquals(OPEN, containerManager.getContainer(containerID).getState());
   }
 
+  public static DatanodeInfo newDatanodeInfo(DatanodeDetails dn) {
+    return new DatanodeInfo(dn, NodeStatus.inServiceHealthy(),
+        UpgradeUtils.defaultLayoutVersionProto(), 1000);
+  }
+
   @Test
   public void testProcessICRStateMismatch()
       throws IOException, TimeoutException {
@@ -133,8 +141,8 @@ public class TestReconIncrementalContainerReportHandler
       ReconContainerManager containerManager = getContainerManager();
       containerManager.addNewContainer(containerWithPipeline);
 
-      DatanodeDetails datanodeDetails =
-          containerWithPipeline.getPipeline().getFirstNode();
+      DatanodeInfo datanodeDetails = newDatanodeInfo(
+          containerWithPipeline.getPipeline().getFirstNode());
       NodeManager nodeManagerMock = mock(NodeManager.class);
       when(nodeManagerMock.getNode(any(DatanodeID.class)))
           .thenReturn(datanodeDetails);

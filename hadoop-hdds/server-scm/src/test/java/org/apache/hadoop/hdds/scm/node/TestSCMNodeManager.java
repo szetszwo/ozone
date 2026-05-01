@@ -729,7 +729,7 @@ public class TestSCMNodeManager {
       // Wait for 2 seconds, wait a total of 4 seconds to make sure that the
       // node moves into stale state.
       Thread.sleep(2 * 1000);
-      List<DatanodeDetails> staleNodeList =
+      List<DatanodeInfo> staleNodeList =
           nodeManager.getNodes(NodeStatus.inServiceStale());
       assertEquals(1, nodeManager.getNodeCount(NodeStatus.inServiceStale()),
           "Expected to find 1 stale node");
@@ -765,7 +765,7 @@ public class TestSCMNodeManager {
               .get(HddsProtos.NodeState.STALE.name()).intValue());
 
       // Check for the dead node now.
-      List<DatanodeDetails> deadNodeList =
+      List<DatanodeInfo> deadNodeList =
           nodeManager.getNodes(NodeStatus.inServiceDead());
       assertEquals(1, nodeManager.getNodeCount(NodeStatus.inServiceDead()),
           "Expected to find 1 dead node");
@@ -1214,7 +1214,7 @@ public class TestSCMNodeManager {
       // 3.5 seconds from last heartbeat for the stale and deadNode. So those
       //  2 nodes must move to Stale state and the healthy node must
       // remain in the healthy State.
-      List<DatanodeDetails> healthyList = nodeManager.getNodes(
+      List<DatanodeInfo> healthyList = nodeManager.getNodes(
           NodeStatus.inServiceHealthy());
       assertEquals(1, healthyList.size(), "Expected one healthy node");
       assertEquals(healthyNode.getID(), healthyList.get(0).getID(),
@@ -1237,9 +1237,9 @@ public class TestSCMNodeManager {
       // 7 seconds have elapsed for dead node, so it moves into dead.
       // 2 Seconds have elapsed for healthy node, so it stays in healthy state.
       healthyList = nodeManager.getNodes((NodeStatus.inServiceHealthy()));
-      List<DatanodeDetails> staleList =
+      List<DatanodeInfo> staleList =
           nodeManager.getNodes(NodeStatus.inServiceStale());
-      List<DatanodeDetails> deadList =
+      List<DatanodeInfo> deadList =
           nodeManager.getNodes(NodeStatus.inServiceDead());
 
       assertEquals(3, nodeManager.getAllNodes().size());
@@ -1395,7 +1395,7 @@ public class TestSCMNodeManager {
       assertEquals(deadCount,
           nodeManager.getNodeCount(NodeStatus.inServiceDead()));
 
-      List<DatanodeDetails> deadList =
+      List<DatanodeInfo> deadList =
           nodeManager.getNodes(NodeStatus.inServiceDead());
 
       for (DatanodeDetails node : deadList) {

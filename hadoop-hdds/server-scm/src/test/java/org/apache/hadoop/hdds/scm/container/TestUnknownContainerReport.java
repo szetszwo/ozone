@@ -37,6 +37,7 @@ import org.apache.hadoop.hdds.scm.ScmConfig;
 import org.apache.hadoop.hdds.scm.events.SCMEvents;
 import org.apache.hadoop.hdds.scm.ha.SCMContext;
 import org.apache.hadoop.hdds.scm.metadata.SCMDBDefinition;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.scm.server.SCMDatanodeHeartbeatDispatcher.ContainerReportFromDatanode;
@@ -114,7 +115,7 @@ public class TestUnknownContainerReport {
         nodeManager, containerManager, SCMContext.emptyContext(), conf);
 
     ContainerInfo container = getContainer(LifeCycleState.CLOSED);
-    Iterator<DatanodeDetails> nodeIterator = nodeManager
+    Iterator<DatanodeInfo> nodeIterator = nodeManager
         .getNodes(NodeStatus.inServiceHealthy()).iterator();
     DatanodeDetails datanode = nodeIterator.next();
 

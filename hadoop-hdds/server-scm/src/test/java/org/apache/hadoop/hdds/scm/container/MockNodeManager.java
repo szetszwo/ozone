@@ -249,8 +249,10 @@ public class MockNodeManager implements NodeManager {
    * @return List of Datanodes that are Heartbeating SCM.
    */
   @Override
-  public List<DatanodeDetails> getNodes(NodeStatus status) {
-    return getDatanodeDetails(status.getOperationalState(), status.getHealth());
+  public List<DatanodeInfo> getNodes(NodeStatus status) {
+    final List<DatanodeDetails> details = getDatanodeDetails(status.getOperationalState(), status.getHealth());
+    return details == null ? null
+        : details.stream().map(this::getDatanodeInfo).collect(Collectors.toList());
   }
 
   /**
@@ -902,9 +904,9 @@ public class MockNodeManager implements NodeManager {
   }
 
   @Override
-  public DatanodeDetails getNode(DatanodeID id) {
+  public DatanodeInfo getNode(DatanodeID id) {
     Node node = clusterMap.getNode(NetConstants.DEFAULT_RACK + "/" + id);
-    return node == null ? null : (DatanodeDetails)node;
+    return node == null ? null : getDatanodeInfo((DatanodeDetails)node);
   }
 
   @Override

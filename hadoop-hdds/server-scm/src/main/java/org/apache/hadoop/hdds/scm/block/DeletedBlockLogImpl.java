@@ -53,6 +53,7 @@ import org.apache.hadoop.hdds.scm.container.replication.ReplicationManager;
 import org.apache.hadoop.hdds.scm.ha.SCMContext;
 import org.apache.hadoop.hdds.scm.ha.SCMHADBTransactionBuffer;
 import org.apache.hadoop.hdds.scm.ha.SequenceIdGenerator;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.server.StorageContainerManager;
 import org.apache.hadoop.hdds.server.events.EventHandler;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
@@ -297,7 +298,7 @@ public class DeletedBlockLogImpl
 
   private Boolean checkInadequateReplica(Set<ContainerReplica> replicas,
       DeletedBlocksTransaction txn,
-      Set<DatanodeDetails> dnList) throws ContainerNotFoundException {
+      Set<DatanodeInfo> dnList) throws ContainerNotFoundException {
     ContainerInfo containerInfo = containerManager
         .getContainer(ContainerID.valueOf(txn.getContainerID()));
     ReplicationManager replicationManager =
@@ -337,7 +338,7 @@ public class DeletedBlockLogImpl
 
   @Override
   public DatanodeDeletedBlockTransactions getTransactions(
-      int blockDeletionLimit, Set<DatanodeDetails> dnList)
+      int blockDeletionLimit, Set<DatanodeInfo> dnList)
       throws IOException {
     lock.lock();
     try {

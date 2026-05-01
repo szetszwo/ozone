@@ -56,6 +56,7 @@ import org.apache.hadoop.hdds.scm.exceptions.SCMException;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManager;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManagerStub;
 import org.apache.hadoop.hdds.scm.metadata.SCMDBDefinition;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
@@ -246,7 +247,7 @@ public class TestRatisPipelineProvider {
 
     int maxPipelinePerNode = 2;
     init(maxPipelinePerNode);
-    List<DatanodeDetails> healthyNodes =
+    List<DatanodeInfo> healthyNodes =
         nodeManager.getNodes(NodeStatus.inServiceHealthy());
 
     Assumptions.assumeTrue(healthyNodes.size() == 8);
@@ -254,7 +255,7 @@ public class TestRatisPipelineProvider {
     HddsProtos.ReplicationFactor factor = HddsProtos.ReplicationFactor.THREE;
 
     // Use up first 3 DNs for an open pipeline.
-    List<DatanodeDetails> dns = healthyNodes.subList(0, 3);
+    List<DatanodeInfo> dns = healthyNodes.subList(0, 3);
     for (int i = 0; i < maxPipelinePerNode; i++) {
       // Saturate pipeline counts on all the 1st 3 DNs.
       addPipeline(dns, Pipeline.PipelineState.OPEN,
@@ -443,7 +444,7 @@ public class TestRatisPipelineProvider {
   }
 
   private void addPipeline(
-      List<DatanodeDetails> dns,
+      List<DatanodeInfo> dns,
       Pipeline.PipelineState open, ReplicationConfig replicationConfig)
       throws IOException, TimeoutException {
     Pipeline openPipeline = Pipeline.newBuilder()

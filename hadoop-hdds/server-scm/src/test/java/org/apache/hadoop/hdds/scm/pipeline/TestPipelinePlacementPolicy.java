@@ -66,6 +66,7 @@ import org.apache.hadoop.hdds.scm.net.Node;
 import org.apache.hadoop.hdds.scm.net.NodeImpl;
 import org.apache.hadoop.hdds.scm.net.NodeSchema;
 import org.apache.hadoop.hdds.scm.net.NodeSchemaManager;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.utils.db.DBStore;
 import org.apache.hadoop.hdds.utils.db.DBStoreBuilder;
@@ -273,7 +274,7 @@ public class TestPipelinePlacementPolicy {
 
   @Test
   public void testPickLowestLoadAnchor() throws IOException, TimeoutException {
-    List<DatanodeDetails> healthyNodes = nodeManager
+    List<DatanodeInfo> healthyNodes = nodeManager
         .getNodes(NodeStatus.inServiceHealthy());
 
     int maxPipelineCount = PIPELINE_LOAD_LIMIT * healthyNodes.size()
@@ -400,7 +401,7 @@ public class TestPipelinePlacementPolicy {
   }
 
   private List<DatanodeDetails> overWriteLocationInNodes(
-      List<DatanodeDetails> datanodes) {
+      List<? extends DatanodeDetails> datanodes) {
     List<DatanodeDetails> results = new ArrayList<>(datanodes.size());
     for (int i = 0; i < datanodes.size(); i++) {
       DatanodeDetails datanode = overwriteLocationInNode(
@@ -413,7 +414,7 @@ public class TestPipelinePlacementPolicy {
   @Test
   public void testHeavyNodeShouldBeExcludedWithMinorityHeavy()
       throws IOException, TimeoutException {
-    List<DatanodeDetails> healthyNodes =
+    List<DatanodeInfo> healthyNodes =
         nodeManager.getNodes(NodeStatus.inServiceHealthy());
     int nodesRequired = HddsProtos.ReplicationFactor.THREE.getNumber();
     // only minority of healthy NODES are heavily engaged in pipelines.
@@ -443,7 +444,7 @@ public class TestPipelinePlacementPolicy {
   @Test
   public void testHeavyNodeShouldBeExcludedWithMajorityHeavy()
       throws IOException, TimeoutException {
-    List<DatanodeDetails> healthyNodes =
+    List<DatanodeInfo> healthyNodes =
         nodeManager.getNodes(NodeStatus.inServiceHealthy());
     int nodesRequired = HddsProtos.ReplicationFactor.THREE.getNumber();
     // majority of healthy NODES are heavily engaged in pipelines.
@@ -616,7 +617,7 @@ public class TestPipelinePlacementPolicy {
   }
 
   private void insertHeavyNodesIntoNodeManager(
-      List<DatanodeDetails> nodes, int heavyNodeCount)
+      List<? extends DatanodeDetails> nodes, int heavyNodeCount)
       throws IOException, TimeoutException {
     if (nodes == null) {
       throw new SCMException("",
@@ -661,8 +662,7 @@ public class TestPipelinePlacementPolicy {
   @Test
   public void testCurrentRatisThreePipelineCount()
       throws IOException, TimeoutException {
-    List<DatanodeDetails> healthyNodes = nodeManager
-        .getNodes(NodeStatus.inServiceHealthy());
+    List<DatanodeInfo> healthyNodes = nodeManager.getNodes(NodeStatus.inServiceHealthy());
     int pipelineCount;
 
     // Check datanode with one STANDALONE/ONE pipeline
@@ -747,7 +747,7 @@ public class TestPipelinePlacementPolicy {
     PipelinePlacementPolicy localPolicy = new PipelinePlacementPolicy(
         localNodeManager, localStateManager, localConf);
 
-    List<DatanodeDetails> healthy =
+    List<DatanodeInfo> healthy =
         localNodeManager.getNodes(NodeStatus.inServiceHealthy());
     DatanodeDetails target = healthy.get(0);
 

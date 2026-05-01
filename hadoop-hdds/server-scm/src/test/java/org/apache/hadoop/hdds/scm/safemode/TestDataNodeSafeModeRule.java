@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.hdds.scm.safemode;
 
+import static org.apache.hadoop.hdds.scm.HddsTestUtils.randomDatanodeInfo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,6 +35,7 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.MockDatanodeDetails;
 import org.apache.hadoop.hdds.scm.events.SCMEvents;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.scm.server.SCMDatanodeProtocolServer.NodeRegistrationContainerReport;
@@ -151,10 +153,9 @@ public class TestDataNodeSafeModeRule {
 
     assertFalse(rule.validate());
 
-    List<DatanodeDetails> healthyNodes = new ArrayList<>();
+    List<DatanodeInfo> healthyNodes = new ArrayList<>();
     for (int i = 0; i < requiredDns; i++) {
-      DatanodeDetails dd = MockDatanodeDetails.randomDatanodeDetails();
-      healthyNodes.add(dd);
+      healthyNodes.add(randomDatanodeInfo());
     }
     
     when(nodeManager.getNodes(NodeStatus.inServiceHealthy()))

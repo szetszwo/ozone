@@ -108,6 +108,7 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.ipc_.ProtobufRpcEngine;
 import org.apache.hadoop.ipc_.RPC;
 import org.apache.hadoop.ipc_.Server;
+import org.apache.hadoop.ozone.ClientVersion;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.audit.AuditAction;
 import org.apache.hadoop.ozone.audit.AuditEventStatus;
@@ -660,8 +661,7 @@ public class SCMClientProtocolServer implements
   @Override
   public List<HddsProtos.Node> queryNode(
       HddsProtos.NodeOperationalState opState, HddsProtos.NodeState state,
-      HddsProtos.QueryScope queryScope, String poolName, int clientVersion)
-      throws IOException {
+      HddsProtos.QueryScope queryScope, String poolName, int clientVersion) {
     final Map<String, String> auditMap = Maps.newHashMap();
     auditMap.put("opState", String.valueOf(opState));
     auditMap.put("state", String.valueOf(state));
@@ -675,75 +675,41 @@ public class SCMClientProtocolServer implements
           SCMAction.QUERY_NODE, auditMap, ex));
       throw ex;
     }
-    try {
-      List<HddsProtos.Node> result = new ArrayList<>();
-      for (DatanodeDetails node : queryNode(opState, state)) {
-        NodeStatus ns = scm.getScmNodeManager().getNodeStatus(node);
-        DatanodeInfo datanodeInfo = node instanceof DatanodeInfo ? (DatanodeInfo) node : null;
-        HddsProtos.Node.Builder nodeBuilder = HddsProtos.Node.newBuilder()
-            .setNodeID(node.toProto(clientVersion))
-            .addNodeStates(ns.getHealth())
-            .addNodeOperationalStates(ns.getOperationalState());
-        
-        if (datanodeInfo != null) {
-          nodeBuilder.setTotalVolumeCount(datanodeInfo.getStorageReports().size());
-          nodeBuilder.setHealthyVolumeCount(datanodeInfo.getHealthyVolumeCount());
-          addFailedVolumes(nodeBuilder, datanodeInfo);
-        }
-        result.add(nodeBuilder.build());
-      }
-      AUDIT.logReadSuccess(buildAuditMessageForSuccess(
-          SCMAction.QUERY_NODE, auditMap));
-      return result;
-    } catch (NodeNotFoundException e) {
-      AUDIT.logReadFailure(buildAuditMessageForFailure(
-          SCMAction.QUERY_NODE, auditMap, e));
-      throw new IOException("An unexpected error occurred querying the NodeStatus", e);
+    final List<DatanodeInfo> datanodeInfos = scm.getScmNodeManager().getNodes(opState, state);
+    final List<HddsProtos.Node> result = new ArrayList<>(datanodeInfos.size());
+    for (DatanodeInfo info: datanodeInfos) {
+      result.add(buildNodeProto(info, clientVersion));
     }
-  }
-
-  @Override
-  public HddsProtos.Node queryNode(UUID uuid)
-      throws IOException {
-    final Map<String, String> auditMap = Maps.newHashMap();
-    auditMap.put("uuid", String.valueOf(uuid));
-    HddsProtos.Node result = null;
-    try {
-      DatanodeDetails node = scm.getScmNodeManager().getNode(DatanodeID.of(uuid));
-      if (node != null) {
-        NodeStatus ns = scm.getScmNodeManager().getNodeStatus(node);
-        DatanodeInfo datanodeInfo = node instanceof DatanodeInfo ? (DatanodeInfo) node : null;
-        HddsProtos.Node.Builder nodeBuilder = HddsProtos.Node.newBuilder()
-            .setNodeID(node.getProtoBufMessage())
-            .addNodeStates(ns.getHealth())
-            .addNodeOperationalStates(ns.getOperationalState());
-
-        if (datanodeInfo != null) {
-          nodeBuilder.setTotalVolumeCount(datanodeInfo.getStorageReports().size());
-          nodeBuilder.setHealthyVolumeCount(datanodeInfo.getHealthyVolumeCount());
-          addFailedVolumes(nodeBuilder, datanodeInfo);
-        }
-        result = nodeBuilder.build();
-      }
-    } catch (NodeNotFoundException e) {
-      IOException ex = new IOException(
-          "An unexpected error occurred querying the NodeStatus", e);
-      AUDIT.logReadFailure(buildAuditMessageForFailure(
-          SCMAction.QUERY_NODE, auditMap, ex));
-      throw ex;
-    }
-    AUDIT.logReadSuccess(buildAuditMessageForSuccess(
-        SCMAction.QUERY_NODE, auditMap));
+    AUDIT.logReadSuccess(buildAuditMessageForSuccess(SCMAction.QUERY_NODE, auditMap));
     return result;
   }
 
-  private static void addFailedVolumes(HddsProtos.Node.Builder nodeBuilder,
-      DatanodeInfo datanodeInfo) {
-    for (StorageReportProto report : datanodeInfo.getStorageReports()) {
+  @Override
+  public HddsProtos.Node queryNode(UUID uuid) {
+    final Map<String, String> auditMap = Collections.singletonMap("uuid", String.valueOf(uuid));
+    final DatanodeInfo datanodeInfo = scm.getScmNodeManager().getNode(DatanodeID.of(uuid));
+    final HddsProtos.Node proto = datanodeInfo == null ? null
+        : buildNodeProto(datanodeInfo, ClientVersion.CURRENT_VERSION);
+    AUDIT.logReadSuccess(buildAuditMessageForSuccess(SCMAction.QUERY_NODE, auditMap));
+    return proto;
+  }
+
+  private HddsProtos.Node buildNodeProto(DatanodeInfo info, int clientVersion) {
+    final HddsProtos.Node.Builder b = HddsProtos.Node.newBuilder()
+        .setNodeID(info.toProto(clientVersion))
+        .setHealthyVolumeCount(info.getHealthyVolumeCount());
+
+    final List<StorageReportProto> reports = info.getStorageReports();
+    for (StorageReportProto report : reports) {
       if (report.hasFailed() && report.getFailed()) {
-        nodeBuilder.addFailedVolumes(report.getStorageLocation());
+        b.addFailedVolumes(report.getStorageLocation());
       }
     }
+    final NodeStatus nodeStatus = info.getNodeStatus();
+    return b.setTotalVolumeCount(reports.size())
+        .addNodeStates(nodeStatus.getHealth())
+        .addNodeOperationalStates(nodeStatus.getOperationalState())
+        .build();
   }
 
   @Override
@@ -1579,26 +1545,6 @@ public class SCMClientProtocolServer implements
     }
   }
 
-  /**
-   * Queries a list of Node that match a set of statuses.
-   *
-   * <p>For example, if the nodeStatuses is HEALTHY and RAFT_MEMBER, then
-   * this call will return all
-   * healthy nodes which members in Raft pipeline.
-   *
-   * <p>Right now we don't support operations, so we assume it is an AND
-   * operation between the
-   * operators.
-   *
-   * @param opState - NodeOperational State
-   * @param state - NodeState.
-   * @return List of Datanodes.
-   */
-  public List<? extends DatanodeDetails> queryNode(
-      HddsProtos.NodeOperationalState opState, HddsProtos.NodeState state) {
-    return queryNodeState(opState, state);
-  }
-
   @VisibleForTesting
   public StorageContainerManager getScm() {
     return scm;
@@ -1609,18 +1555,6 @@ public class SCMClientProtocolServer implements
    */
   public boolean getSafeModeStatus() {
     return scm.getScmContext().isInSafeMode();
-  }
-
-  /**
-   * Query the System for Nodes.
-   *
-   * @params opState - The node operational state
-   * @param nodeState - NodeState that we are interested in matching.
-   * @return Set of Datanodes that match the NodeState.
-   */
-  private List<? extends DatanodeDetails> queryNodeState(
-      HddsProtos.NodeOperationalState opState, HddsProtos.NodeState nodeState) {
-    return scm.getScmNodeManager().getNodes(opState, nodeState);
   }
 
   @Override

@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.hdds.scm.block;
 
+import static org.apache.hadoop.hdds.scm.HddsTestUtils.randomDatanodeInfo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.any;
@@ -39,13 +40,13 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.conf.ReconfigurationHandler;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.DatanodeID;
-import org.apache.hadoop.hdds.protocol.MockDatanodeDetails;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.SCMCommandProto.Type;
 import org.apache.hadoop.hdds.scm.ScmConfig;
 import org.apache.hadoop.hdds.scm.events.SCMEvents;
 import org.apache.hadoop.hdds.scm.ha.SCMContext;
 import org.apache.hadoop.hdds.scm.ha.SCMServiceManager;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
@@ -62,7 +63,7 @@ import org.mockito.ArgumentCaptor;
 public class TestSCMBlockDeletingService {
   private SCMBlockDeletingService service;
   private EventPublisher eventPublisher;
-  private List<DatanodeDetails> datanodeDetails;
+  private List<DatanodeInfo> datanodeDetails;
   private OzoneConfiguration conf;
   private NodeManager nodeManager;
   private ScmBlockDeletingServiceMetrics metrics;
@@ -80,9 +81,9 @@ public class TestSCMBlockDeletingService {
 
     DatanodeDeletedBlockTransactions ddbt =
         new DatanodeDeletedBlockTransactions();
-    DatanodeDetails datanode1 = MockDatanodeDetails.randomDatanodeDetails();
-    DatanodeDetails datanode2 = MockDatanodeDetails.randomDatanodeDetails();
-    DatanodeDetails datanode3 = MockDatanodeDetails.randomDatanodeDetails();
+    DatanodeInfo datanode1 = randomDatanodeInfo();
+    DatanodeInfo datanode2 = randomDatanodeInfo();
+    DatanodeInfo datanode3 = randomDatanodeInfo();
     datanodeDetails = Arrays.asList(datanode1, datanode2, datanode3);
     when(nodeManager.getNodes(NodeStatus.inServiceHealthy())).thenReturn(
         datanodeDetails);
@@ -159,7 +160,7 @@ public class TestSCMBlockDeletingService {
     DatanodeDetails fullDatanode = datanodeDetails.get(0);
     when(nodeManager.getTotalDatanodeCommandCount(fullDatanode,
         Type.deleteBlocksCommand)).thenReturn(pendingCommandLimit);
-    Set<DatanodeDetails> includeNodes =
+    Set<DatanodeInfo> includeNodes =
         service.getDatanodesWithinCommandLimit(datanodeDetails);
     assertEquals(datanodeDetails.size() - 1,
         includeNodes.size());

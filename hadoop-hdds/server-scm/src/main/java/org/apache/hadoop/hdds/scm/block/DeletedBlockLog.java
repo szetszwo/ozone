@@ -28,6 +28,7 @@ import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.DatanodeID;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.DeletedBlocksTransactionSummary;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.utils.db.Table;
 import org.apache.hadoop.ozone.common.DeletedBlock;
 import org.apache.hadoop.ozone.protocol.commands.SCMCommand;
@@ -51,7 +52,7 @@ public interface DeletedBlockLog extends Closeable {
    * @throws IOException
    */
   DatanodeDeletedBlockTransactions getTransactions(
-      int blockDeletionLimit, Set<DatanodeDetails> dnList)
+      int blockDeletionLimit, Set<DatanodeInfo> dnList)
       throws IOException;
 
   /**

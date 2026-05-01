@@ -60,6 +60,8 @@ import org.apache.hadoop.hdds.scm.container.ContainerManager;
 import org.apache.hadoop.hdds.scm.container.ContainerReplica;
 import org.apache.hadoop.hdds.scm.ha.SCMContext;
 import org.apache.hadoop.hdds.scm.ha.SCMHAManagerStub;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
+import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.apache.hadoop.hdds.scm.node.SCMNodeManager;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.pipeline.PipelineID;
@@ -75,6 +77,7 @@ import org.apache.hadoop.ipc_.Server;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.common.Storage;
 import org.apache.hadoop.ozone.common.statemachine.InvalidStateTransitionException;
+import org.apache.hadoop.ozone.container.upgrade.UpgradeUtils;
 import org.apache.hadoop.ozone.protocol.commands.RegisteredCommand;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.client.AuthenticationException;
@@ -92,6 +95,15 @@ public final class HddsTestUtils {
   public static final long ROLL_INTERVAL_MS_DEFAULT = 5 * 60 * 1000L; //TODO
 
   private HddsTestUtils() {
+  }
+
+  public static DatanodeInfo newDatanodeInfo(DatanodeDetails dn) {
+    return new DatanodeInfo(dn, NodeStatus.inServiceHealthy(),
+        UpgradeUtils.defaultLayoutVersionProto(), ROLL_INTERVAL_MS_DEFAULT);
+  }
+
+  public static DatanodeInfo randomDatanodeInfo() {
+    return newDatanodeInfo(MockDatanodeDetails.randomDatanodeDetails());
   }
 
   /**

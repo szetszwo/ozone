@@ -621,7 +621,7 @@ public final class Pipeline {
       return this;
     }
 
-    public Builder setNodes(List<DatanodeDetails> nodes) {
+    public Builder setNodes(List<? extends DatanodeDetails> nodes) {
       Map<DatanodeDetails, Long> newNodeStatus = new LinkedHashMap<>();
       nodes.forEach(node -> newNodeStatus.put(node, -1L));
 

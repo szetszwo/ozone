@@ -64,7 +64,7 @@ import org.junit.jupiter.api.Test;
  */
 public class TestContainerPlacementFactory {
   // datanodes array list
-  private List<DatanodeDetails> datanodes = new ArrayList<>();
+  private List<DatanodeInfo> datanodes = new ArrayList<>();
   private List<DatanodeInfo> dnInfos = new ArrayList<>();
   // node storage capacity
   private static final long STORAGE_CAPACITY = 100L;
@@ -113,7 +113,7 @@ public class TestContainerPlacementFactory {
       datanodeInfo.updateMetaDataStorageReports(
           new ArrayList<>(Arrays.asList(metaStorage1)));
 
-      datanodes.add(datanodeDetails);
+      datanodes.add(HddsTestUtils.newDatanodeInfo(datanodeDetails));
       cluster.add(datanodeDetails);
       dnInfos.add(datanodeInfo);
     }

@@ -33,6 +33,7 @@ import org.apache.hadoop.hdds.scm.SCMCommonPlacementPolicy;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.exceptions.SCMException;
 import org.apache.hadoop.hdds.scm.net.NetworkTopology;
+import org.apache.hadoop.hdds.scm.node.DatanodeInfo;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.scm.node.NodeStatus;
 import org.slf4j.Logger;
@@ -145,17 +146,16 @@ public final class PipelinePlacementPolicy extends SCMCommonPlacementPolicy {
       long metadataSizeRequired, long dataSizeRequired)
       throws SCMException {
     // get nodes in HEALTHY state
-    List<DatanodeDetails> healthyNodes =
-        nodeManager.getNodes(NodeStatus.inServiceHealthy());
+    final List<DatanodeInfo> healthyInfos = nodeManager.getNodes(NodeStatus.inServiceHealthy());
     String msg;
-    if (healthyNodes.isEmpty()) {
+    if (healthyInfos.isEmpty()) {
       msg = "No healthy node found to allocate container.";
       LOG.error(msg);
       throw new SCMException(msg, SCMException.ResultCodes
               .FAILED_TO_FIND_HEALTHY_NODES);
     }
 
-    healthyNodes = filterNodesWithSpace(healthyNodes, nodesRequired,
+    final List<DatanodeDetails> healthyNodes = filterNodesWithSpace(healthyInfos, nodesRequired,
         metadataSizeRequired, dataSizeRequired);
     boolean multipleRacks = multipleRacksAvailable(healthyNodes);
     int excludedNodesSize = 0;

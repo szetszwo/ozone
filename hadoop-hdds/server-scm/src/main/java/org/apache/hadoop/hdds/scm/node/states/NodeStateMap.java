@@ -23,10 +23,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.DatanodeID;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeOperationalState;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeState;
@@ -179,8 +177,8 @@ public class NodeStateMap {
   }
 
   /** @return a list of datanodes for the matching nodes matching the given status. */
-  public List<DatanodeDetails> getDatanodeDetails(NodeStatus status) {
-    return filterNodes(matching(status), d -> d);
+  public List<DatanodeInfo> getDatanodeInfos(NodeStatus status) {
+    return filterNodes(matching(status));
   }
 
   /**
@@ -362,16 +360,11 @@ public class NodeStateMap {
    * @return a list of all nodes matching the {@code filter}
    */
   private List<DatanodeInfo> filterNodes(Predicate<DatanodeInfo> filter) {
-    return filterNodes(filter, Function.identity());
-  }
-
-  private <T> List<T> filterNodes(Predicate<DatanodeInfo> filter, Function<DatanodeInfo, T> converter) {
     lock.readLock().lock();
     try {
       return nodeMap.values().stream()
           .map(DatanodeEntry::getInfo)
           .filter(filter)
-          .map(converter)
           .collect(Collectors.toList());
     } finally {
       lock.readLock().unlock();
