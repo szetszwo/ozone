@@ -44,6 +44,12 @@ public class HostAndPort {
     this(host, port, null);
   }
 
+  /**
+   * Derives the host from {@code address.getHostName()}, which can differ from the configured
+   * spelling used by {@link #HostAndPort(String, int)} (IP literal vs hostname). Since equals/hashCode
+   * key on the host string, callers must use one consistent spelling per node or instances will not
+   * match in the endpoint maps.
+   */
   public HostAndPort(InetSocketAddress address) {
     this(address.getHostName(), address.getPort(), address);
   }

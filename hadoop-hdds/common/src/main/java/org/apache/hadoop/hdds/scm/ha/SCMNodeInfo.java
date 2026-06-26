@@ -229,15 +229,15 @@ public class SCMNodeInfo {
   }
 
   public String getBlockClientAddress() {
-    return blockClientAddress.getHostAndPortString();
+    return blockClientAddress == null ? null : blockClientAddress.getHostAndPortString();
   }
 
   public String getScmClientAddress() {
-    return scmClientAddress.getHostAndPortString();
+    return scmClientAddress == null ? null : scmClientAddress.getHostAndPortString();
   }
 
   public String getScmSecurityAddress() {
-    return scmSecurityAddress.getHostAndPortString();
+    return scmSecurityAddress == null ? null : scmSecurityAddress.getHostAndPortString();
   }
 
   public HostAndPort getScmDatanodeHostPortAddress() {
@@ -245,6 +245,6 @@ public class SCMNodeInfo {
   }
 
   public String getScmDatanodeAddress() {
-    return scmDatanodeAddress.getHostAndPortString();
+    return scmDatanodeAddress == null ? null : scmDatanodeAddress.getHostAndPortString();
   }
 }
