@@ -139,38 +139,79 @@ public class SCMConnectionManager
             "Ignoring the request.");
         return;
       }
-
-      Configuration hadoopConfig =
-          LegacyHadoopConfigurationSource.asHadoopConfiguration(this.conf);
-      RPC.setProtocolEngine(
-          hadoopConfig,
-          StorageContainerDatanodeProtocolPB.class,
-          ProtobufRpcEngine.class);
-      long version =
-          RPC.getProtocolVersion(StorageContainerDatanodeProtocolPB.class);
-
-      RetryPolicy retryPolicy =
-          RetryPolicies.retryUpToMaximumCountWithFixedSleep(
-              getScmRpcRetryCount(conf), getScmRpcRetryInterval(conf),
-              TimeUnit.MILLISECONDS);
-
-      StorageContainerDatanodeProtocolPB rpcProxy = RPC.getProtocolProxy(
-          StorageContainerDatanodeProtocolPB.class, version,
-          address.getAddress(), UserGroupInformation.getCurrentUser(), hadoopConfig,
-          NetUtils.getDefaultSocketFactory(hadoopConfig), getRpcTimeout(),
-          retryPolicy).getProxy();
-
-      StorageContainerDatanodeProtocolClientSideTranslatorPB rpcClient =
-          new StorageContainerDatanodeProtocolClientSideTranslatorPB(
-              rpcProxy);
-
-      EndpointStateMachine endPoint = new EndpointStateMachine(address,
-          rpcClient, this.conf, threadNamePrefix);
+      EndpointStateMachine endPoint = buildScmEndpoint(address, threadNamePrefix);
       endPoint.setPassive(false);
       scmMachines.put(address, endPoint);
     } finally {
       writeUnlock();
     }
+  }
+
+  /**
+   * Builds (but does not register) an active-SCM endpoint dialing {@code address.getAddress()}.
+   * Factored out so {@link #refreshSCMServer} can rebuild an endpoint on a freshly-resolved IP.
+   */
+  private EndpointStateMachine buildScmEndpoint(HostAndPort address, String threadNamePrefix)
+      throws IOException {
+    Configuration hadoopConfig =
+        LegacyHadoopConfigurationSource.asHadoopConfiguration(this.conf);
+    RPC.setProtocolEngine(hadoopConfig, StorageContainerDatanodeProtocolPB.class,
+        ProtobufRpcEngine.class);
+    long version = RPC.getProtocolVersion(StorageContainerDatanodeProtocolPB.class);
+    RetryPolicy retryPolicy = RetryPolicies.retryUpToMaximumCountWithFixedSleep(
+        getScmRpcRetryCount(conf), getScmRpcRetryInterval(conf), TimeUnit.MILLISECONDS);
+    StorageContainerDatanodeProtocolPB rpcProxy = RPC.getProtocolProxy(
+        StorageContainerDatanodeProtocolPB.class, version,
+        address.getAddress(), UserGroupInformation.getCurrentUser(), hadoopConfig,
+        NetUtils.getDefaultSocketFactory(hadoopConfig), getRpcTimeout(),
+        retryPolicy).getProxy();
+    StorageContainerDatanodeProtocolClientSideTranslatorPB rpcClient =
+        new StorageContainerDatanodeProtocolClientSideTranslatorPB(rpcProxy);
+    return new EndpointStateMachine(address, rpcClient, this.conf, threadNamePrefix);
+  }
+
+  /**
+   * Re-resolves the hostname of the active SCM endpoint at {@code address} and, if the IP changed,
+   * rebuilds the endpoint in place under the same key. Because the key is the stable host:port, no
+   * re-keying or StateContext queue migration is needed -- only the {@link EndpointStateMachine}
+   * value (which holds the frozen RPC proxy) is replaced.
+   *
+   * @return true if the endpoint was rebuilt on a new address
+   */
+  public boolean refreshSCMServer(HostAndPort address, String threadNamePrefix)
+      throws IOException {
+    final EndpointStateMachine current;
+    readLock();
+    try {
+      current = scmMachines.get(address);
+      if (current == null || current.isPassive()) {
+        return false;
+      }
+    } finally {
+      readUnlock();
+    }
+    // DNS lookup runs outside the map lock; HostAndPort swaps its cached address only on a change.
+    if (!address.refresh()) {
+      return false;
+    }
+    final EndpointStateMachine stale;
+    writeLock();
+    try {
+      if (scmMachines.get(address) != current) {
+        // Lost the race: another refresh or removeSCMServer replaced this entry. Abandon.
+        return false;
+      }
+      EndpointStateMachine rebuilt = buildScmEndpoint(address, threadNamePrefix);
+      rebuilt.setPassive(false);
+      scmMachines.put(address, rebuilt);
+      stale = current;
+    } finally {
+      writeUnlock();
+    }
+    // Close the stale proxy outside the lock; teardown can block on socket close.
+    stale.close();
+    LOG.info("Re-resolved SCM endpoint {} after connection failure.", address);
+    return true;
   }
 
   /**

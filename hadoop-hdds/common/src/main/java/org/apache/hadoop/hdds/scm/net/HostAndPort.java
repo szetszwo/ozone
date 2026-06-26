@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.hdds.scm.net;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import org.apache.hadoop.net.NetUtils;
 
@@ -68,6 +69,26 @@ public class HostAndPort {
 
   public synchronized InetSocketAddress getAddress() {
     return address;
+  }
+
+  /**
+   * Re-resolves the host:port and swaps the cached address if the IP changed. The DNS lookup runs
+   * outside the monitor; only the swap is synchronized, mirroring {@link #getAddress()}.
+   * @return true if the cached address changed
+   */
+  public boolean refresh() {
+    final InetSocketAddress latest = NetUtils.createSocketAddr(hostAndPortString);
+    final InetAddress latestIp = latest.getAddress();
+    if (latestIp == null) {
+      return false;
+    }
+    synchronized (this) {
+      if (latestIp.equals(address.getAddress())) {
+        return false;
+      }
+      address = latest;
+      return true;
+    }
   }
 
   @Override
