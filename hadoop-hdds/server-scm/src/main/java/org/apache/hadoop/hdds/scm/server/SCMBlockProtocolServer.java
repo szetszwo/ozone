@@ -211,9 +211,9 @@ public class SCMBlockProtocolServer implements
           // Sort the datanodes if client machine is specified
           final Node client = getClientNode(clientMachine);
           if (client != null) {
-            final List<DatanodeDetails> nodes = block.getPipeline().getNodes();
-            final List<DatanodeDetails> sorted = scm.getClusterMap()
-                .sortByDistanceCost(client, nodes, nodes.size());
+            final List<DatanodeDetails> sorted = block.getPipeline().getNodes();
+            scm.getClusterMap().sortByDistance(client, sorted);
+
             if (!Objects.equals(sorted, block.getPipeline().getNodesInOrder())) {
               block = block.toBuilder()
                   .setPipeline(block.getPipeline().copyWithNodesInOrder(sorted))
@@ -395,8 +395,8 @@ public class SCMBlockProtocolServer implements
           nodeList.add(node);
         }
       });
-      return scm.getClusterMap()
-          .sortByDistanceCost(client, nodeList, nodeList.size());
+      scm.getClusterMap().sortByDistance(client, nodeList);
+      return nodeList;
     } catch (Exception ex) {
       auditSuccess = false;
       AUDIT.logReadFailure(

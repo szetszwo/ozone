@@ -71,6 +71,10 @@ public class TestOMSortDatanodes {
 
   private static OzoneClient ozoneClient;
 
+  List<DatanodeDetails> getAllNodes() {
+    return new ArrayList<>(nodeManager.getAllNodes());
+  }
+
   @BeforeAll
   public static void setup() throws Exception {
     config = new OzoneConfiguration();
@@ -126,8 +130,8 @@ public class TestOMSortDatanodes {
   public void sortDatanodesRelativeToDatanode() {
     for (DatanodeDetails dn : nodeManager.getAllNodes()) {
       assertEquals(ROOT_LEVEL + 2, dn.getLevel());
-      List<? extends DatanodeDetails> sorted =
-          keyManager.sortDatanodes(nodeManager.getAllNodes(), nodeAddress(dn));
+      final List<DatanodeDetails> sorted = getAllNodes();
+      keyManager.sortDatanodes(sorted, nodeAddress(dn));
       assertEquals(dn, sorted.get(0),
           "Source node should be sorted very first");
       assertRackOrder(dn.getNetworkLocation(), sorted);
@@ -137,31 +141,31 @@ public class TestOMSortDatanodes {
   @Test
   public void sortDatanodesRelativeToNonDatanode() {
     for (Map.Entry<String, String> entry : EDGE_NODES.entrySet()) {
-      assertRackOrder(entry.getValue(),
-          keyManager.sortDatanodes(nodeManager.getAllNodes(), entry.getKey()));
+      final List<DatanodeDetails> sorted = getAllNodes();
+      keyManager.sortDatanodes(sorted, entry.getKey());
+      assertRackOrder(entry.getValue(), sorted);
     }
   }
 
   @Test
   public void testSortDatanodes() {
-    List<? extends DatanodeDetails> nodes = nodeManager.getAllNodes();
-
     // sort normal datanodes
-    String client;
-    client = nodeManager.getAllNodes().get(0).getIpAddress();
-    List<? extends DatanodeDetails> datanodeDetails =
-        keyManager.sortDatanodes(nodes, client);
-    assertEquals(NODE_COUNT, datanodeDetails.size());
+    String client = nodeManager.getAllNodes().get(0).getIpAddress();
+    List<DatanodeDetails> nodes = getAllNodes();
+    keyManager.sortDatanodes(nodes, client);
+    assertEquals(NODE_COUNT, nodes.size());
 
     // illegal client 1
     client += "X";
-    datanodeDetails = keyManager.sortDatanodes(nodes, client);
-    assertEquals(NODE_COUNT, datanodeDetails.size());
+    nodes = getAllNodes();
+    keyManager.sortDatanodes(nodes, client);
+    assertEquals(NODE_COUNT, nodes.size());
 
     // illegal client 2
     client = "/default-rack";
-    datanodeDetails = keyManager.sortDatanodes(nodes, client);
-    assertEquals(NODE_COUNT, datanodeDetails.size());
+    nodes = getAllNodes();
+    keyManager.sortDatanodes(nodes, client);
+    assertEquals(NODE_COUNT, nodes.size());
   }
 
   private static void assertRackOrder(String rack, List<? extends DatanodeDetails> list) {

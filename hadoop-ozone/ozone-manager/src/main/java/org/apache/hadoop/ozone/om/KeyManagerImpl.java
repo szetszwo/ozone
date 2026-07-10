@@ -2165,7 +2165,7 @@ public class KeyManagerImpl implements KeyManager {
 
   private void sortDatanodes(String clientMachine, List<OmKeyInfo> keyInfos) {
     if (keyInfos != null && clientMachine != null) {
-      final Map<Set<String>, List<? extends DatanodeDetails>> sortedPipelines = new HashMap<>();
+      final Map<Set<String>, List<DatanodeDetails>> sortedPipelines = new HashMap<>();
       for (OmKeyInfo keyInfo : keyInfos) {
         OmKeyLocationInfoGroup key = keyInfo.getLatestVersionLocations();
         if (key == null) {
@@ -2183,12 +2183,10 @@ public class KeyManagerImpl implements KeyManager {
           final Set<String> uuidSet = nodes.stream().map(DatanodeDetails::getUuidString)
               .collect(Collectors.toSet());
 
-          List<? extends DatanodeDetails> sortedNodes = sortedPipelines.get(uuidSet);
+          final List<DatanodeDetails> sortedNodes = sortedPipelines.get(uuidSet);
           if (sortedNodes == null) {
-            sortedNodes = sortDatanodes(nodes, clientMachine);
-            if (sortedNodes != null) {
-              sortedPipelines.put(uuidSet, sortedNodes);
-            }
+            sortDatanodes(nodes, clientMachine);
+            sortedPipelines.put(uuidSet, nodes);
           } else if (LOG.isDebugEnabled()) {
             LOG.debug("Found sorted datanodes for pipeline {} and client {} "
                 + "in cache", pipeline.getId(), clientMachine);
@@ -2202,11 +2200,9 @@ public class KeyManagerImpl implements KeyManager {
   }
 
   @VisibleForTesting
-  public List<? extends DatanodeDetails> sortDatanodes(List<? extends DatanodeDetails> nodes,
-                                             String clientMachine) {
+  public void sortDatanodes(List<DatanodeDetails> nodes, String clientMachine) {
     final Node client = getClientNode(clientMachine, nodes);
-    return ozoneManager.getClusterMap()
-        .sortByDistanceCost(client, nodes, nodes.size());
+    ozoneManager.getClusterMap().sortByDistance(client, nodes);
   }
 
   private Node getClientNode(String clientMachine,

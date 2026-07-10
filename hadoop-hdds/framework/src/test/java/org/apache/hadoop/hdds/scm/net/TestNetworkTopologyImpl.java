@@ -73,7 +73,7 @@ class TestNetworkTopologyImpl {
   private NetworkTopology cluster;
   private Node[] dataNodes;
   private final Random random = new Random();
-  private Consumer<List<? extends Node>> mockedShuffleOperation;
+  private Consumer<List<?>> mockedShuffleOperation;
 
   @BeforeEach
   void beforeAll() {
@@ -845,8 +845,8 @@ class TestNetworkTopologyImpl {
       for (Node[] nodeList : nodes) {
         int length = nodeList.length;
         while (length > 0) {
-          List<? extends Node> ret = cluster.sortByDistanceCost(reader,
-              Arrays.asList(nodeList), length);
+          final List<? extends Node> ret = Arrays.asList(nodeList);
+          cluster.sortByDistance(reader, ret);
           assertEquals(length, ret.size());
           for (int i = 0; i < ret.size(); i++) {
             if ((i + 1) < ret.size()) {
@@ -866,12 +866,11 @@ class TestNetworkTopologyImpl {
     }
 
     // sort all nodes
-    List<Node> nodeList = Arrays.asList(dataNodes.clone());
     for (Node reader : readers) {
-      int length = nodeList.size();
+      final List<Node> sortedNodeList = Arrays.asList(dataNodes.clone());
+      int length = sortedNodeList.size();
       while (length >= 0) {
-        List<? extends Node> sortedNodeList =
-            cluster.sortByDistanceCost(reader, nodeList, length);
+        cluster.sortByDistance(reader, sortedNodeList);
         assertEquals(length, sortedNodeList.size());
         for (int i = 0; i < sortedNodeList.size(); i++) {
           if ((i + 1) < sortedNodeList.size()) {
@@ -897,16 +896,15 @@ class TestNetworkTopologyImpl {
   void testSortByDistanceCostNullReader(NodeSchema[] schemas,
       Node[] nodeArray) {
     // GIVEN
-    // various cluster topologies with null reader
+    // various cluster topologies with a null client
     initNetworkTopology(schemas, nodeArray);
-    List<Node> nodeList = Arrays.asList(dataNodes.clone());
-    final Node reader = null;
     NetworkTopology spyCluster = spy(cluster);
-    int length = nodeList.size();
+    int length = dataNodes.length;
     while (length > 0) {
       // WHEN
-      List<? extends Node> ret = spyCluster.sortByDistanceCost(reader,
-          nodeList, length);
+      final List<Node> nodeList = Arrays.asList(dataNodes.clone()).subList(0, length);
+      final List<Node> ret = new ArrayList<>(nodeList);
+      spyCluster.sortByDistance(null, ret);
       // THEN
       // no actual distance cost calculated
       // only shuffle input node list with given length limit

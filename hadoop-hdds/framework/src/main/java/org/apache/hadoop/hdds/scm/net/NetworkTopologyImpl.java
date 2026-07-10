@@ -22,22 +22,24 @@ import static org.apache.hadoop.hdds.scm.net.NetConstants.ROOT;
 import static org.apache.hadoop.hdds.scm.net.NetConstants.SCOPE_REVERSE_STR;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.NavigableMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
+import org.apache.ratis.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,55 +52,42 @@ import org.slf4j.LoggerFactory;
 public class NetworkTopologyImpl implements NetworkTopology {
   private static final Logger LOG =
       LoggerFactory.getLogger(NetworkTopologyImpl.class);
+  private static final Consumer<List<?>> SHUFFLE = list -> Collections.shuffle(list, ThreadLocalRandom.current());
 
-  /** The Inner node crate factory. */
-  private final InnerNode.Factory factory;
   /** The root cluster tree. */
   private final InnerNode clusterTree;
   /** Depth of all leaf nodes. */
   private final int maxLevel;
-  /** Schema manager. */
-  private final NodeSchemaManager schemaManager;
   /** The algorithm to randomize nodes with equal distances. */
-  private final Consumer<List<? extends Node>> shuffleOperation;
+  private final Consumer<List<?>> shuffleOperation;
   /** Lock to coordinate cluster tree access. */
   private final ReadWriteLock netlock = new ReentrantReadWriteLock(true);
 
+  private NetworkTopologyImpl(NodeSchemaManager manager, Consumer<List<?>> shuffleOperation, InnerNode clusterTree) {
+    this.clusterTree = clusterTree;
+    this.maxLevel = manager.getMaxLevel();
+    this.shuffleOperation = shuffleOperation;
+  }
+
   public NetworkTopologyImpl(ConfigurationSource conf) {
-    schemaManager = NodeSchemaManager.getInstance();
-    schemaManager.init(conf);
-    shuffleOperation = Collections::shuffle;
-    maxLevel = schemaManager.getMaxLevel();
-    factory = InnerNodeImpl.FACTORY;
-    clusterTree = factory.newInnerNode(ROOT, null, null,
-        NetConstants.ROOT_LEVEL,
-        schemaManager.getCost(NetConstants.ROOT_LEVEL));
+    this(NodeSchemaManager.getInstance().init(conf));
   }
 
   public NetworkTopologyImpl(String schemaFile, InnerNode clusterTree) {
-    schemaManager = NodeSchemaManager.getInstance();
-    schemaManager.init(schemaFile);
-    maxLevel = schemaManager.getMaxLevel();
-    shuffleOperation = Collections::shuffle;
-    factory = InnerNodeImpl.FACTORY;
-    this.clusterTree = clusterTree;
+    this(NodeSchemaManager.getInstance().init(schemaFile), SHUFFLE, clusterTree);
   }
 
   @VisibleForTesting
-  public NetworkTopologyImpl(NodeSchemaManager manager,
-                             Consumer<List<? extends Node>> shuffleOperation) {
-    schemaManager = manager;
-    this.shuffleOperation = shuffleOperation;
-    maxLevel = schemaManager.getMaxLevel();
-    factory = InnerNodeImpl.FACTORY;
-    clusterTree = factory.newInnerNode(ROOT, null, null,
-        NetConstants.ROOT_LEVEL,
-        schemaManager.getCost(NetConstants.ROOT_LEVEL));
+  NetworkTopologyImpl(NodeSchemaManager manager, Consumer<List<?>> shuffleOperation) {
+    this(manager, shuffleOperation,
+        InnerNodeImpl.FACTORY.newInnerNode(ROOT, null, null,
+        NetConstants.ROOT_LEVEL, manager.getCost(NetConstants.ROOT_LEVEL))
+    );
   }
 
   @VisibleForTesting
   public NetworkTopologyImpl(NodeSchemaManager manager) {
-    this(manager, Collections::shuffle);
+    this(manager, SHUFFLE);
   }
 
   /**
@@ -109,7 +98,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
    */
   @Override
   public void add(Node node) {
-    Preconditions.checkArgument(node != null, "node cannot be null");
+    Objects.requireNonNull(node, "node == null");
     if (node instanceof InnerNode) {
       throw new IllegalArgumentException(
           "Not allowed to add an inner node: " + node.getNetworkFullPath());
@@ -145,7 +134,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
    */
   @Override
   public void update(Node oldNode, Node newNode) {
-    Preconditions.checkArgument(newNode != null, "newNode cannot be null");
+    Objects.requireNonNull(newNode, "newNode == null");
     if (oldNode instanceof InnerNode) {
       throw new IllegalArgumentException(
               "Not allowed to update an inner node: "
@@ -197,7 +186,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
    */
   @Override
   public void remove(Node node) {
-    Preconditions.checkArgument(node != null, "node cannot be null");
+    Objects.requireNonNull(node, "node == null");
     if (node instanceof InnerNode) {
       throw new IllegalArgumentException(
           "Not allowed to remove an inner node: " + node.getNetworkFullPath());
@@ -221,7 +210,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
    */
   @Override
   public boolean contains(Node node) {
-    Preconditions.checkArgument(node != null, "node cannot be null");
+    Objects.requireNonNull(node, "node == null");
     netlock.readLock().lock();
     try {
       return containsNode(node);
@@ -346,6 +335,11 @@ public class NetworkTopologyImpl implements NetworkTopology {
     return maxLevel;
   }
 
+  static void assertLevel(int level, int max) {
+    Preconditions.assertTrue(level > 0, () -> "level = " + level + " <= 0");
+    Preconditions.assertTrue(level <= max, () -> "level = " + level + " > max = " + max);
+  }
+
   /**
    * Return the node numbers at level <i>level</i>.
    * @param level topology level, start from 1, which means ROOT
@@ -353,8 +347,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
    */
   @Override
   public int getNumOfNodes(int level) {
-    Preconditions.checkArgument(level > 0 && level <= maxLevel,
-        "Invalid level");
+    assertLevel(level, getMaxLevel());
     netlock.readLock().lock();
     try {
       return clusterTree.getNumOfNodes(level);
@@ -370,8 +363,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
    */
   @Override
   public List<Node> getNodes(int level) {
-    Preconditions.checkArgument(level > 0 && level <= maxLevel,
-        "Invalid level");
+    assertLevel(level, getMaxLevel());
     netlock.readLock().lock();
     try {
       return clusterTree.getNodes(level);
@@ -570,7 +562,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
   @Override
   public Node getNode(int leafIndex, String scope, List<String> excludedScopes,
       Collection<Node> excludedNodes, Node affinityNode, int ancestorGen) {
-    Preconditions.checkArgument(leafIndex >= 0);
+    Preconditions.assertTrue(leafIndex >= 0, () -> "leafIndex = " + leafIndex + " < 0");
     if (scope == null) {
       scope = ROOT;
     }
@@ -592,7 +584,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
   private Node chooseNodeInternal(String scope, int leafIndex,
       List<String> excludedScopes, Collection<? extends Node> excludedNodes,
       Node affinityNode, int ancestorGen) {
-    Preconditions.checkArgument(scope != null);
+    Objects.requireNonNull(scope, "scope == null");
     if (LOG.isDebugEnabled()) {
       LOG.debug("Start choosing node[scope = {}, index = {}, excludedScopes = "
               + "{}, excludedNodes = {}, affinityNode = {}, ancestorGen = {}",
@@ -765,62 +757,94 @@ public class NetworkTopologyImpl implements NetworkTopology {
     }
   }
 
-  /**
-   * Sort nodes array by network distance to <i>reader</i> to reduces network
-   * traffic and improves performance.
-   *
-   * As an additional twist, we also randomize the nodes at each network
-   * distance. This helps with load balancing when there is data skew.
-   *
-   * @param reader    Node where need the data
-   * @param nodes     Available replicas with the requested data
-   * @param activeLen Number of active nodes at the front of the array
-   *
-   * @return list of sorted nodes if reader is not null,
-   * or shuffled input nodes otherwise. The size of returned list is limited
-   * by activeLen parameter.
-   */
+  static class DistanceMap<E> {
+    private final Function<E, Node> getNode;
+    private final Map<String, Integer> map = new HashMap<>();
+
+    DistanceMap(Function<E, Node> getNode) {
+      this.getNode = getNode;
+    }
+
+    private String key(E element) {
+      return getNode.apply(element).getNetworkFullPath();
+    }
+
+    int getDistance(E element) {
+      return map.get(key(element));
+    }
+
+    void putNonExisting(E element, int distance) {
+      final Integer previous = map.put(key(element), distance);
+      Preconditions.assertNull(previous, "previous");
+    }
+  }
+
   @Override
-  public <N extends Node> List<N> sortByDistanceCost(Node reader,
-      List<N> nodes, int activeLen) {
-    // shuffle input list of nodes if reader is not defined
-    if (reader == null) {
-      List<N> shuffledNodes =
-          new ArrayList<>(nodes.subList(0, activeLen));
-      shuffleOperation.accept(shuffledNodes);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Sorted datanodes {}, result: {}", nodes, shuffledNodes);
-      }
-      return shuffledNodes;
-    }
-    // Sort weights for the nodes array
-    int[] costs = new int[activeLen];
-    for (int i = 0; i < activeLen; i++) {
-      costs[i] = getDistanceCost(reader, nodes.get(i));
-    }
-    // Add cost/node pairs to a TreeMap to sort
-    NavigableMap<Integer, List<N>> tree = new TreeMap<>();
-    for (int i = 0; i < activeLen; i++) {
-      int cost = costs[i];
-      N node = nodes.get(i);
-      tree.computeIfAbsent(cost, k -> Lists.newArrayListWithExpectedSize(1))
-          .add(node);
+  public <E> void sortByDistance(List<E> elements, Function<E, Node> getNode, Node client) {
+    if (elements.isEmpty()) {
+      return;
     }
 
-    List<N> ret = new ArrayList<>();
-    for (List<N> list : tree.values()) {
-      if (list != null) {
-        shuffleOperation.accept(list);
-        ret.addAll(list);
-      }
+    shuffleOperation.accept(elements);
+    if (client == null) {
+      move(elements, getNode, e -> 1);
+      return;
     }
 
-    Preconditions.checkState(ret.size() == activeLen,
-        "Wrong number of nodes sorted!");
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Sorted datanodes {} for client {}, result: {}", nodes, reader, ret);
+    // init distance map
+    final DistanceMap<E> map = new DistanceMap<>(getNode);
+    for (E e : elements) {
+      final Node node = getNode.apply(e);
+      final int distance = getDistanceCost(client, node);
+      map.putNonExisting(e, distance);
     }
-    return ret;
+
+    // sort and move
+    elements.sort(Comparator.comparingInt(map::getDistance));
+    move(elements, getNode, map::getDistance);
+  }
+
+  /** Move the elements with the same distance and parent next to each other. */
+  static <E> void move(List<E> elements, Function<E, Node> getNode, ToIntFunction<E> getDistance) {
+    for (int i = 0; i < elements.size() - 2; i++) {
+      final E current = elements.get(i);
+      final int distance = getDistance.applyAsInt(current);
+      final InnerNode parent = getNode.apply(current).getParent();
+
+      // check if the next element should be swapped
+      final int fromIndex = i + 1;
+      final E from = elements.get(i + 1);
+      if (getDistance.applyAsInt(from) != distance) {
+        // different distance, nothing to swap
+        continue;
+      }
+      if (getNode.apply(from).getParent() == parent) {
+        // same parent, nothing to swap
+        continue;
+      }
+
+      // find another element with the same distance and the same parent
+      E to = null;
+      int toIndex = i + 2;
+      for (; toIndex < elements.size(); toIndex++) {
+        final E e = elements.get(toIndex);
+        if (getDistance.applyAsInt(to) != distance) {
+          // different distance, nothing to swap
+          break;
+        }
+        if (getNode.apply(from).getParent() == parent) {
+          // same parent, should swap to it
+          to = e;
+          break;
+        }
+      }
+
+      // swap
+      if (to != null) {
+        elements.set(fromIndex, to);
+        elements.set(toIndex, from);
+      }
+    }
   }
 
   /**
@@ -835,7 +859,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
    */
   private int getAvailableNodesCount(String scope, List<String> excludedScopes,
       Collection<Node> mutableExcludedNodes, int ancestorGen) {
-    Preconditions.checkArgument(scope != null);
+    Objects.requireNonNull(scope, "scope == null");
 
     Node scopeNode = getNode(scope);
     if (scopeNode == null) {
@@ -883,7 +907,7 @@ public class NetworkTopologyImpl implements NetworkTopology {
     }
 
     int availableCount = scopeNode.getNumOfLeaves() - excludedCount;
-    Preconditions.checkState(availableCount >= 0);
+    Preconditions.assertTrue(availableCount >= 0, () -> "availableCount = " + availableCount + " < 0");
     return availableCount;
   }
 

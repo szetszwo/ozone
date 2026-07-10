@@ -19,6 +19,7 @@ package org.apache.hadoop.hdds.scm.net;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * The interface defines a network topology.
@@ -232,20 +233,13 @@ public interface NetworkTopology {
   int getDistanceCost(Node node1, Node node2);
 
   /**
-   * Sort nodes array by network distance to <i>reader</i> to reduces network
-   * traffic and improves performance.
-   *
-   * As an additional twist, we also randomize the nodes at each network
-   * distance. This helps with load balancing when there is data skew.
-   *
-   * @param reader    Node where need the data
-   * @param nodes     Available replicas with the requested data
-   * @param activeLen Number of active nodes at the front of the array
-   *
-   * @return list of sorted nodes if reader is not null,
-   * or shuffled input nodes otherwise. The size of returned list is limited
-   * by activeLen parameter.
+   * Inplace shuffle and then sort the given list of the nodes by the distance to the given client.
+   * For the nodes with the same distance and the same parent (i.e. rack),
+   * they will be put next to each others.
    */
-  <N extends Node> List<N> sortByDistanceCost(Node reader,
-      List<N> nodes, int activeLen);
+  <E> void sortByDistance(List<E> elements, Function<E, Node> getNode, Node client);
+
+  default <N extends Node> void sortByDistance(Node client, List<N> nodes) {
+    sortByDistance(nodes, n -> n, client);
+  }
 }

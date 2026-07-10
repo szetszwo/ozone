@@ -55,18 +55,17 @@ public final class NodeSchemaManager {
     return instance;
   }
 
-  public void init(ConfigurationSource conf) {
-    /**
-     * Load schemas from network topology schema configuration file
-     */
+  public NodeSchemaManager init(ConfigurationSource conf) {
+    // Load schemas from network topology schema configuration file
     String schemaFile = conf.get(
         ScmConfigKeys.OZONE_SCM_NETWORK_TOPOLOGY_SCHEMA_FILE,
         ScmConfigKeys.OZONE_SCM_NETWORK_TOPOLOGY_SCHEMA_FILE_DEFAULT);
-    loadSchemaFile(schemaFile);
+    return init(schemaFile);
   }
 
-  public void init(String schemaFile) {
+  public NodeSchemaManager init(String schemaFile) {
     loadSchemaFile(schemaFile);
+    return this;
   }
 
   private void loadSchemaFile(String schemaFile) {
