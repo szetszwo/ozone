@@ -326,7 +326,7 @@ public class OzoneManagerLock implements IOzoneManagerLock {
       updateProcessingDetails(resourcelockMap.get(resource.getClass()).getValue(),
           Timing.LOCKWAIT, readLockWaitingTimeNanos);
 
-      resource.getResourceManager().setStartReadHeldTimeNanos(Time.monotonicNowNanos());
+      resource.getResourceManager().startRead();
     }
   }
 
@@ -348,7 +348,7 @@ public class OzoneManagerLock implements IOzoneManagerLock {
       updateProcessingDetails(resourcelockMap.get(resource.getClass()).getValue(), Timing.LOCKWAIT,
           writeLockWaitingTimeNanos);
 
-      resource.getResourceManager().setStartWriteHeldTimeNanos(Time.monotonicNowNanos());
+      resource.getResourceManager().startWrite();
     }
   }
 
@@ -497,8 +497,7 @@ public class OzoneManagerLock implements IOzoneManagerLock {
      *  of reentrant locks.
      */
     if (lock.getReadHoldCount() == 0) {
-      long readLockHeldTimeNanos =
-          Time.monotonicNowNanos() - resource.getResourceManager().getStartReadHeldTimeNanos();
+      final long readLockHeldTimeNanos = resource.getResourceManager().getReadNanos();
 
       // Adds a snapshot to the metric readLockHeldTimeMsStat.
       omLockMetrics.setReadLockHeldTimeMsStat(
@@ -516,8 +515,7 @@ public class OzoneManagerLock implements IOzoneManagerLock {
      *  by the current thread.
      */
     if ((lock.getWriteHoldCount() == 0) && isWriteLocked) {
-      long writeLockHeldTimeNanos =
-          Time.monotonicNowNanos() - resource.getResourceManager().getStartWriteHeldTimeNanos();
+      final long writeLockHeldTimeNanos = resource.getResourceManager().getWriteNanos();
 
       // Adds a snapshot to the metric writeLockHeldTimeMsStat.
       omLockMetrics.setWriteLockHeldTimeMsStat(

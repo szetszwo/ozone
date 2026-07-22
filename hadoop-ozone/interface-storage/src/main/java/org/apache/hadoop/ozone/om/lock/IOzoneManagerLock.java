@@ -19,7 +19,10 @@ package org.apache.hadoop.ozone.om.lock;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.hadoop.util.Time;
 import org.apache.ratis.util.function.UncheckedAutoCloseableSupplier;
 
 /**
@@ -141,65 +144,25 @@ public interface IOzoneManagerLock {
    * more granular lock usage metrics.
    */
   class ResourceManager {
-    // This helps in maintaining read lock related variables locally confined
-    // to a given thread.
-    private final ThreadLocal<LockUsageInfo> readLockTimeStampNanos =
-        ThreadLocal.withInitial(LockUsageInfo::new);
+    private final ThreadLocal<Long> readNanos = new ThreadLocal<>();
+    private final ThreadLocal<Long> writeNanos = new ThreadLocal<>();
 
-    // This helps in maintaining write lock related variables locally confined
-    // to a given thread.
-    private final ThreadLocal<LockUsageInfo> writeLockTimeStampNanos =
-        ThreadLocal.withInitial(LockUsageInfo::new);
-
-    ResourceManager() {
+    void startRead() {
+      readNanos.set(Time.monotonicNowNanos());
     }
 
-    /**
-     * Sets the time (ns) when the read lock holding period begins specific to a
-     * thread.
-     *
-     * @param startReadHeldTimeNanos read lock held start time (ns)
-     */
-    void setStartReadHeldTimeNanos(long startReadHeldTimeNanos) {
-      readLockTimeStampNanos.get()
-          .setStartReadHeldTimeNanos(startReadHeldTimeNanos);
+    void startWrite() {
+      writeNanos.set(Time.monotonicNowNanos());
     }
 
-    /**
-     * Sets the time (ns) when the write lock holding period begins specific to
-     * a thread.
-     *
-     * @param startWriteHeldTimeNanos write lock held start time (ns)
-     */
-    void setStartWriteHeldTimeNanos(long startWriteHeldTimeNanos) {
-      writeLockTimeStampNanos.get()
-          .setStartWriteHeldTimeNanos(startWriteHeldTimeNanos);
+    long getReadNanos() {
+      final long start = Objects.requireNonNull(readNanos.get(), "readNanos");
+      return Time.monotonicNowNanos() - start;
     }
 
-    /**
-     * Returns the time (ns) when the read lock holding period began specific to
-     * a thread.
-     *
-     * @return read lock held start time (ns)
-     */
-    long getStartReadHeldTimeNanos() {
-      long startReadHeldTimeNanos =
-          readLockTimeStampNanos.get().getStartReadHeldTimeNanos();
-      readLockTimeStampNanos.remove();
-      return startReadHeldTimeNanos;
-    }
-
-    /**
-     * Returns the time (ns) when the write lock holding period began specific
-     * to a thread.
-     *
-     * @return write lock held start time (ns)
-     */
-    long getStartWriteHeldTimeNanos() {
-      long startWriteHeldTimeNanos =
-          writeLockTimeStampNanos.get().getStartWriteHeldTimeNanos();
-      writeLockTimeStampNanos.remove();
-      return startWriteHeldTimeNanos;
+    long getWriteNanos() {
+      final long start = Objects.requireNonNull(writeNanos.get(), "writeNanos");
+      return Time.monotonicNowNanos() - start;
     }
   }
 }
