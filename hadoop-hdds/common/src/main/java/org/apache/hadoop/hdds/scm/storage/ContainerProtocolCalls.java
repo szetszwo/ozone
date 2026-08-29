@@ -17,7 +17,6 @@
 
 package org.apache.hadoop.hdds.scm.storage;
 
-import static java.util.Collections.singletonList;
 import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.Result.BLOCK_TOKEN_VERIFICATION_FAILED;
 
 import io.opentelemetry.api.trace.Span;
@@ -87,7 +86,10 @@ import org.slf4j.LoggerFactory;
 public final class ContainerProtocolCalls  {
   private static final Logger LOG = LoggerFactory.getLogger(ContainerProtocolCalls.class);
 
-  private static final List<Validator> VALIDATORS = createValidators();
+  private static final List<Validator> VALIDATORS = Collections.singletonList(
+      (request, response) -> validateContainerResponse(response));
+  private static final List<Validator> GET_BLOCK_VALIDATORS = toValidatorList(
+      (request, response) -> validateGetBlock(response));
 
   /**
    * There is no need to instantiate this class.
@@ -180,25 +182,16 @@ public final class ContainerProtocolCalls  {
    * Calls the container protocol to get a container block.
    *
    * @param xceiverClient client to perform call
-   * @param validators functions to validate the response
    * @param blockID blockID to identify container
    * @param token a token for this block (may be null)
    * @return container protocol get block response
    * @throws IOException if there is an I/O error while performing the call
    */
   public static GetBlockResponseProto getBlock(XceiverClientSpi xceiverClient,
-      List<Validator> validators, BlockID blockID, Token<? extends TokenIdentifier> token,
+      BlockID blockID, Token<? extends TokenIdentifier> token,
       Map<DatanodeDetails, Integer> replicaIndexes) throws IOException {
-    ContainerCommandRequestProto.Builder builder = ContainerCommandRequestProto
-        .newBuilder()
-        .setCmdType(Type.GetBlock)
-        .setContainerID(blockID.getContainerID());
-    if (token != null) {
-      builder.setEncodedToken(token.encodeToUrlString());
-    }
-
     return tryEachDatanode(xceiverClient.getPipeline(),
-        d -> getBlock(xceiverClient, validators, builder, blockID, d, replicaIndexes),
+        d -> getBlock(xceiverClient, blockID, token, d, replicaIndexes),
         d -> toErrorMessage(blockID, d));
   }
 
@@ -208,73 +201,44 @@ public final class ContainerProtocolCalls  {
   }
 
   public static GetBlockResponseProto getBlock(XceiverClientSpi xceiverClient,
-      BlockID datanodeBlockID,
-      Token<? extends TokenIdentifier> token, Map<DatanodeDetails, Integer> replicaIndexes) throws IOException {
-    return getBlock(xceiverClient, getValidatorList(), datanodeBlockID, token, replicaIndexes);
+      BlockID blockID, Token<? extends TokenIdentifier> token,
+      DatanodeDetails datanode, Map<DatanodeDetails, Integer> replicaIndexes) throws IOException {
+    final int replicaIndex = replicaIndexes.getOrDefault(datanode, 0);
+    return getBlock(xceiverClient, blockID, token, datanode, replicaIndex, null, 0);
   }
 
-  /**
-   * Gets block metadata from a datanode.
-   * <p>
-   *
-   * @param xceiverClient client to perform call
-   * @param blockID blockID to identify container
-   * @param token a token for this block (may be null)
-   * @param datanode datanode to query
-   * @param replicaIndexes replica indexes for EC pipelines
-   * @return container protocol get block response
-   * @throws IOException if there is an I/O error while performing the call
-   */
-  public static GetBlockResponseProto getBlockFromDatanode(
-      XceiverClientSpi xceiverClient,
-      BlockID blockID,
-      Token<? extends TokenIdentifier> token,
-      DatanodeDetails datanode,
-      Map<DatanodeDetails, Integer> replicaIndexes) throws IOException {
-    ContainerCommandRequestProto.Builder builder = ContainerCommandRequestProto
-        .newBuilder()
+  public static GetBlockResponseProto getBlock(XceiverClientSpi client,
+      BlockID blockID, Token<? extends TokenIdentifier> token,
+      DatanodeDetails datanode, int replicaIndex,
+      ByteString clientId, long callId) throws IOException {
+    final ContainerCommandRequestProto.Builder builder = ContainerCommandRequestProto.newBuilder()
         .setCmdType(Type.GetBlock)
         .setContainerID(blockID.getContainerID());
     if (token != null) {
       builder.setEncodedToken(token.encodeToUrlString());
     }
-    return getBlock(xceiverClient, getValidatorList(), builder, blockID, datanode,
-        replicaIndexes);
-  }
-
-  private static GetBlockResponseProto getBlock(XceiverClientSpi xceiverClient,
-      List<Validator> validators,
-      ContainerCommandRequestProto.Builder builder, BlockID blockID,
-      DatanodeDetails datanode, Map<DatanodeDetails, Integer> replicaIndexes) throws IOException {
     String traceId = TracingUtil.exportCurrentSpan();
     if (traceId != null) {
       builder.setTraceID(traceId);
     }
+
     final DatanodeBlockID.Builder datanodeBlockID = blockID.getDatanodeBlockIDProtobufBuilder();
-    int replicaIndex = replicaIndexes.getOrDefault(datanode, 0);
     if (replicaIndex > 0) {
       datanodeBlockID.setReplicaIndex(replicaIndex);
     }
+    final boolean shortCircuit = clientId != null;
+    if (shortCircuit) {
+      builder.setClientId(clientId)
+          .setCallId(callId);
+    }
     final GetBlockRequestProto.Builder readBlockRequest = GetBlockRequestProto.newBuilder()
-        .setBlockID(datanodeBlockID.build());
+        .setBlockID(datanodeBlockID)
+        .setRequestShortCircuitAccess(shortCircuit);
     final ContainerCommandRequestProto request = builder
         .setDatanodeUuid(datanode.getUuidString())
-        .setGetBlock(readBlockRequest).build();
-    ContainerCommandResponseProto response =
-        xceiverClient.sendCommand(request, validators);
-    return response.getGetBlock();
-  }
-
-  public static GetBlockResponseProto getBlock(XceiverClientSpi xceiverClient,
-      List<Validator> validators, ContainerCommandRequestProto.Builder builder,
-      DatanodeDetails datanode) throws IOException {
-    String traceId = TracingUtil.exportCurrentSpan();
-    if (traceId != null) {
-      builder.setTraceID(traceId);
-    }
-    final ContainerCommandRequestProto request = builder.setDatanodeUuid(datanode.getUuidString()).build();
-    ContainerCommandResponseProto response = xceiverClient.sendCommand(request, validators);
-    return response.getGetBlock();
+        .setGetBlock(readBlockRequest)
+        .build();
+    return client.sendCommand(request, GET_BLOCK_VALIDATORS).getGetBlock();
   }
 
   /**
@@ -512,12 +476,8 @@ public final class ContainerProtocolCalls  {
 
     WriteChunkRequestProto.Builder writeChunkRequest =
         WriteChunkRequestProto.newBuilder()
-            .setBlockID(DatanodeBlockID.newBuilder()
-                .setContainerID(blockID.getContainerID())
-                .setLocalID(blockID.getLocalID())
-                .setBlockCommitSequenceId(blockID.getBlockCommitSequenceId())
-                .setReplicaIndex(replicationIndex)
-                .build())
+            .setBlockID(blockID.getDatanodeBlockIDProtobufBuilder()
+                .setReplicaIndex(replicationIndex))
             .setChunkData(chunk)
             .setData(data);
     if (blockData != null) {
@@ -917,11 +877,6 @@ public final class ContainerProtocolCalls  {
     return VALIDATORS;
   }
 
-  private static List<Validator> createValidators() {
-    return singletonList(
-        (request, response) -> validateContainerResponse(response));
-  }
-
   public static List<Validator> toValidatorList(Validator validator) {
     final List<Validator> defaults = getValidatorList();
     final List<Validator> validators
@@ -929,41 +884,6 @@ public final class ContainerProtocolCalls  {
     validators.addAll(defaults);
     validators.add(validator);
     return Collections.unmodifiableList(validators);
-  }
-
-  public static HashMap<DatanodeDetails, GetBlockResponseProto>
-      getBlockFromAllNodes(
-      XceiverClientSpi xceiverClient,
-      DatanodeBlockID datanodeBlockID,
-      Token<OzoneBlockTokenIdentifier> token)
-      throws IOException, InterruptedException {
-    GetBlockRequestProto.Builder readBlockRequest = GetBlockRequestProto
-            .newBuilder()
-            .setBlockID(datanodeBlockID);
-    HashMap<DatanodeDetails, GetBlockResponseProto> datanodeToResponseMap
-            = new HashMap<>();
-    String id = xceiverClient.getPipeline().getFirstNode().getUuidString();
-    ContainerCommandRequestProto.Builder builder = ContainerCommandRequestProto
-        .newBuilder()
-        .setCmdType(Type.GetBlock)
-        .setContainerID(datanodeBlockID.getContainerID())
-        .setDatanodeUuid(id)
-        .setGetBlock(readBlockRequest);
-    if (token != null) {
-      builder.setEncodedToken(token.encodeToUrlString());
-    }
-    String traceId = TracingUtil.exportCurrentSpan();
-    if (traceId != null) {
-      builder.setTraceID(traceId);
-    }
-    ContainerCommandRequestProto request = builder.build();
-    Map<DatanodeDetails, ContainerCommandResponseProto> responses =
-            xceiverClient.sendCommandOnAllNodes(request);
-    for (Map.Entry<DatanodeDetails, ContainerCommandResponseProto> entry:
-           responses.entrySet()) {
-      datanodeToResponseMap.put(entry.getKey(), entry.getValue().getGetBlock());
-    }
-    return datanodeToResponseMap;
   }
 
   public static HashMap<DatanodeDetails, ReadContainerResponseProto>
@@ -1026,5 +946,28 @@ public final class ContainerProtocolCalls  {
       b.setReplicaIndex(replicaIndex);
     }
     return b.build();
+  }
+
+  static void validateGetBlock(ContainerCommandResponseProto response) throws IOException {
+    if (!response.hasGetBlock()) {
+      throw new IllegalArgumentException("Not GetBlock: response=" + response);
+    }
+    final GetBlockResponseProto b = response.getGetBlock();
+    final long blockLength = b.getBlockData().getSize();
+    final List<ChunkInfo> chunks = b.getBlockData().getChunksList();
+    for (int i = 0; i < chunks.size(); i++) {
+      final ChunkInfo c = chunks.get(i);
+      // HDDS-10682 caused an empty chunk to get written to the end of some EC blocks. Due to this
+      // validation, these blocks will not be readable. In the EC case, the empty chunk is always
+      // the last chunk and the offset is the block length. We can safely ignore this case and not fail.
+      if (c.getLen() <= 0 && i == chunks.size() - 1 && c.getOffset() == blockLength) {
+        final DatanodeBlockID blockID = b.getBlockData().getBlockID();
+        LOG.warn("The last chunk is empty for container {} block {} with an offset {} == block length {}. "
+                + "Safe to ignore; see HDDS-10682",
+            blockID.getContainerID(), blockID.getLocalID(), c.getOffset(),  blockLength);
+      } else if (c.getLen() <= 0) {
+        throw new IOException("Failed to get chunkInfo[" + i + "]: len == " + c.getLen());
+      }
+    }
   }
 }

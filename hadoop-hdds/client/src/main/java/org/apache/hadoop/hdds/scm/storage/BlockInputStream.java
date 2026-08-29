@@ -30,17 +30,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.apache.hadoop.hdds.client.BlockID;
-import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
+import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.BlockData;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ChunkInfo;
-import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandResponseProto;
-import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.DatanodeBlockID;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.GetBlockResponseProto;
 import org.apache.hadoop.hdds.scm.OzoneClientConfig;
 import org.apache.hadoop.hdds.scm.XceiverClientFactory;
 import org.apache.hadoop.hdds.scm.XceiverClientShortCircuit;
 import org.apache.hadoop.hdds.scm.XceiverClientSpi;
-import org.apache.hadoop.hdds.scm.XceiverClientSpi.Validator;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.security.exception.SCMSecurityException;
@@ -59,9 +56,6 @@ import org.slf4j.LoggerFactory;
 public class BlockInputStream extends BlockExtendedInputStream {
 
   public static final Logger LOG = LoggerFactory.getLogger(BlockInputStream.class);
-
-  private static final List<Validator> VALIDATORS =
-      ContainerProtocolCalls.toValidatorList((request, response) -> validate(response));
 
   private final BlockID blockID;
   private long length;
@@ -268,39 +262,18 @@ public class BlockInputStream extends BlockExtendedInputStream {
           blockID.getContainerID());
     }
 
-    DatanodeBlockID.Builder blkIDBuilder =
-        DatanodeBlockID.newBuilder().setContainerID(blockID.getContainerID())
-            .setLocalID(blockID.getLocalID())
-            .setBlockCommitSequenceId(blockID.getBlockCommitSequenceId());
-
-    int replicaIndex = pipeline.getReplicaIndex(xceiverClientShortCircuit.getDn());
-    if (replicaIndex > 0) {
-      blkIDBuilder.setReplicaIndex(replicaIndex);
-    }
-    DatanodeBlockID datanodeBlockID = blkIDBuilder.build();
-    ContainerProtos.GetBlockRequestProto.Builder readBlockRequest =
-        ContainerProtos.GetBlockRequestProto.newBuilder().setBlockID(datanodeBlockID)
-            .setRequestShortCircuitAccess(true);
-    ContainerProtos.ContainerCommandRequestProto.Builder builder =
-        ContainerProtos.ContainerCommandRequestProto.newBuilder()
-            .setCmdType(ContainerProtos.Type.GetBlock)
-            .setContainerID(datanodeBlockID.getContainerID())
-            .setGetBlock(readBlockRequest)
-            .setClientId(xceiverClientShortCircuit.getClientId())
-            .setCallId(xceiverClientShortCircuit.getCallId());
-    if (tokenRef.get() != null) {
-      builder.setEncodedToken(tokenRef.get().encodeToUrlString());
-    }
+    final DatanodeDetails dn =  xceiverClientShortCircuit.getDn();
+    final int replicaIndex = pipeline.getReplicaIndex(dn);
+    final long callId = xceiverClientShortCircuit.getCallId();
     GetBlockResponseProto response = ContainerProtocolCalls.getBlock(xceiverClientShortCircuit,
-        VALIDATORS, builder, xceiverClientShortCircuit.getDn());
+        blockID, tokenRef.get(), dn, replicaIndex, xceiverClientShortCircuit.getClientId(), callId);
 
-    blockFileInputStream = xceiverClientShortCircuit.getFileInputStream(
-        builder.getCallId(), datanodeBlockID.getLocalID());
+    blockFileInputStream = xceiverClientShortCircuit.getFileInputStream(callId, blockID.getLocalID());
     if (blockFileInputStream == null) {
-      throw new IOException("Failed to get file InputStream for block " + datanodeBlockID);
+      throw new IOException("Failed to get file InputStream for block " + blockID);
     } else {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Get the FileInputStream of block {}", datanodeBlockID);
+        LOG.debug("Get the FileInputStream of block {}", blockID);
       }
     }
     return response.getBlockData();
@@ -316,32 +289,8 @@ public class BlockInputStream extends BlockExtendedInputStream {
     }
 
     GetBlockResponseProto response = ContainerProtocolCalls.getBlock(
-        xceiverClientGrpc, VALIDATORS, blockID, tokenRef.get(), pipeline.getReplicaIndexes());
+        xceiverClientGrpc, blockID, tokenRef.get(), pipeline.getReplicaIndexes());
     return response.getBlockData();
-  }
-
-  private static void validate(ContainerCommandResponseProto response)
-      throws IOException {
-    if (!response.hasGetBlock()) {
-      throw new IllegalArgumentException("Not GetBlock: response=" + response);
-    }
-    final GetBlockResponseProto b = response.getGetBlock();
-    final long blockLength = b.getBlockData().getSize();
-    final List<ChunkInfo> chunks = b.getBlockData().getChunksList();
-    for (int i = 0; i < chunks.size(); i++) {
-      final ChunkInfo c = chunks.get(i);
-      // HDDS-10682 caused an empty chunk to get written to the end of some EC blocks. Due to this
-      // validation, these blocks will not be readable. In the EC case, the empty chunk is always
-      // the last chunk and the offset is the block length. We can safely ignore this case and not fail.
-      if (c.getLen() <= 0 && i == chunks.size() - 1 && c.getOffset() == blockLength) {
-        DatanodeBlockID blockID = b.getBlockData().getBlockID();
-        LOG.warn("The last chunk is empty for container/block {}/{} with an offset of the block length. " +
-            "Likely due to HDDS-10682. This is safe to ignore.", blockID.getContainerID(), blockID.getLocalID());
-      } else if (c.getLen() <= 0) {
-        throw new IOException("Failed to get chunkInfo["
-            + i + "]: len == " + c.getLen());
-      }
-    }
   }
 
   private void acquireClient() throws IOException {

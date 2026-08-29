@@ -127,11 +127,12 @@ public class ChunkKeyHandler extends KeyHandler {
             for (DatanodeDetails datanodeDetails : pipeline.getNodes()) {
               try {
                 ContainerProtos.GetBlockResponseProto blockResponse =
-                    ContainerProtocolCalls.getBlockFromDatanode(xceiverClient,
+                    ContainerProtocolCalls.getBlock(xceiverClient,
                         keyLocation.getBlockID(),
                         keyLocation.getToken(),
                         datanodeDetails,
-                        pipeline.getReplicaIndexes());
+                        pipeline.getReplicaIndexes(),
+                        false);
 
                 if (blockResponse == null || !blockResponse.hasBlockData()) {
                   System.err.printf("GetBlock call failed on %s datanode and %s block.%n",
