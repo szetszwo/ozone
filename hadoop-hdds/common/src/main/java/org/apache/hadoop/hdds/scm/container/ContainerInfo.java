@@ -334,6 +334,7 @@ public final class ContainerInfo implements Comparable<ContainerInfo> {
   public String toString() {
     return "ContainerInfo{"
         + "id=" + containerID
+        + ", bcsId=" + sequenceId
         + ", state=" + state
         + ", stateEnterTime=" + stateEnterTime
         + ", pipelineID=" + pipelineID

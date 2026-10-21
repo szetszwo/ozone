@@ -1106,6 +1106,7 @@ public class ContainerStateMachine extends BaseStateMachine {
   private CompletableFuture<ContainerCommandResponseProto> applyTransaction(
       ContainerCommandRequestProto request, DispatcherContext context,
       Consumer<Throwable> exceptionHandler) {
+    System.out.println("applyTransaction " + TextFormat.shortDebugString(request));
     final long containerId = request.getContainerID();
     final CheckedSupplier<ContainerCommandResponseProto, Exception> task
         = () -> {

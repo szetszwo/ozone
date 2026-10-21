@@ -138,6 +138,7 @@ public class BlockManagerImpl implements BlockManager {
         }
         if (overwriteBcsId && blockBcsID > containerBcsID) {
           db.getStore().getMetadataTable().putWithBatch(batch, containerData.getBcsIdKey(), blockBcsID);
+          System.out.println("updating bcsId to " + blockBcsID + " for container " + containerData.getContainerID());
         }
 
         // Set Bytes used, this bytes used will be updated for every write and
@@ -181,6 +182,7 @@ public class BlockManagerImpl implements BlockManager {
     try (DBHandle db = BlockUtils.getDB(containerData, config)) {
       Objects.requireNonNull(db, "db == null");
       db.getStore().getMetadataTable().put(containerData.getBcsIdKey(), bcsId);
+      System.out.println("updating bcsId to " + bcsId + " for container " + containerData.getContainerID());
     }
     container.updateBlockCommitSequenceId(bcsId);
   }
@@ -268,6 +270,7 @@ public class BlockManagerImpl implements BlockManager {
         if (bcsId != 0) {
           db.getStore().getMetadataTable().putWithBatch(
               batch, containerData.getBcsIdKey(), bcsId);
+          System.out.println("updating bcsId to " + bcsId + " for container " + containerData.getContainerID());
         }
 
         // Set Bytes used, this bytes used will be updated for every write and
