@@ -85,6 +85,8 @@ public class TestBlockDataStreamOutput {
   private static final String BUCKET_NAME = VOLUME_NAME;
   private static String keyString = UUID.randomUUID().toString();
   private static final HDDSVersion DN_OLD_VERSION = HDDSVersion.SEPARATE_RATIS_PORTS_AVAILABLE;
+  /** PutBlock without Raft takes effect only for CHAINED, which is not yet supported by the client. */
+  private static final ReplicationType REPLICATION_TYPE = ReplicationType.RATIS;
 
   static MiniOzoneCluster createCluster() throws IOException,
       InterruptedException, TimeoutException {
@@ -185,9 +187,10 @@ public class TestBlockDataStreamOutput {
     return clientConfig;
   }
 
-  /** Whether PutBlock is committed through the data stream for this test cluster (config plus DN version). */
+  /** Whether PutBlock is committed through the data stream for this test cluster (config, type and DN version). */
   private static boolean isStreamPutBlockWithoutRaftActive(OzoneClientConfig config) {
     return config.isDatastreamPutBlockWithoutRaftEnabled()
+        && REPLICATION_TYPE == ReplicationType.CHAINED
         && HDDSVersion.STREAM_PUTBLOCK_WITHOUT_RAFT.isSupportedBy(DN_OLD_VERSION);
   }
 
@@ -263,7 +266,7 @@ public class TestBlockDataStreamOutput {
 
   static OzoneDataStreamOutput createKey(OzoneClient client, String keyName,
                                          long size) throws Exception {
-    return OzoneTestHelper.createStreamKey(keyName, ReplicationType.RATIS, size,
+    return OzoneTestHelper.createStreamKey(keyName, REPLICATION_TYPE, size,
         client.getObjectStore(), VOLUME_NAME, BUCKET_NAME);
   }
 

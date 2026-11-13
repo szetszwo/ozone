@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.ratis.ContainerCommandRequestMessage;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.ozone.container.common.interfaces.ContainerDispatcher;
@@ -58,11 +59,13 @@ import org.apache.hadoop.ozone.container.keyvalue.impl.KeyValueStreamDataChannel
 import org.apache.hadoop.ozone.container.ozoneimpl.ContainerController;
 import org.apache.ozone.test.tag.Flaky;
 import org.apache.ratis.proto.RaftProtos;
+import org.apache.ratis.protocol.ClientId;
 import org.apache.ratis.protocol.Message;
 import org.apache.ratis.protocol.RaftClientRequest;
 import org.apache.ratis.protocol.RaftGroup;
 import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
+import org.apache.ratis.protocol.RaftPeerId;
 import org.apache.ratis.server.DivisionInfo;
 import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.statemachine.StateMachine;
@@ -85,6 +88,7 @@ abstract class ContainerStateMachineTests {
   private ContainerDispatcher dispatcher;
   private final OzoneConfiguration conf = new OzoneConfiguration();
   private ContainerStateMachine stateMachine;
+  private ContainerStateMachine chainedStateMachine;
   private final List<ThreadPoolExecutor> executor = IntStream.range(0, 2).mapToObj(i -> new ThreadPoolExecutor(1, 1,
       0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadFactoryBuilder()
       .setDaemon(true)
@@ -116,18 +120,26 @@ abstract class ContainerStateMachineTests {
     when(division.getInfo()).thenReturn(info);
     when(info.isLeader()).thenReturn(isLeader);
     when(ratisServer.getServerDivision(any())).thenReturn(division);
-    stateMachine = new ContainerStateMachine(null,
-        RaftGroupId.randomId(), dispatcher, controller, executor, ratisServer, conf, "containerOp");
+    stateMachine = newStateMachine(ReplicationType.RATIS, controller, ratisServer, raftServer);
+    chainedStateMachine = newStateMachine(ReplicationType.CHAINED, controller, ratisServer, raftServer);
+  }
+
+  private ContainerStateMachine newStateMachine(ReplicationType type, ContainerController controller,
+      XceiverServerRatis ratisServer, RaftServer raftServer) {
+    final ContainerStateMachine sm = new ContainerStateMachine(null,
+        RaftGroupId.randomId(), type, dispatcher, controller, executor, ratisServer, conf, "containerOp");
     try {
-      stateMachine.initialize(raftServer, stateMachine.getGroupId(), null);
+      sm.initialize(raftServer, sm.getGroupId(), null);
     } catch (Exception e) {
       // Ingore exception, as need init server to be closed
     }
+    return sm;
   }
 
   @AfterEach
   public void teardown() {
     stateMachine.close();
+    chainedStateMachine.close();
   }
 
   @AfterAll
@@ -262,7 +274,7 @@ abstract class ContainerStateMachineTests {
   @ValueSource(booleans = {false, true})
   public void testStreamCommandDrainsBuffersBeforePutBlock(boolean sync) throws Exception {
     final KeyValueStreamDataChannel channel = mock(KeyValueStreamDataChannel.class);
-    final StateMachine.DataStream stream = setUpStream(channel);
+    final StateMachine.DataStream stream = setUpStream(chainedStateMachine, channel);
 
     stream.onCommand(newPutBlockCommand(sync), 0).get();
 
@@ -277,7 +289,7 @@ abstract class ContainerStateMachineTests {
   public void testStreamCommandNotDispatchedIfDrainFails() throws Exception {
     final KeyValueStreamDataChannel channel = mock(KeyValueStreamDataChannel.class);
     doThrow(new IOException("drain failed")).when(channel).drainBuffers();
-    final StateMachine.DataStream stream = setUpStream(channel);
+    final StateMachine.DataStream stream = setUpStream(chainedStateMachine, channel);
 
     final ExecutionException e = assertThrows(ExecutionException.class,
         () -> stream.onCommand(newPutBlockCommand(), 0).get());
@@ -287,7 +299,7 @@ abstract class ContainerStateMachineTests {
 
   @Test
   public void testStreamCommandWithUnexpectedDataChannel() throws Exception {
-    final StateMachine.DataStream stream = setUpStream(mock(StateMachine.DataChannel.class));
+    final StateMachine.DataStream stream = setUpStream(chainedStateMachine, mock(StateMachine.DataChannel.class));
 
     final ExecutionException e = assertThrows(ExecutionException.class,
         () -> stream.onCommand(newPutBlockCommand(), 0).get());
@@ -295,7 +307,47 @@ abstract class ContainerStateMachineTests {
     verify(dispatcher, never()).dispatch(argThat(r -> r.getCmdType() == ContainerProtos.Type.PutBlock), any());
   }
 
-  private StateMachine.DataStream setUpStream(StateMachine.DataChannel channel) throws Exception {
+  @Test
+  public void testStreamCommandNotSupportedForRatis() throws Exception {
+    final KeyValueStreamDataChannel channel = mock(KeyValueStreamDataChannel.class);
+    final StateMachine.DataStream stream = setUpStream(stateMachine, channel);
+
+    final ExecutionException e = assertThrows(ExecutionException.class,
+        () -> stream.onCommand(newPutBlockCommand(), 0).get());
+    assertUnsupported(e.getCause());
+    verify(dispatcher, never()).dispatch(argThat(r -> r.getCmdType() == ContainerProtos.Type.PutBlock), any());
+  }
+
+  @Test
+  public void testAppendTransactionNotSupportedForChained() throws Exception {
+    final RaftClientRequest request = RaftClientRequest.newBuilder()
+        .setClientId(ClientId.randomId())
+        .setServerId(RaftPeerId.valueOf("s0"))
+        .setGroupId(RaftGroupId.randomId())
+        .setMessage(Message.valueOf("test"))
+        .setType(RaftClientRequest.writeRequestType())
+        .build();
+    final TransactionContext trx = chainedStateMachine.startTransaction(request);
+    assertUnsupported(trx.getException());
+    verify(dispatcher, never()).validateContainerCommand(any());
+  }
+
+  @Test
+  public void testApplyTransactionNotSupportedForChained() throws Exception {
+    final TransactionContext trx = mock(TransactionContext.class);
+    final ExecutionException e = assertThrows(ExecutionException.class,
+        () -> chainedStateMachine.applyTransaction(trx).get());
+    assertUnsupported(e.getCause());
+    verify(dispatcher, never()).dispatch(any(), any());
+  }
+
+  private static void assertUnsupported(Throwable t) {
+    assertInstanceOf(StorageContainerException.class, t);
+    assertEquals(ContainerProtos.Result.UNSUPPORTED_REQUEST, ((StorageContainerException) t).getResult());
+  }
+
+  private StateMachine.DataStream setUpStream(ContainerStateMachine sm, StateMachine.DataChannel channel)
+      throws Exception {
     when(dispatcher.dispatch(any(), any())).thenReturn(ContainerProtos.ContainerCommandResponseProto.newBuilder()
         .setCmdType(ContainerProtos.Type.PutBlock).setResult(ContainerProtos.Result.SUCCESS).build());
     when(dispatcher.getStreamDataChannel(any(), any())).thenReturn(channel);
@@ -308,7 +360,7 @@ abstract class ContainerStateMachineTests {
         .build();
     final RaftClientRequest request = mock(RaftClientRequest.class);
     when(request.getMessage()).thenReturn(ContainerCommandRequestMessage.toMessage(streamInit, null));
-    return stateMachine.stream(request).get();
+    return sm.stream(request).get();
   }
 
   private static ByteBuffer newPutBlockCommand() {

@@ -65,6 +65,7 @@ import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ReadChunkR
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ReadChunkResponseProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.Type;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.WriteChunkRequestProto;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.ratis.ContainerCommandRequestMessage;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.container.common.helpers.ContainerNotOpenException;
@@ -167,6 +168,7 @@ public class ContainerStateMachine extends BaseStateMachine {
   private final HddsDatanodeService datanodeService;
   private static Semaphore semaphore = new Semaphore(1);
   private final AtomicBoolean peersValidated;
+  private final ReplicationType replicationType;
 
   /**
    * CSM metrics.
@@ -251,12 +253,16 @@ public class ContainerStateMachine extends BaseStateMachine {
 
   @SuppressWarnings("parameternumber")
   public ContainerStateMachine(HddsDatanodeService hddsDatanodeService, RaftGroupId gid,
+      ReplicationType replicationType,
       ContainerDispatcher dispatcher,
       ContainerController containerController,
       List<ThreadPoolExecutor> chunkExecutors,
       XceiverServerRatis ratisServer,
       ConfigurationSource conf,
       String threadNamePrefix) {
+    Preconditions.checkArgument(replicationType == ReplicationType.RATIS || replicationType == ReplicationType.CHAINED,
+        "Unexpected replicationType %s", replicationType);
+    this.replicationType = replicationType;
     this.datanodeService = hddsDatanodeService;
     this.dispatcher = dispatcher;
     this.containerController = containerController;
@@ -308,6 +314,11 @@ public class ContainerStateMachine extends BaseStateMachine {
 
     this.writeChunkWaitMaxNs = conf.getTimeDuration(ScmConfigKeys.HDDS_CONTAINER_RATIS_STATEMACHINE_WRITE_WAIT_INTERVAL,
         ScmConfigKeys.HDDS_CONTAINER_RATIS_STATEMACHINE_WRITE_WAIT_INTERVAL_NS_DEFAULT, TimeUnit.NANOSECONDS);
+  }
+
+  private StorageContainerException newUnsupportedException(String op) {
+    return new StorageContainerException(getGroupId() + ": " + op + " is not supported for " + replicationType,
+        ContainerProtos.Result.UNSUPPORTED_REQUEST);
   }
 
   private void validatePeers() throws IOException {
@@ -476,6 +487,14 @@ public class ContainerStateMachine extends BaseStateMachine {
   @Override
   public TransactionContext startTransaction(RaftClientRequest request)
       throws IOException {
+    if (replicationType == ReplicationType.CHAINED) {
+      return TransactionContext.newBuilder()
+          .setClientRequest(request)
+          .setStateMachine(this)
+          .setServerRole(RaftPeerRole.LEADER)
+          .build()
+          .setException(newUnsupportedException("appendTransaction"));
+    }
     long startTime = Time.monotonicNowNanos();
     final ContainerCommandRequestProto proto =
         message2ContainerCommandRequestProto(request.getMessage());
@@ -753,6 +772,9 @@ public class ContainerStateMachine extends BaseStateMachine {
    *         which is identical on all the peers of the pipeline.
    */
   ByteBuffer streamCommand(ByteBuffer command, DataChannel channel) throws IOException {
+    if (replicationType == ReplicationType.RATIS) {
+      throw newUnsupportedException("streamCommand");
+    }
     // unsafeWrap is okay since the command buffer can be modified after this method has returned.
     final ContainerCommandRequestProto request = ContainerCommandRequestMessage.toProto(
         UnsafeByteOperations.unsafeWrap(command), getGroupId());
@@ -1160,6 +1182,9 @@ public class ContainerStateMachine extends BaseStateMachine {
    */
   @Override
   public CompletableFuture<Message> applyTransaction(TransactionContext trx) {
+    if (replicationType == ReplicationType.CHAINED) {
+      return JavaUtils.completeExceptionally(newUnsupportedException("applyTransaction"));
+    }
     long index = trx.getLogEntry().getIndex();
     try {
       // Remove the stateMachine data once both followers have caught up. If any

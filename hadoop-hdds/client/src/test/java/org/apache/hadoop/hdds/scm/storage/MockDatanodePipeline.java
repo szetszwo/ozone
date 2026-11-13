@@ -37,12 +37,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import org.apache.hadoop.hdds.client.BlockID;
+import org.apache.hadoop.hdds.client.ChainedReplicationConfig;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandRequestProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandResponseProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.GetCommittedBlockLengthResponseProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.PutBlockResponseProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.Result;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.Type;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationFactor;
 import org.apache.hadoop.hdds.ratis.ContainerCommandRequestMessage;
 import org.apache.hadoop.hdds.scm.XceiverClientFactory;
 import org.apache.hadoop.hdds.scm.XceiverClientManager;
@@ -106,8 +108,15 @@ public class MockDatanodePipeline {
   }
 
   public MockDatanodePipeline(BlockID blockID) throws IOException {
+    // CHAINED so that PutBlock without Raft can take effect.
+    this(blockID, MockPipeline.createRatisPipeline().toBuilder()
+        .setReplicationConfig(ChainedReplicationConfig.getInstance(ReplicationFactor.THREE))
+        .build());
+  }
+
+  public MockDatanodePipeline(BlockID blockID, Pipeline pipeline) throws IOException {
     this.blockID = blockID;
-    this.pipeline = MockPipeline.createRatisPipeline();
+    this.pipeline = pipeline;
 
     // Ensure metrics are initialized
     XceiverClientManager.getXceiverClientMetrics();
