@@ -26,6 +26,7 @@ import static org.apache.hadoop.ozone.OzoneConsts.MAX_SIZE;
 import static org.apache.hadoop.ozone.OzoneConsts.METADATA;
 import static org.apache.hadoop.ozone.OzoneConsts.ORIGIN_NODE_ID;
 import static org.apache.hadoop.ozone.OzoneConsts.ORIGIN_PIPELINE_ID;
+import static org.apache.hadoop.ozone.OzoneConsts.REPLICATION_TYPE;
 import static org.apache.hadoop.ozone.OzoneConsts.STATE;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,13 +40,13 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerType;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.ContainerReplicaProto;
 import org.apache.hadoop.ozone.container.common.helpers.ContainerUtils;
 import org.apache.hadoop.ozone.container.common.volume.HddsVolume;
@@ -60,7 +61,7 @@ public abstract class ContainerData {
 
   //Type of the container.
   // For now, we support only KeyValueContainer.
-  private final ContainerType containerType;
+  private final ContainerType containerType = ContainerType.KeyValueContainer;
 
   private final AtomicBoolean immediateCloseActionSent = new AtomicBoolean(false);
 
@@ -105,6 +106,14 @@ public abstract class ContainerData {
 
   private int replicaIndex;
 
+  /**
+   * The {@link ReplicationType} stored in the .container file.
+   * Null if the .container file does not have it,
+   * e.g. the container was created before {@link org.apache.hadoop.hdds.HDDSVersion#STREAM_PUTBLOCK_WITHOUT_RAFT}.
+   */
+  @Nullable
+  private final ReplicationType replicationType;
+
   /** Timestamp of last data scan (milliseconds since Unix Epoch).
    * {@code null} if not yet scanned (or timestamp not recorded,
    * eg. in prior versions). */
@@ -120,6 +129,7 @@ public abstract class ContainerData {
       Collections.unmodifiableList(Lists.newArrayList(
       CONTAINER_TYPE,
       CONTAINER_ID,
+      REPLICATION_TYPE,
       LAYOUTVERSION,
       STATE,
       METADATA,
@@ -131,18 +141,14 @@ public abstract class ContainerData {
 
   /**
    * Creates a ContainerData Object, which holds metadata of the container.
-   * @param type - ContainerType
    * @param containerId - ContainerId
    * @param layoutVersion - Container layoutVersion
    * @param size - Container maximum size in bytes
    * @param originPipelineId - Pipeline Id where this container is/was created
    * @param originNodeId - Node Id where this container is/was created
    */
-  protected ContainerData(ContainerType type, long containerId,
-                          ContainerLayoutVersion layoutVersion, long size,
-                          String originPipelineId,
-                          String originNodeId) {
-    this.containerType = Objects.requireNonNull(type, "type == null");
+  protected ContainerData(long containerId, ContainerLayoutVersion layoutVersion, long size,
+      String originPipelineId, String originNodeId, Integer replicaIndex, ReplicationType replicationType) {
     this.containerID = containerId;
     this.layOutVersion = layoutVersion.getVersion();
     this.metadata = new TreeMap<>();
@@ -155,13 +161,9 @@ public abstract class ContainerData {
     this.isEmpty = false;
     this.checksum = ZERO_CHECKSUM;
     this.dataChecksum = UNSET_DATA_CHECKSUM;
-  }
 
-  protected ContainerData(ContainerData source) {
-    this(source.getContainerType(), source.getContainerID(),
-        source.getLayoutVersion(), source.getMaxSize(),
-        source.getOriginPipelineId(), source.getOriginNodeId());
-    replicaIndex = source.getReplicaIndex();
+    this.replicaIndex = replicaIndex == null ? 0 : replicaIndex;
+    this.replicationType = replicationType;
   }
 
   /**
@@ -209,6 +211,15 @@ public abstract class ContainerData {
 
   public void setReplicaIndex(int replicaIndex) {
     this.replicaIndex = replicaIndex;
+  }
+
+  /**
+   * @return the {@link ReplicationType} stored in the .container file,
+   *         or null if the .container file does not have it.
+   */
+  @Nullable
+  public ReplicationType getReplicationType() {
+    return replicationType;
   }
 
   /**

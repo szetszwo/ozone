@@ -68,6 +68,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -99,6 +100,7 @@ import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerC
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerCommandResponseProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto.State;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerType;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.ContainerReplicaProto;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
@@ -143,6 +145,8 @@ import org.apache.hadoop.ozone.container.ozoneimpl.ContainerController;
 import org.apache.hadoop.ozone.container.ozoneimpl.ContainerScannerConfiguration;
 import org.apache.hadoop.ozone.container.ozoneimpl.OnDemandContainerScanner;
 import org.apache.hadoop.ozone.container.ozoneimpl.OzoneContainer;
+import org.apache.hadoop.ozone.container.upgrade.DatanodeVersionManager;
+import org.apache.hadoop.ozone.container.upgrade.VersionedDatanodeFeatures;
 import org.apache.hadoop.util.Time;
 import org.apache.ozone.test.GenericTestUtils;
 import org.apache.ozone.test.GenericTestUtils.LogCapturer;
@@ -710,6 +714,43 @@ public class TestKeyValueHandler {
       keyValueHandler.stop();
       handlerCtx.getVolumeSet().getVolumesList().forEach(StorageVolume::shutdown);
     }
+  }
+
+  /** The ReplicationType is stored in the .container file only after STREAM_PUTBLOCK_WITHOUT_RAFT is finalized. */
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void testCreateContainerReplicationType(boolean finalized) throws IOException {
+    final DatanodeVersionManager versionManager = mock(DatanodeVersionManager.class);
+    when(versionManager.isAllowed(any())).thenReturn(true);
+    when(versionManager.isAllowed(HDDSVersion.STREAM_PUTBLOCK_WITHOUT_RAFT)).thenReturn(finalized);
+    VersionedDatanodeFeatures.initialize(versionManager);
+    HandlerWithVolumeSet handlerCtx = createKeyValueHandler(tempDir);
+    KeyValueHandler keyValueHandler = handlerCtx.getHandler();
+    try {
+      assertCreateContainerReplicationType(keyValueHandler, handlerCtx.getContainerSet(), DUMMY_CONTAINER_ID, 0,
+          ReplicationType.RATIS, finalized);
+      assertCreateContainerReplicationType(keyValueHandler, handlerCtx.getContainerSet(), DUMMY_CONTAINER_ID + 1, 3,
+          ReplicationType.EC, finalized);
+    } finally {
+      VersionedDatanodeFeatures.initialize(null);
+      keyValueHandler.stop();
+      handlerCtx.getVolumeSet().getVolumesList().forEach(StorageVolume::shutdown);
+    }
+  }
+
+  private static void assertCreateContainerReplicationType(KeyValueHandler handler, ContainerSet containerSet,
+      long containerID, int replicaIndex, ReplicationType type, boolean stored) throws IOException {
+    final ContainerCommandRequestProto.Builder request = createContainerRequest(DATANODE_UUID, containerID)
+        .toBuilder();
+    request.getCreateContainerBuilder().setReplicaIndex(replicaIndex);
+    assertThat(handler.handleCreateContainer(request.build(), null).getResult())
+        .isEqualTo(ContainerProtos.Result.SUCCESS);
+
+    final KeyValueContainer container = (KeyValueContainer) containerSet.getContainer(containerID);
+    assertEquals(stored ? type : null, container.getContainerData().getReplicationType());
+    final String content = FileUtils.readFileToString(container.getContainerFile(), StandardCharsets.UTF_8);
+    assertEquals(stored, content.contains(OzoneConsts.REPLICATION_TYPE + ": " + type), content);
+    assertEquals(stored, content.contains(OzoneConsts.REPLICATION_TYPE), content);
   }
 
   @Test

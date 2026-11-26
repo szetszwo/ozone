@@ -34,6 +34,7 @@ import org.apache.hadoop.hdds.HddsConfigKeys;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.container.common.helpers.ContainerUtils;
 import org.apache.hadoop.ozone.container.keyvalue.ContainerLayoutTestInfo;
@@ -69,19 +70,23 @@ public class TestContainerDataYaml {
    */
   private File createContainerFile(long containerID, int replicaIndex)
       throws IOException {
+    return createContainerFile(containerID, replicaIndex, null);
+  }
+
+  private File createContainerFile(long containerID, int replicaIndex, ReplicationType replicationType)
+      throws IOException {
     String containerPath = containerID + ".container";
 
     KeyValueContainerData keyValueContainerData = new KeyValueContainerData(
         containerID, layoutVersion, MAXSIZE,
         UUID.randomUUID().toString(),
-        UUID.randomUUID().toString());
+        UUID.randomUUID().toString(), replicaIndex, replicationType);
     keyValueContainerData.setContainerDBType(CONTAINER_DB_TYPE);
     keyValueContainerData.setMetadataPath(testRoot.getAbsolutePath());
     keyValueContainerData.setChunksPath(testRoot.getAbsolutePath());
     keyValueContainerData.updateDataScanTime(SCAN_TIME);
     keyValueContainerData.setSchemaVersion(
         VersionedDatanodeFeatures.SchemaV2.chooseSchemaVersion());
-    keyValueContainerData.setReplicaIndex(replicaIndex);
     keyValueContainerData.setDataChecksum(12345);
 
     File containerFile = new File(testRoot, containerPath);
@@ -175,6 +180,42 @@ public class TestContainerDataYaml {
     assertThat(content)
         .withFailMessage("ReplicaIndex shouldn't be persisted if zero")
         .doesNotContain("replicaIndex");
+  }
+
+  @ContainerLayoutTestInfo.ContainerTest
+  public void testReplicationType(ContainerLayoutVersion layout) throws IOException {
+    setLayoutVersion(layout);
+    for (ReplicationType type : new ReplicationType[] {ReplicationType.RATIS, ReplicationType.CHAINED}) {
+      assertReplicationType(type, createContainerFile(testContainerID++, 0, type));
+    }
+    assertReplicationType(ReplicationType.EC, createContainerFile(testContainerID++, 3, ReplicationType.EC));
+  }
+
+  /** A .container file without replicationType, e.g. created before STREAM_PUTBLOCK_WITHOUT_RAFT. */
+  @ContainerLayoutTestInfo.ContainerTest
+  public void testReplicationTypeNotInContainerFile(ContainerLayoutVersion layout) throws IOException {
+    setLayoutVersion(layout);
+    assertReplicationType(null, createContainerFile(testContainerID++, 0));
+    assertReplicationType(null, createContainerFile(testContainerID++, 3));
+  }
+
+  /** @param expected the stored ReplicationType, or null if it is not stored. */
+  private void assertReplicationType(ReplicationType expected, File containerFile) throws IOException {
+    final boolean stored = expected != null;
+    final String content = FileUtils.readFileToString(containerFile, Charset.defaultCharset());
+    assertEquals(stored, content.contains(OzoneConsts.REPLICATION_TYPE + ": " + expected), content);
+    assertEquals(stored, content.contains(OzoneConsts.REPLICATION_TYPE), content);
+
+    final KeyValueContainerData kvData = (KeyValueContainerData) ContainerDataYaml.readContainerFile(containerFile);
+    assertEquals(expected, kvData.getReplicationType());
+    ContainerUtils.verifyContainerFileChecksum(kvData, conf);
+    // the copy has the same ReplicationType, and stores it only if the original stores it
+    final KeyValueContainerData copy = new KeyValueContainerData(kvData);
+    assertEquals(expected, copy.getReplicationType());
+    final File copyFile = new File(testRoot, "copy-" + containerFile.getName());
+    ContainerDataYaml.createContainerFile(copy, copyFile);
+    assertEquals(stored, FileUtils.readFileToString(copyFile, Charset.defaultCharset())
+        .contains(OzoneConsts.REPLICATION_TYPE));
   }
 
   @ContainerLayoutTestInfo.ContainerTest

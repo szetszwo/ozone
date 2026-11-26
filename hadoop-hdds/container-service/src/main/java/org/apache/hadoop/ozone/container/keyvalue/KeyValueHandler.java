@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.ozone.container.keyvalue;
 
+import static org.apache.hadoop.hdds.HDDSVersion.STREAM_PUTBLOCK_WITHOUT_RAFT;
 import static org.apache.hadoop.hdds.HddsUtils.checksumToString;
 import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto.State.CLOSED;
 import static org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto.State.QUASI_CLOSED;
@@ -111,6 +112,7 @@ import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.PutSmallFi
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ReadBlockRequestProto;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.Type;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.WriteChunkRequestProto;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.scm.ByteStringConversion;
 import org.apache.hadoop.hdds.scm.OzoneClientConfig;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
@@ -484,15 +486,17 @@ public class KeyValueHandler extends Handler {
 
     ContainerLayoutVersion layoutVersion =
         ContainerLayoutVersion.getConfiguredVersion(conf);
+    final int replicaIndex = request.getCreateContainer().getReplicaIndex();
+    // Before finalization, an older datanode would fail to verify the checksum of a .container file with it.
+    final ReplicationType replicationType = !VersionedDatanodeFeatures.isFinalized(STREAM_PUTBLOCK_WITHOUT_RAFT) ? null
+        : replicaIndex > 0 ? ReplicationType.EC : ReplicationType.RATIS;
     KeyValueContainerData newContainerData = new KeyValueContainerData(
         containerID, layoutVersion, maxContainerSize, request.getPipelineID(),
-        getDatanodeId());
+        getDatanodeId(), replicaIndex, replicationType);
     State state = request.getCreateContainer().getState();
     if (state != null) {
       newContainerData.setState(state);
     }
-    newContainerData.setReplicaIndex(request.getCreateContainer()
-        .getReplicaIndex());
 
     // TODO: Add support to add metadataList to ContainerData. Add metadata
     // to container during creation.

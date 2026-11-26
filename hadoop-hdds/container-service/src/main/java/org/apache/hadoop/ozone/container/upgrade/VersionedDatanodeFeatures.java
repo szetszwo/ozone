@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.hadoop.hdds.ComponentVersion;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutFeature;
@@ -47,11 +48,11 @@ public final class VersionedDatanodeFeatures {
   }
 
   public static boolean isFinalized(
-      HDDSLayoutFeature layoutFeature) {
+      ComponentVersion version) {
     // version manager can be null for testing. Use the latest version in
     // this case.
     return versionManager == null ||
-        versionManager.isAllowed(layoutFeature);
+        versionManager.isAllowed(version);
   }
 
   /**

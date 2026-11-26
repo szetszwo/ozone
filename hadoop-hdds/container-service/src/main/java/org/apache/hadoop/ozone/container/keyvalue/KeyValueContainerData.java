@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerDataProto;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.ContainerReplicaProto;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutFeature;
@@ -110,19 +111,26 @@ public class KeyValueContainerData extends ContainerData {
    */
   public KeyValueContainerData(long id, ContainerLayoutVersion layoutVersion,
       long size, String originPipelineId, String originNodeId) {
-    super(ContainerProtos.ContainerType.KeyValueContainer, id, layoutVersion,
-        size, originPipelineId, originNodeId);
+    this(id, layoutVersion, size, originPipelineId, originNodeId, null, null);
+  }
+
+  public KeyValueContainerData(long id, ContainerLayoutVersion layoutVersion,
+      long size, String originPipelineId, String originNodeId,
+      Integer replicaIndex, HddsProtos.ReplicationType replicationType) {
+    super(id, layoutVersion, size, originPipelineId, originNodeId, replicaIndex, replicationType);
     this.deleteTransactionId = 0;
     finalizedBlockSet =  ConcurrentHashMap.newKeySet();
   }
 
   public KeyValueContainerData(KeyValueContainerData source) {
-    super(source);
+    this(source.getContainerID(),
+        source.getLayoutVersion(), source.getMaxSize(),
+        source.getOriginPipelineId(), source.getOriginNodeId(),
+        source.getReplicaIndex(), source.getReplicationType());
+
     Preconditions.checkArgument(source.getContainerType()
         == ContainerProtos.ContainerType.KeyValueContainer);
-    this.deleteTransactionId = 0;
     this.schemaVersion = source.getSchemaVersion();
-    finalizedBlockSet = ConcurrentHashMap.newKeySet();
   }
 
   /**

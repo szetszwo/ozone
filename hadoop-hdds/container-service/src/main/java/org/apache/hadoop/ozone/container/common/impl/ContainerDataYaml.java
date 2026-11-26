@@ -17,6 +17,7 @@
 
 package org.apache.hadoop.ozone.container.common.impl;
 
+import static org.apache.hadoop.ozone.OzoneConsts.REPLICATION_TYPE;
 import static org.apache.hadoop.ozone.OzoneConsts.REPLICA_INDEX;
 import static org.apache.hadoop.ozone.container.keyvalue.KeyValueContainerData.KEYVALUE_YAML_TAG;
 
@@ -33,6 +34,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos;
 import org.apache.hadoop.hdds.protocol.datanode.proto.ContainerProtos.ContainerType;
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 import org.apache.hadoop.hdds.scm.container.common.helpers.StorageContainerException;
 import org.apache.hadoop.hdds.server.YamlUtils;
 import org.apache.hadoop.ozone.OzoneConsts;
@@ -259,10 +261,16 @@ public final class ContainerDataYaml {
             OzoneConsts.ORIGIN_PIPELINE_ID);
         String originNodeId = (String) nodes.get(OzoneConsts.ORIGIN_NODE_ID);
 
+        final Object replicationTypeObj = nodes.get(REPLICATION_TYPE);
+        final ReplicationType replicationType  = replicationTypeObj != null ?
+            ReplicationType.valueOf((String) replicationTypeObj) : null;
+        final Object replicaIndexObj = nodes.get(REPLICA_INDEX);
+        final Integer replicaIndex = replicaIndexObj != null ? ((Long) replicaIndexObj).intValue() : null;
+
         //When a new field is added, it needs to be added here.
         KeyValueContainerData kvData = new KeyValueContainerData(
             (long) nodes.get(OzoneConsts.CONTAINER_ID), containerLayoutVersion,
-            size, originPipelineId, originNodeId);
+            size, originPipelineId, originNodeId, replicaIndex, replicationType);
 
         kvData.setContainerDBType((String)nodes.get(
             OzoneConsts.CONTAINER_DB_TYPE));
@@ -279,11 +287,6 @@ public final class ContainerDataYaml {
             .setState(ContainerProtos.ContainerDataProto.State.valueOf(state));
         String schemaVersion = (String) nodes.get(OzoneConsts.SCHEMA_VERSION);
         kvData.setSchemaVersion(schemaVersion);
-        final Object replicaIndex = nodes.get(REPLICA_INDEX);
-        if (replicaIndex != null) {
-          kvData.setReplicaIndex(
-              ((Long) replicaIndex).intValue());
-        }
         return kvData;
       }
     }
