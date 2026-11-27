@@ -35,6 +35,28 @@ import org.apache.hadoop.ozone.upgrade.UpgradeException;
  * Datanode-specific version manager that wires upgrade actions internally.
  */
 public class DatanodeVersionManager extends ComponentVersionManager {
+  static final ComponentVersionManager LATEST = new ComponentVersionManager(
+      HDDSVersion.SOFTWARE_VERSION, HDDSVersion.SOFTWARE_VERSION) {
+    @Override
+    public int getPersistedApparentVersion() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ComponentVersion getVersionForClient() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected void persistApparentVersion(ComponentVersion newVersion) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected void runUpgradeAction(ComponentVersion componentVersion) {
+      throw new UnsupportedOperationException();
+    }
+  };
 
   private final DatanodeStorage storage;
   private final Map<ComponentVersion, DatanodeUpgradeAction> upgradeActions;

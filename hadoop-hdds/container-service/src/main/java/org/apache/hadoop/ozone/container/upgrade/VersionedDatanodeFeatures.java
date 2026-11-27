@@ -23,7 +23,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.hadoop.hdds.ComponentVersion;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.upgrade.HDDSLayoutFeature;
@@ -31,6 +33,7 @@ import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.container.common.DatanodeStorage;
 import org.apache.hadoop.ozone.container.common.statemachine.DatanodeConfiguration;
 import org.apache.hadoop.ozone.container.common.volume.StorageVolume;
+import org.apache.hadoop.ozone.upgrade.ComponentVersionManager;
 
 /**
  * Utility class to retrieve the version of a feature that corresponds to the
@@ -38,20 +41,17 @@ import org.apache.hadoop.ozone.container.common.volume.StorageVolume;
  * {@link DatanodeVersionManager}.
  */
 public final class VersionedDatanodeFeatures {
-  private static DatanodeVersionManager versionManager;
+  private static volatile ComponentVersionManager versionManager = DatanodeVersionManager.LATEST;
 
   private VersionedDatanodeFeatures() { }
 
-  public static void initialize(DatanodeVersionManager manager) {
+  public static void initialize(ComponentVersionManager manager) {
+    Objects.requireNonNull(manager, "Version manager is null");
     versionManager = manager;
   }
 
-  public static boolean isFinalized(
-      HDDSLayoutFeature layoutFeature) {
-    // version manager can be null for testing. Use the latest version in
-    // this case.
-    return versionManager == null ||
-        versionManager.isAllowed(layoutFeature);
+  public static boolean isFinalized(ComponentVersion version) {
+    return versionManager.isAllowed(version);
   }
 
   /**
